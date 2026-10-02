@@ -183,6 +183,13 @@
       "when": 1790927596699,
       "tag": "0025_enforce_cover_image_mime",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1790984413125,
+      "tag": "0026_sync_schema",
+      "breakpoints": true
     }
   ]
 }
