@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { PasswordInput } from "@/components/PasswordInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -100,9 +101,8 @@ export function ClaimUsername({
           <>
             <div className="space-y-2">
               <Label htmlFor="claim-password">Password</Label>
-              <Input
+              <PasswordInput
                 id="claim-password"
-                type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 placeholder="At least 8 characters"
@@ -111,9 +111,8 @@ export function ClaimUsername({
             </div>
             <div className="space-y-2">
               <Label htmlFor="claim-password-confirm">Confirm password</Label>
-              <Input
+              <PasswordInput
                 id="claim-password-confirm"
-                type="password"
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
                 placeholder="Repeat your password"
