@@ -1,0 +1,188 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1789181731877,
+      "tag": "0000_profiles_and_avatar_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789182230365,
+      "tag": "0001_create_profile_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789519604995,
+      "tag": "0002_more_social_platforms",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789520083772,
+      "tag": "0003_add_profile_verified",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789619237874,
+      "tag": "0004_noop_apply_pending",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789619309844,
+      "tag": "0005_reconcile_authoritative_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789619871503,
+      "tag": "0006_add_profile_card_appearance",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789620499124,
+      "tag": "0007_add_social_icon_colors",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789670743816,
+      "tag": "0008_grant_sandbox_exec_schema_access",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789670798674,
+      "tag": "0009_add_profile_page_background",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789671402285,
+      "tag": "0010_add_profile_text_typography",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1789672059036,
+      "tag": "0011_add_page_background_image",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1789690195044,
+      "tag": "0012_background_upload_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1789697751195,
+      "tag": "0013_grant_sandbox_exec_schema_access",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1789697807545,
+      "tag": "0014_add_page_background_video",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1789698029466,
+      "tag": "0015_restore_custom_link_functions",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1790037634187,
+      "tag": "0016_add_name_bio_colors",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1790132369329,
+      "tag": "0017_apply_pending_baseline",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1790132415590,
+      "tag": "0018_add_qr_customization_columns",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1790301097581,
+      "tag": "0019_noop_sync",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1790301136593,
+      "tag": "0020_qr_defaults_and_button",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1790303381157,
+      "tag": "0021_noop_sync",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1790392567475,
+      "tag": "0022_probe_pending_apply",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1790883323728,
+      "tag": "0023_cover_storage_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790883353007,
+      "tag": "0024_add_profile_cover_photo",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1790927596699,
+      "tag": "0025_enforce_cover_image_mime",
+      "breakpoints": true
+    }
+  ]
+}

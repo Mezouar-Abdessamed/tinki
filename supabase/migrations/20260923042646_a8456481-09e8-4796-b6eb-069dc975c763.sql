@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ALTER COLUMN qr_margin SET DEFAULT 4;

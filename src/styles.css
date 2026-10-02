@@ -1,0 +1,402 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Design system: "One Link" — deep ink background, electric mint accent,
+ * Space Grotesk display + DM Sans body. All colors are oklch tokens.
+ */
+
+@theme inline {
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-foreground: var(--surface-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-glow: var(--primary-glow);
+  --color-verified: var(--verified);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  --radius: 1rem;
+
+  --background: oklch(0.16 0.018 265);
+  --foreground: oklch(0.97 0.006 250);
+
+  --surface: oklch(0.21 0.022 265);
+  --surface-foreground: oklch(0.97 0.006 250);
+
+  --card: oklch(0.21 0.022 265);
+  --card-foreground: oklch(0.97 0.006 250);
+
+  --popover: oklch(0.21 0.022 265);
+  --popover-foreground: oklch(0.97 0.006 250);
+
+  --primary: oklch(0.85 0.17 165);
+  --primary-foreground: oklch(0.18 0.03 175);
+  --primary-glow: oklch(0.93 0.14 175);
+  --verified: oklch(0.82 0.16 85);
+
+  --secondary: oklch(0.27 0.025 265);
+  --secondary-foreground: oklch(0.97 0.006 250);
+
+  --muted: oklch(0.25 0.022 265);
+  --muted-foreground: oklch(0.7 0.02 260);
+
+  --accent: oklch(0.3 0.03 265);
+  --accent-foreground: oklch(0.97 0.006 250);
+
+  --destructive: oklch(0.62 0.21 22);
+  --destructive-foreground: oklch(0.98 0.005 250);
+
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.85 0.17 165);
+
+  --chart-1: oklch(0.85 0.17 165);
+  --chart-2: oklch(0.7 0.14 220);
+  --chart-3: oklch(0.75 0.16 90);
+  --chart-4: oklch(0.68 0.19 330);
+  --chart-5: oklch(0.72 0.17 40);
+
+  --sidebar: oklch(0.19 0.02 265);
+  --sidebar-foreground: oklch(0.97 0.006 250);
+  --sidebar-primary: oklch(0.85 0.17 165);
+  --sidebar-primary-foreground: oklch(0.18 0.03 175);
+  --sidebar-accent: oklch(0.27 0.025 265);
+  --sidebar-accent-foreground: oklch(0.97 0.006 250);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.85 0.17 165);
+
+  --gradient-primary: linear-gradient(135deg, var(--primary), var(--primary-glow));
+  --gradient-halo: radial-gradient(
+    60% 60% at 50% 0%,
+    color-mix(in oklab, var(--primary) 22%, transparent),
+    transparent 70%
+  );
+  --shadow-glow: 0 18px 60px -20px color-mix(in oklab, var(--primary) 45%, transparent);
+  --shadow-panel: 0 24px 70px -30px oklch(0 0 0 / 70%);
+  --transition-smooth: 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+}
+
+@utility bg-halo {
+  background-image: var(--gradient-halo);
+}
+
+@utility text-gradient {
+  background-image: var(--gradient-primary);
+  background-clip: text;
+  color: transparent;
+}
+
+@utility bg-gradient-primary {
+  background-image: var(--gradient-primary);
+}
+
+/* ---------------------------------------------------------------------------
+ * Landing button animation groups.
+ * Buttons that share one container share one class (same hover + click
+ * animation); every container gets a different pair.
+ * ------------------------------------------------------------------------- */
+.landing-btn {
+  position: relative;
+  will-change: transform;
+}
+
+/* Group A — desktop header actions: lift + glow on hover, press on click */
+.btn-nav {
+  transition:
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 200ms ease,
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease;
+}
+.btn-nav:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px -14px color-mix(in oklab, var(--primary) 60%, transparent);
+}
+.btn-nav:active {
+  animation: btn-press 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes btn-press {
+  0% { transform: translateY(-2px) scale(1); }
+  45% { transform: translateY(1px) scale(0.9); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* Group B — mobile menu icon: tilt-zoom on hover, nudge-twist on click */
+.btn-menu {
+  transition:
+    transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 200ms ease;
+}
+.btn-menu:hover {
+  transform: scale(1.12) rotate(-6deg);
+  background-color: var(--color-accent);
+}
+.btn-menu:active {
+  animation: btn-menu-nudge 340ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes btn-menu-nudge {
+  0% { transform: scale(0.85) rotate(0deg); }
+  60% { transform: scale(1.08) rotate(8deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+/* Group C — mobile sheet actions: slide on hover, jelly squish on click */
+.btn-sheet {
+  transition:
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 200ms ease,
+    color 200ms ease;
+}
+.btn-sheet:hover {
+  transform: translateX(4px);
+  color: var(--color-primary);
+}
+html[dir="rtl"] .btn-sheet:hover {
+  transform: translateX(-4px);
+}
+.btn-sheet:active {
+  animation: btn-jelly 360ms ease-out;
+}
+@keyframes btn-jelly {
+  0% { transform: scale(1, 1); }
+  35% { transform: scale(0.94, 1.06); }
+  70% { transform: scale(1.05, 0.95); }
+  100% { transform: scale(1, 1); }
+}
+
+/* Group D — hero CTAs: float + glow on hover, pop on click */
+.btn-hero {
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 260ms ease,
+    filter 220ms ease;
+}
+.btn-hero:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: var(--shadow-glow);
+  filter: brightness(1.06);
+}
+.btn-hero:active {
+  animation: btn-pop 340ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes btn-pop {
+  0% { transform: scale(0.92); }
+  55% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+/* Group E — final-section CTAs: light sweep on hover, rubber-band on click */
+.btn-final {
+  overflow: hidden;
+  transition:
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 240ms ease;
+}
+.btn-final::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 30%,
+    color-mix(in oklab, var(--primary-glow) 40%, transparent) 50%,
+    transparent 70%
+  );
+  transform: translateX(-130%);
+  transition: transform 600ms ease;
+  pointer-events: none;
+}
+.btn-final:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 36px -18px color-mix(in oklab, var(--primary) 50%, transparent);
+}
+.btn-final:hover::after {
+  transform: translateX(130%);
+}
+.btn-final:active {
+  animation: btn-rubber 420ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+@keyframes btn-rubber {
+  0% { transform: scale(1, 1); }
+  30% { transform: scale(1.08, 0.9); }
+  55% { transform: scale(0.95, 1.05); }
+  75% { transform: scale(1.02, 0.98); }
+  100% { transform: scale(1, 1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-nav,
+  .btn-menu,
+  .btn-sheet,
+  .btn-hero,
+  .btn-final,
+  .btn-final::after {
+    transition: none;
+  }
+  .btn-nav:active,
+  .btn-menu:active,
+  .btn-sheet:active,
+  .btn-hero:active,
+  .btn-final:active {
+    animation: none;
+  }
+}
+
+@utility panel {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-panel);
+}
+
+/* Verified badge: spins like a wheel for 1s, rests for 2s, forever. */
+@keyframes verified-wheel-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  33.33% {
+    transform: rotate(-360deg);
+  }
+  100% {
+    transform: rotate(-360deg);
+  }
+}
+
+@utility verified-spin {
+  animation: verified-wheel-spin 3s linear infinite;
+  transform-origin: center;
+}
+
+/* Password eye toggle: one expanding ring per click, then fades out. */
+@keyframes eye-ping-once {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.7;
+  }
+  70% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+@utility ping-once {
+  animation: eye-ping-once 0.6s ease-out forwards;
+}
+
+html[dir="rtl"] body { font-family: "Cairo", var(--font-sans, sans-serif); }
+
+/* Landing scroll reveal */
+.reveal {
+  opacity: 0;
+  transform: translateY(26px) scale(0.985);
+  transition:
+    opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.reveal[data-shown="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Lenis inertia scrolling (classes are set on <html> by the library) */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  html { scroll-behavior: auto !important; }
+}
+html { scroll-behavior: smooth; }
