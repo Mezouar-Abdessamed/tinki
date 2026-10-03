@@ -204,18 +204,26 @@ export function socialIconStyles(appearance: CardAppearance): {
 }
 
 
-// The "avatars" bucket is publicly readable, so a plain public URL is enough.
-export async function getAvatarUrl(path: string | null | undefined): Promise<string | null> {
+// The photo buckets are private, but their object read policies permit public
+// profile photos. Sign each path so visitors can display it without a login.
+const PROFILE_PHOTO_TTL_SECONDS = 60 * 60 * 24 * 7;
+
+async function getProfilePhotoUrl(bucket: "avatars" | "covers", path: string | null | undefined): Promise<string | null> {
   if (!path) return null;
-  const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-  return data.publicUrl ?? null;
+  try {
+    const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, PROFILE_PHOTO_TTL_SECONDS);
+    return error ? null : (data?.signedUrl ?? null);
+  } catch {
+    return null;
+  }
 }
 
-// Cover images live in the public "covers" bucket, so a plain public URL is enough.
+export async function getAvatarUrl(path: string | null | undefined): Promise<string | null> {
+  return getProfilePhotoUrl("avatars", path);
+}
+
 export async function getCoverUrl(path: string | null | undefined): Promise<string | null> {
-  if (!path) return null;
-  const { data } = await supabase.storage.from("covers").getPublicUrl(path);
-  return data.publicUrl ?? null;
+  return getProfilePhotoUrl("covers", path);
 }
 
 const BACKGROUND_TTL_SECONDS = 60 * 60 * 24 * 7;

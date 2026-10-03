@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Show existing profile and cover photos from private storage on public and owner pages; verify the photo links load.
+
 - [x] Restore the uploaded LinkMe app without secrets or project metadata.
 - [x] Add the “Costumize QR Code” account page.
 - [x] Add the page to desktop and mobile sidebar navigation.
