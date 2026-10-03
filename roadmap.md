@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Match the cover photo and editing preview to Facebook's 851:315 cover proportions.
+
 - [x] Show existing profile and cover photos from private storage on public and owner pages; verified both images load for signed-in owners and anonymous visitors.
 
 - [x] Restore the uploaded LinkMe app without secrets or project metadata.
