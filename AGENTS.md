@@ -32,6 +32,7 @@
 
 - Render uploaded covers inside `ProfileCard` with the shared `CoverBanner` treatment, keeping the existing avatar element unchanged; this maintains parity between public and dashboard previews.
 - Store only cover paths and focal percentages on profiles, with per-user files in the dedicated private covers bucket; this preserves access control and avoids persisted URLs.
+- Resolve avatar and cover paths through short-lived signed links from their private buckets; public profile visitors need working photos without making buckets public.
 
 ## Page backgrounds
 

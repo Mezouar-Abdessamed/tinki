@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Show existing profile and cover photos from private storage on public and owner pages; verified both images load for signed-in owners and anonymous visitors.
+
 - [x] Restore the uploaded LinkMe app without secrets or project metadata.
 - [x] Add the “Costumize QR Code” account page.
 - [x] Add the page to desktop and mobile sidebar navigation.
@@ -15,7 +17,7 @@
 - [x] Make the homepage language selector compact and responsive while preserving synchronization.
 - [x] Add a Views by Country pie chart for the top five countries and an Other percentage.
 - [ ] Complete repeat-view protection in country analytics (blocked: the connected Cloud database has none of the project's existing tables or analytics function; its schema migrations must be restored before the country count can be changed).
-- [ ] Add cover photo upload, positioning, removal and shared public/dashboard rendering; public mobile/desktop display verified (blocked: no signed-in account exists to verify upload, replacement, removal, and validation end to end).
+- [ ] Validate cover upload, replacement, removal, and positioning end to end (blocked: requires a disposable test profile or permission to alter the existing user's cover photo).
 - [x] Move analytics insert hardening into supabase/migrations/ (verified compatible, no duplicates; applying it to the live database still blocked: migration tool unavailable and connected database lacks the project's tables).
 - [x] Add `getBackgroundUrl` to src/lib/profiles.ts so stored background values resolve to a displayable link (object paths get a short-lived signed URL, existing URLs pass through).
 - [ ] Save background object paths instead of signed URLs (Step 2; blocked: waiting for approval to change how backgrounds are saved).
