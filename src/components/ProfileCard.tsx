@@ -95,7 +95,7 @@ export function ProfileCard({
       style={background ? { background } : undefined}
     >
       <div className="bg-halo pointer-events-none absolute inset-x-0 top-0 h-40" />
-      {(profile.cover_photo_path || coverUrl) && <CoverBanner url={coverUrl ?? null} x={profile.cover_photo_x ?? 50} y={profile.cover_photo_y ?? 50} className="w-full max-h-[280px]" />}
+      {(profile.cover_photo_path || coverUrl) && <CoverBanner url={coverUrl ?? null} x={profile.cover_photo_x ?? 50} y={profile.cover_photo_y ?? 50} className="w-full" />}
       {showVerifiedBadge ? (
         <BadgeCheck
           aria-label="Verified account"

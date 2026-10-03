@@ -413,7 +413,7 @@ export function EditInformationsForm({
         <div className="mt-5 max-w-xl overflow-hidden rounded-lg border border-border">
           {coverPreview || savedCoverUrl || profile.cover_photo_path ? (
             <CoverBanner url={coverPreview ?? savedCoverUrl} x={coverX} y={coverY} className="w-full" />
-          ) : <div className="flex aspect-[2/1] items-center justify-center bg-secondary text-sm text-muted-foreground">No cover photo</div>}
+          ) : <div className="flex aspect-[851/315] items-center justify-center bg-secondary text-sm text-muted-foreground">No cover photo</div>}
         </div>
         {(coverPreview || savedCoverUrl || profile.cover_photo_path) && <div className="mt-5 grid max-w-xl gap-4 sm:grid-cols-2">
           <div><Label htmlFor="cover-x">Horizontal position</Label><input id="cover-x" type="range" min="0" max="100" value={coverX} onChange={(e) => setCoverX(Number(e.target.value))} className="mt-2 w-full accent-primary" /></div>

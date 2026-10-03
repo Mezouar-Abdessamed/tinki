@@ -4,7 +4,7 @@ import { useState } from "react";
 export function CoverBanner({ url, x = 50, y = 50, className = "" }: { url: string | null; x?: number; y?: number; className?: string }) {
   const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
   return (
-    <div className={`aspect-[2/1] max-h-[280px] overflow-hidden bg-secondary ${className}`}>
+    <div className={`aspect-[851/315] overflow-hidden bg-secondary ${className}`}>
       {url && <img
         src={url}
         alt="Cover photo"
