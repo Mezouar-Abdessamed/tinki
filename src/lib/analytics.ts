@@ -150,14 +150,21 @@ export async function trackProfileView(profileId: string, isOwner: boolean) {
   if (isOwner) return;
   const visitorId = getVisitorId();
   if (!visitorId || seenRecently(profileId)) return;
-  markSeen(profileId);
   const country = await getCountryCode();
-  await supabase.from("profile_events").insert({
+  const event = {
     profile_id: profileId,
     event_type: "profile_view",
     visitor_id: visitorId,
-    country,
-  });
+  } as const;
+  const { error } = await supabase.from("profile_events").insert({ ...event, country });
+  if (error?.code === "PGRST204" && error.message.includes("country")) {
+    // Older Cloud databases may not have the country column yet. Count the
+    // visit without a location instead of silently losing the entire view.
+    const { error: retryError } = await supabase.from("profile_events").insert(event);
+    if (!retryError) markSeen(profileId);
+  } else if (!error) {
+    markSeen(profileId);
+  }
 }
 
 // The database requires a visitor_id on every event, so clicks without one are skipped.

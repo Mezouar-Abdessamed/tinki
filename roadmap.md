@@ -1,6 +1,7 @@
 # Roadmap
 
 - [x] Match the cover photo and editing preview to Facebook's 851:315 cover proportions.
+- [x] Enable email sign-in and preserve profile view counts when country analytics is unavailable.
 
 - [x] Show existing profile and cover photos from private storage on public and owner pages; verified both images load for signed-in owners and anonymous visitors.
 
@@ -18,7 +19,7 @@
 - [x] Add Spanish across the shared language system and Settings selector.
 - [x] Make the homepage language selector compact and responsive while preserving synchronization.
 - [x] Add a Views by Country pie chart for the top five countries and an Other percentage.
-- [ ] Complete repeat-view protection in country analytics (blocked: the connected Cloud database has none of the project's existing tables or analytics function; its schema migrations must be restored before the country count can be changed).
+- [ ] Restore country analytics and server-side repeat-view protection (blocked: Cloud migration reports a missing legacy migration file; the live database still lacks the country column and insert guard).
 - [ ] Validate cover upload, replacement, removal, and positioning end to end (blocked: requires a disposable test profile or permission to alter the existing user's cover photo).
 - [x] Move analytics insert hardening into supabase/migrations/ (verified compatible, no duplicates; applying it to the live database still blocked: migration tool unavailable and connected database lacks the project's tables).
 - [x] Add `getBackgroundUrl` to src/lib/profiles.ts so stored background values resolve to a displayable link (object paths get a short-lived signed URL, existing URLs pass through).
