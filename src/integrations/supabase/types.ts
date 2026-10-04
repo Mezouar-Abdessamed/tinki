@@ -75,6 +75,7 @@ export type Database = {
       }
       profile_events: {
         Row: {
+          country: string | null
           created_at: string
           custom_link_id: string | null
           event_type: string
@@ -84,6 +85,7 @@ export type Database = {
           visitor_id: string | null
         }
         Insert: {
+          country?: string | null
           created_at?: string
           custom_link_id?: string | null
           event_type: string
@@ -93,6 +95,7 @@ export type Database = {
           visitor_id?: string | null
         }
         Update: {
+          country?: string | null
           created_at?: string
           custom_link_id?: string | null
           event_type?: string
