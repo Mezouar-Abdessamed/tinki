@@ -19,7 +19,7 @@
 - [x] Add Spanish across the shared language system and Settings selector.
 - [x] Make the homepage language selector compact and responsive while preserving synchronization.
 - [x] Add a Views by Country pie chart for the top five countries and an Other percentage.
-- [ ] Restore country analytics and server-side repeat-view protection (blocked: Cloud migration reports a missing legacy migration file; the live database still lacks the country column and insert guard).
+- [x] Restore country analytics and server-side repeat-view protection (country column, insert guard trigger, and byCountry analytics applied; verified a visit records with country and the dashboard reads totals).
 - [ ] Validate cover upload, replacement, removal, and positioning end to end (blocked: requires a disposable test profile or permission to alter the existing user's cover photo).
 - [x] Move analytics insert hardening into supabase/migrations/ (verified compatible, no duplicates; applying it to the live database still blocked: migration tool unavailable and connected database lacks the project's tables).
 - [x] Add `getBackgroundUrl` to src/lib/profiles.ts so stored background values resolve to a displayable link (object paths get a short-lived signed URL, existing URLs pass through).
