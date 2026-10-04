@@ -216,7 +216,12 @@ export async function fetchMyAnalytics(profileId: string): Promise<ProfileAnalyt
     target_profile_id: profileId,
   });
 
-  if (error) throw error;
+  // A missing or failed aggregate function must never break the dashboard:
+  // show zeros instead of an error screen.
+  if (error) {
+    console.warn("Analytics unavailable:", error.message);
+    return { views: 0, clicks: 0, byPlatform: {}, customLinkClicks: 0, byCustomLink: {}, byCountry: {} };
+  }
 
   const result = (data ?? {}) as Partial<ProfileAnalytics>;
 
