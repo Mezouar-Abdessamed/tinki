@@ -38,7 +38,7 @@ import { useAuth } from "@/lib/auth";
 import { useLanguage } from "@/lib/i18n";
 import { SOCIAL_PLATFORMS } from "@/lib/socials";
 
-const TITLE = "LinkMe — All your links. One simple page.";
+const TITLE = "Tinki — All your links. One simple page.";
 const DESCRIPTION =
   "Create your personal link page with your social profiles, custom links and a QR code. Share it anywhere and see how people interact with it.";
 
@@ -88,8 +88,8 @@ const ACCOUNT = [
 ];
 
 const FAQ = [
-  ["What is this platform?", "LinkMe gives you one personal page that collects your social profiles and important links, so you can share a single link instead of many."],
-  ["How does my profile link work?", "When you sign up you choose a username. Your public page lives at that address — for example linkme.app/yourname."],
+  ["What is this platform?", "Tinki gives you one personal page that collects your social profiles and important links, so you can share a single link instead of many."],
+  ["How does my profile link work?", "When you sign up you choose a username. Your public page lives at that address — for example tinki.lovable.app/yourname."],
    ["Can I add social media accounts?", `Yes. You can add ${SOCIAL_PLATFORMS.length} platforms including Instagram, Facebook, TikTok, Snapchat, LinkedIn, X, YouTube, WhatsApp and Telegram.`],
   ["Can I add custom links?", "Yes. Add websites, portfolios or stores, plus phone and email links, and choose an icon for each."],
   ["Can I customize my page?", "Yes. Upload a profile photo, write a bio, and change fonts, colors, the card style and the page background — a color, gradient, image or video."],
@@ -101,7 +101,7 @@ const FAQ = [
 function Logo() {
   return (
     <Link to="/" className="font-display text-lg font-bold tracking-tight">
-      Link<span className="text-primary">Me</span>
+      Tin<span className="text-primary">ki</span>
     </Link>
   );
 }
@@ -298,7 +298,7 @@ function Landing() {
               body="The same page adapts to every screen — opened from a link on desktop, a bio on mobile, or a QR code on a poster."
             />
             <Reveal className="relative mt-14">
-              <BrowserFrame url="linkme.app/sara.designs" className="mx-auto max-w-4xl">
+              <BrowserFrame url="tinki.lovable.app/sara.designs" className="mx-auto max-w-4xl">
                 <DemoPublicProfile />
               </BrowserFrame>
               <div className="panel absolute bottom-[-2rem] -start-2 hidden flex-col items-center gap-2 p-4 lg:flex xl:-start-6">
@@ -531,7 +531,7 @@ function Landing() {
         </div>
         <div className="border-t border-border">
           <p className="mx-auto max-w-6xl px-5 py-6 text-xs text-muted-foreground">
-            © {new Date().getFullYear()} LinkMe. {t("All rights reserved.")}
+            © {new Date().getFullYear()} Tinki. {t("All rights reserved.")}
           </p>
         </div>
       </footer>

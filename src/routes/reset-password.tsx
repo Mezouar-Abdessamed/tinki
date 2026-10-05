@@ -14,9 +14,9 @@ export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
       { title: "Choose a new password" },
-      { name: "description", content: "Set a new password for your LinkMe account." },
+      { name: "description", content: "Set a new password for your Tinki account." },
       { property: "og:title", content: "Choose a new password" },
-      { property: "og:description", content: "Set a new password for your LinkMe account." },
+      { property: "og:description", content: "Set a new password for your Tinki account." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

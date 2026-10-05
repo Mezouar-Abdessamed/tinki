@@ -6,12 +6,12 @@ import { useMyProfile } from "@/lib/use-profile";
 export const Route = createFileRoute("/dashboard/informations")({
   head: () => ({
     meta: [
-      { title: "My Informations & Security — LinkMe" },
+      { title: "My Informations & Security — Tinki" },
       {
         name: "description",
         content: "Edit your picture, username, bio, social links and password.",
       },
-      { property: "og:title", content: "My Informations & Security — LinkMe" },
+      { property: "og:title", content: "My Informations & Security — Tinki" },
       {
         property: "og:description",
         content: "Edit your picture, username, bio, social links and password.",

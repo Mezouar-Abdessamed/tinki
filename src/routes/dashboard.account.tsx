@@ -7,9 +7,9 @@ import { useMyProfile } from "@/lib/use-profile";
 export const Route = createFileRoute("/dashboard/account")({
   head: () => ({
     meta: [
-      { title: "Account & Deletion — LinkMe" },
+      { title: "Account & Deletion — Tinki" },
       { name: "description", content: "Review your public page and delete your account." },
-      { property: "og:title", content: "Account & Deletion — LinkMe" },
+      { property: "og:title", content: "Account & Deletion — Tinki" },
       {
         property: "og:description",
         content: "Review your public page and delete your account.",

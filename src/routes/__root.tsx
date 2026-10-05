@@ -81,13 +81,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "LinkMe — All Your Socials. One Link." },
+      { title: "Tinki — All Your Socials. One Link." },
       {
         name: "description",
         content:
           "Create your personal social profile, share one link and a QR code, and let people find all your social accounts in one place.",
       },
-      { property: "og:title", content: "LinkMe — All Your Socials. One Link." },
+      { property: "og:title", content: "Tinki — All Your Socials. One Link." },
       {
         property: "og:description",
         content: "One link and one QR code for every social account you have.",

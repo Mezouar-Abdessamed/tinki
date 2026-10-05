@@ -26,12 +26,12 @@ import { UnsafeQrSettingsError } from "@/lib/qr-validation";
 export const Route = createFileRoute("/dashboard/customize-qr-code")({
   head: () => ({
     meta: [
-      { title: "Costumize QR Code — LinkMe" },
-      { name: "description", content: "Customize the QR code for your LinkMe profile." },
-      { property: "og:title", content: "Costumize QR Code — LinkMe" },
+      { title: "Costumize QR Code — Tinki" },
+      { name: "description", content: "Customize the QR code for your Tinki profile." },
+      { property: "og:title", content: "Costumize QR Code — Tinki" },
       {
         property: "og:description",
-        content: "Customize the QR code for your LinkMe profile.",
+        content: "Customize the QR code for your Tinki profile.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -76,7 +76,7 @@ function ColorField({
 
 /** Tiny QR rendered with one shape option, used as the button thumbnail. */
 function ShapeThumb({ settings }: { settings: QrSettings }) {
-  const svg = useMemo(() => renderQrSvg("linkme", settings, 56), [settings]);
+  const svg = useMemo(() => renderQrSvg("tinki", settings, 56), [settings]);
   return (
     <div
       className="h-14 w-14 overflow-hidden rounded-md"

@@ -197,7 +197,7 @@ function PublicProfilePage() {
 
         <div className="mt-6 flex flex-col items-center gap-5">
           <Link to="/" className="text-xs text-muted-foreground transition-colors hover:text-primary">
-            Powered by LinkMe
+            Powered by Tinki
           </Link>
         </div>
       </div>
