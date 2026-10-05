@@ -16,7 +16,7 @@ export function ProfileLinkCard({ url, username }: { url: string; username: stri
 
   async function share() {
     const shareData = {
-      title: `@${username} on LinkMe`,
+      title: `@${username} on Tinki`,
       text: `All my socials, one link.`,
       url,
     };

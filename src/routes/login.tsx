@@ -14,9 +14,9 @@ import { useAuth } from "@/lib/auth";
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
-      { title: "Log in to LinkMe" },
+      { title: "Log in to Tinki" },
       { name: "description", content: "Log in to edit your social profile page and QR code." },
-      { property: "og:title", content: "Log in to LinkMe" },
+      { property: "og:title", content: "Log in to Tinki" },
       {
         property: "og:description",
         content: "Log in to edit your social profile page and QR code.",

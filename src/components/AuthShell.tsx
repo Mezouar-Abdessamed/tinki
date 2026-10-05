@@ -36,7 +36,7 @@ export function AuthShell({
         </Link>
         <Link to="/" className="mb-8 flex items-center justify-center gap-2">
           <span className="font-display text-lg font-bold tracking-tight">
-            Link<span className="text-primary">Me</span>
+            Tin<span className="text-primary">ki</span>
           </span>
         </Link>
         <div className="panel p-7 sm:p-8">

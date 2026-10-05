@@ -12,10 +12,10 @@ import { useLanguage } from "@/lib/i18n";
 export const Route = createFileRoute("/dashboard/settings")({
   head: () => ({
     meta: [
-      { title: "Settings — LinkMe" },
-      { name: "description", content: "Manage your LinkMe account, page style and QR code in one place." },
-      { property: "og:title", content: "Settings — LinkMe" },
-      { property: "og:description", content: "Manage your LinkMe account, page style and QR code in one place." },
+      { title: "Settings — Tinki" },
+      { name: "description", content: "Manage your Tinki account, page style and QR code in one place." },
+      { property: "og:title", content: "Settings — Tinki" },
+      { property: "og:description", content: "Manage your Tinki account, page style and QR code in one place." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

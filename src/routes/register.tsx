@@ -16,14 +16,14 @@ import { emailSchema, firstError, passwordSchema, usernameSchema } from "@/lib/s
 export const Route = createFileRoute("/register")({
   head: () => ({
     meta: [
-      { title: "Create your LinkMe page" },
+      { title: "Create your Tinki page" },
       {
         name: "description",
         content: "Sign up free, pick your username, and start sharing one link to all your socials.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { property: "og:title", content: "Create your LinkMe page" },
+      { property: "og:title", content: "Create your Tinki page" },
       {
         property: "og:description",
         content: "Sign up free, pick your username, and start sharing one link to all your socials.",

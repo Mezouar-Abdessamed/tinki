@@ -11,12 +11,12 @@ import { useMyProfile } from "@/lib/use-profile";
 export const Route = createFileRoute("/dashboard/profile")({
   head: () => ({
     meta: [
-      { title: "My Profile — LinkMe" },
+      { title: "My Profile — Tinki" },
       {
         name: "description",
         content: "Preview your public page, copy your link, and get your QR code.",
       },
-      { property: "og:title", content: "My Profile — LinkMe" },
+      { property: "og:title", content: "My Profile — Tinki" },
       {
         property: "og:description",
         content: "Preview your public page, copy your link, and get your QR code.",

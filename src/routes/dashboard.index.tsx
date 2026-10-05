@@ -13,9 +13,9 @@ import { useMyProfile } from "@/lib/use-profile";
 export const Route = createFileRoute("/dashboard/")({
   head: () => ({
     meta: [
-      { title: "Dashboard — LinkMe" },
+      { title: "Dashboard — Tinki" },
       { name: "description", content: "See how many people visit your page and click your links." },
-      { property: "og:title", content: "Dashboard — LinkMe" },
+      { property: "og:title", content: "Dashboard — Tinki" },
       {
         property: "og:description",
         content: "See how many people visit your page and click your links.",

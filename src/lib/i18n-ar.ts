@@ -1,5 +1,5 @@
 // English -> Arabic dictionary. Keys are the exact English text shown on screen.
-// NOTE: do not add a "Link" entry — the LinkMe logo renders "Link" as its own text node.
+// Keep brand names untranslated across language dictionaries.
 export const AR: Record<string, string> = {
   "Settings": "الإعدادات",
   "Everything about your account in one place.": "كل ما يخص حسابك في مكان واحد.",
@@ -87,7 +87,7 @@ export const AR: Record<string, string> = {
   "Loading your page…": "جارٍ تحميل صفحتك…",
   "Password": "كلمة المرور",
   "Confirm password": "تأكيد كلمة المرور",
-  "Create your LinkMe page": "أنشئ صفحتك على LinkMe",
+  "Create your Tinki page": "أنشئ صفحتك على Tinki",
   "Pick a username — it becomes your public link.": "اختر اسم مستخدم — سيصبح رابطك العام.",
   "Your page is ready!": "صفحتك جاهزة!",
   "Google sign-in didn't work. Please try again.": "فشل تسجيل الدخول عبر Google. حاول مرة أخرى.",
@@ -332,7 +332,7 @@ export const AR: Record<string, string> = {
   "Open page": "فتح الصفحة",
   "Open your dashboard": "افتح لوحة التحكم",
   "Paste a full https link, or clear a field to remove that platform.": "الصق رابط https كاملًا، أو امسح الحقل لإزالة تلك المنصة.",
-  "Powered by LinkMe": "مدعوم من LinkMe",
+  "Powered by Tinki": "مدعوم من Tinki",
   "Previous": "السابق",
   "Previous slide": "الشريحة السابقة",
   "Product": "المنتج",
@@ -402,9 +402,9 @@ export const AR: Record<string, string> = {
   "Manage your profile information, social links, profile picture and password.": "أدِر معلومات ملفك وروابط التواصل وصورة الملف وكلمة المرور.",
   "Review your account details or permanently delete your account.": "راجع تفاصيل حسابك أو احذفه نهائيًا.",
   "What is this platform?": "ما هي هذه المنصة؟",
-  "LinkMe gives you one personal page that collects your social profiles and important links, so you can share a single link instead of many.": "يمنحك LinkMe صفحة شخصية تجمع حساباتك وروابطك المهمة، لتشارك رابطًا واحدًا بدلًا من روابط كثيرة.",
+  "Tinki gives you one personal page that collects your social profiles and important links, so you can share a single link instead of many.": "يمنحك Tinki صفحة شخصية تجمع حساباتك وروابطك المهمة، لتشارك رابطًا واحدًا بدلًا من روابط كثيرة.",
   "How does my profile link work?": "كيف يعمل رابط ملفي؟",
-  "When you sign up you choose a username. Your public page lives at that address — for example linkme.app/yourname.": "عند التسجيل تختار اسم مستخدم، وتصبح صفحتك العامة على ذلك العنوان، مثل linkme.app/yourname.",
+  "When you sign up you choose a username. Your public page lives at that address — for example example.com/yourname.": "عند التسجيل تختار اسم مستخدم، وتصبح صفحتك العامة على ذلك العنوان، مثل example.com/yourname.",
   "Can I add social media accounts?": "هل يمكنني إضافة حسابات التواصل؟",
   "Can I add custom links?": "هل يمكنني إضافة روابط مخصصة؟",
   "Yes. Add websites, portfolios or stores, plus phone and email links, and choose an icon for each.": "نعم. أضف مواقع أو معارض أعمال أو متاجر، بالإضافة إلى روابط الهاتف والبريد، واختر أيقونة لكل منها.",
@@ -437,7 +437,7 @@ export const AR: Record<string, string> = {
   "A readability check so it keeps scanning": "فحص سهولة المسح لضمان عمله",
   "Download in high resolution, or share from My Profile": "نزّله بدقة عالية أو شاركه من ملفي الشخصي",
   "Your dashboard shows how many people open your page and which social icons and links they tap. Your own visits are never counted.": "تعرض لوحة التحكم عدد من فتحوا صفحتك وأيقونات التواصل والروابط التي نقروا عليها. لا تُحتسب زياراتك أنت.",
-  "LinkMe. All rights reserved.": "LinkMe. جميع الحقوق محفوظة.",
+  "Tinki. All rights reserved.": "Tinki. جميع الحقوق محفوظة.",
   "more": "المزيد",
   "No page yet?": "ليس لديك صفحة بعد؟",
   "Already have a page?": "لديك صفحة بالفعل؟",

@@ -66,7 +66,7 @@ function Brand({ onNavigate }: { onNavigate?: () => void }) {
       onClick={onNavigate}
       className="font-display text-lg font-bold tracking-tight"
     >
-      Link<span className="text-primary">Me</span>
+      Tin<span className="text-primary">ki</span>
     </Link>
   );
 }

@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Rename visible site branding, metadata, language copy, sharing labels, and QR/browser icons to Tinki.
+
 - [x] Match the cover photo and editing preview to Facebook's 851:315 cover proportions.
 - [x] Enable email sign-in and preserve profile view counts when country analytics is unavailable.
 

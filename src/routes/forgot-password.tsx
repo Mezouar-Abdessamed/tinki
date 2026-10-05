@@ -10,9 +10,9 @@ import { supabase } from "@/lib/app-supabase";
 export const Route = createFileRoute("/forgot-password")({
   head: () => ({
     meta: [
-      { title: "Reset your LinkMe password" },
+      { title: "Reset your Tinki password" },
       { name: "description", content: "Send yourself a link to choose a new password." },
-      { property: "og:title", content: "Reset your LinkMe password" },
+      { property: "og:title", content: "Reset your Tinki password" },
       { property: "og:description", content: "Send yourself a link to choose a new password." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

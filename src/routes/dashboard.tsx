@@ -10,10 +10,10 @@ import { useMyProfile } from "@/lib/use-profile";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [
-    { title: "Dashboard — LinkMe" },
-    { name: "description", content: "Manage your LinkMe profile and links." },
-    { property: "og:title", content: "Dashboard — LinkMe" },
-    { property: "og:description", content: "Manage your LinkMe profile and links." },
+    { title: "Dashboard — Tinki" },
+    { name: "description", content: "Manage your Tinki profile and links." },
+    { property: "og:title", content: "Dashboard — Tinki" },
+    { property: "og:description", content: "Manage your Tinki profile and links." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
   ] }),

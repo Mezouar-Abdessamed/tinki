@@ -19,17 +19,17 @@ export const Route = createFileRoute("/verify-email")({
   }),
   head: () => ({
     meta: [
-      { title: "Verify your email — LinkMe" },
+      { title: "Verify your email — Tinki" },
       {
         name: "description",
-        content: "Enter the 6-digit code we emailed you to activate your LinkMe page.",
+        content: "Enter the 6-digit code we emailed you to activate your Tinki page.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { property: "og:title", content: "Verify your email — LinkMe" },
+      { property: "og:title", content: "Verify your email — Tinki" },
       {
         property: "og:description",
-        content: "Enter the 6-digit code we emailed you to activate your LinkMe page.",
+        content: "Enter the 6-digit code we emailed you to activate your Tinki page.",
       },
     ],
   }),
