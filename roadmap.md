@@ -1,5 +1,6 @@
 # Roadmap
 
+- [ ] Diagnose and restore Google sign-in, email sign-up, and email sign-in on the published site for visitors outside the workspace.
 - [x] Rename visible site branding, metadata, language copy, sharing labels, and QR/browser icons to Tinki.
 
 - [x] Match the cover photo and editing preview to Facebook's 851:315 cover proportions.
