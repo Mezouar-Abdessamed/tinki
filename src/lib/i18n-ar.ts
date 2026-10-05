@@ -404,7 +404,7 @@ export const AR: Record<string, string> = {
   "What is this platform?": "ما هي هذه المنصة؟",
   "Tinki gives you one personal page that collects your social profiles and important links, so you can share a single link instead of many.": "يمنحك Tinki صفحة شخصية تجمع حساباتك وروابطك المهمة، لتشارك رابطًا واحدًا بدلًا من روابط كثيرة.",
   "How does my profile link work?": "كيف يعمل رابط ملفي؟",
-  "When you sign up you choose a username. Your public page lives at that address — for example example.com/yourname.": "عند التسجيل تختار اسم مستخدم، وتصبح صفحتك العامة على ذلك العنوان، مثل example.com/yourname.",
+  "When you sign up you choose a username. Your public page lives at that address — for example tinki.lovable.app/yourname.": "عند التسجيل تختار اسم مستخدم، وتصبح صفحتك العامة على ذلك العنوان، مثل tinki.lovable.app/yourname.",
   "Can I add social media accounts?": "هل يمكنني إضافة حسابات التواصل؟",
   "Can I add custom links?": "هل يمكنني إضافة روابط مخصصة؟",
   "Yes. Add websites, portfolios or stores, plus phone and email links, and choose an icon for each.": "نعم. أضف مواقع أو معارض أعمال أو متاجر، بالإضافة إلى روابط الهاتف والبريد، واختر أيقونة لكل منها.",

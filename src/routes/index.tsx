@@ -89,7 +89,7 @@ const ACCOUNT = [
 
 const FAQ = [
   ["What is this platform?", "Tinki gives you one personal page that collects your social profiles and important links, so you can share a single link instead of many."],
-  ["How does my profile link work?", "When you sign up you choose a username. Your public page lives at that address — for example example.com/yourname."],
+  ["How does my profile link work?", "When you sign up you choose a username. Your public page lives at that address — for example tinki.lovable.app/yourname."],
    ["Can I add social media accounts?", `Yes. You can add ${SOCIAL_PLATFORMS.length} platforms including Instagram, Facebook, TikTok, Snapchat, LinkedIn, X, YouTube, WhatsApp and Telegram.`],
   ["Can I add custom links?", "Yes. Add websites, portfolios or stores, plus phone and email links, and choose an icon for each."],
   ["Can I customize my page?", "Yes. Upload a profile photo, write a bio, and change fonts, colors, the card style and the page background — a color, gradient, image or video."],
@@ -298,7 +298,7 @@ function Landing() {
               body="The same page adapts to every screen — opened from a link on desktop, a bio on mobile, or a QR code on a poster."
             />
             <Reveal className="relative mt-14">
-              <BrowserFrame url="example.com/sara.designs" className="mx-auto max-w-4xl">
+              <BrowserFrame url="tinki.lovable.app/sara.designs" className="mx-auto max-w-4xl">
                 <DemoPublicProfile />
               </BrowserFrame>
               <div className="panel absolute bottom-[-2rem] -start-2 hidden flex-col items-center gap-2 p-4 lg:flex xl:-start-6">
