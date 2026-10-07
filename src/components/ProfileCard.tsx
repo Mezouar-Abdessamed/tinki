@@ -74,6 +74,7 @@ export function ProfileCard({
   }).sort((a, b) => (settings.get(a.key)?.position ?? SOCIAL_PLATFORMS.indexOf(a)) - (settings.get(b.key)?.position ?? SOCIAL_PLATFORMS.indexOf(b)));
   // Verification is fixed to a single username by design; no admin system.
   const showVerifiedBadge = profile.username === "abdessamed";
+  const hasCover = Boolean(profile.cover_photo_path || coverUrl);
   const background = profileCardBackground(profile);
   const iconStyles = socialIconStyles(profile);
   const nameStyle = textTypographyStyle({
@@ -95,14 +96,16 @@ export function ProfileCard({
       style={background ? { background } : undefined}
     >
       <div className="bg-halo pointer-events-none absolute inset-x-0 top-0 h-40" />
-      {(profile.cover_photo_path || coverUrl) && <CoverBanner url={coverUrl ?? null} x={profile.cover_photo_x ?? 50} y={profile.cover_photo_y ?? 50} className="w-full" />}
-      {showVerifiedBadge ? (
-        <BadgeCheck
-          aria-label="Verified account"
-          className={`absolute end-3 top-3 z-10 text-verified verified-spin ${compact ? "h-5 w-5" : "h-7 w-7"}`}
-          style={{ filter: "drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))" }}
-        />
-      ) : null}
+      <div className={hasCover ? "relative" : "absolute inset-x-0 top-0"}>
+        {hasCover && <CoverBanner url={coverUrl ?? null} x={profile.cover_photo_x ?? 50} y={profile.cover_photo_y ?? 50} className="w-full" />}
+        {showVerifiedBadge ? (
+          <BadgeCheck
+            aria-label="Verified account"
+            className={`absolute right-3 z-10 text-verified verified-spin ${hasCover ? "top-full mt-3" : "top-3"} ${compact ? "h-5 w-5" : "h-7 w-7"}`}
+            style={{ filter: "drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))" }}
+          />
+        ) : null}
+      </div>
       <div className={`relative flex flex-col items-center ${profile.cover_photo_path || coverUrl ? `${compact ? "px-6 pb-6" : "px-8 pb-8 sm:px-10 sm:pb-10"} ${hideAvatar ? "pt-6" : "-mt-10 sm:-mt-14"}` : ""}`}>
         {!hideAvatar && (
         <div
