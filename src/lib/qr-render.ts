@@ -1,8 +1,9 @@
 import QRCode from "qrcode";
+import qrCenterAsset from "@/assets/tinki-qr-center.png.asset.json";
 
 import type { QrEyeShape, QrModuleShape, QrSettings } from "@/lib/qr-settings";
 
-const QR_CENTER_LOGO_URL = "/qr-center-logo.jpg";
+const QR_CENTER_LOGO_URL = qrCenterAsset.url;
 
 export type QrAvatar = {
   url?: string | null | undefined;
@@ -145,9 +146,8 @@ export function renderQrSvg(
 
   const centerLogoMarkup = centerLogoUrl
     ? [
-        `<defs><clipPath id="qr-logo-clip"><circle cx="${total / 2}" cy="${total / 2}" r="${logoSize / 2}"/></clipPath></defs>`,
-        `<circle cx="${total / 2}" cy="${total / 2}" r="${logoQuietSize / 2}" fill="${settings.backgroundColor}"/>`,
-        `<image href="${escapeXml(centerLogoUrl)}" x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" preserveAspectRatio="xMidYMid slice" clip-path="url(#qr-logo-clip)"/>`,
+        `<rect x="${(total - logoQuietSize) / 2}" y="${(total - logoQuietSize) / 2}" width="${logoQuietSize}" height="${logoQuietSize}" rx="0.6" fill="${settings.backgroundColor}"/>`,
+        `<image href="${escapeXml(centerLogoUrl)}" x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" preserveAspectRatio="xMidYMid meet"/>`,
       ].join("")
     : "";
 
