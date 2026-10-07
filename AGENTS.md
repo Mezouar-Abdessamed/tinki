@@ -22,6 +22,8 @@
 
 ## Landing previews
 
+- Keep the QR center asset in the shared QR renderer via a Lovable Assets pointer so previews, readability checks, and downloads use the same image.
+
 - Render landing-page phone and desktop examples through `DemoPublicProfile` so both stay aligned with the public profile experience.
 
 ## Localization
