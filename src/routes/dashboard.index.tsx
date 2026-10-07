@@ -14,11 +14,11 @@ export const Route = createFileRoute("/dashboard/")({
   head: () => ({
     meta: [
       { title: "Dashboard — Tinki" },
-      { name: "description", content: "See how many people visit your page and click your links." },
+      { name: "description", content: "See how many people visit your page and click your links" },
       { property: "og:title", content: "Dashboard — Tinki" },
       {
         property: "og:description",
-        content: "See how many people visit your page and click your links.",
+        content: "See how many people visit your page and click your links",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -77,7 +77,7 @@ function DashboardHome() {
 
       {analyticsQuery.isError ? (
         <p className="text-sm text-destructive">
-          We couldn't load your statistics right now. Please refresh the page.
+          We couldn't load your statistics right now. Please refresh the page
         </p>
       ) : null}
 
@@ -85,21 +85,21 @@ function DashboardHome() {
         <StatsCard
           label="Profile Views"
           value={analytics?.views ?? 0}
-          hint="People who opened your page. Your own visits are never counted."
+          hint="People who opened your page. Your own visits are never counted"
           icon={Eye}
           loading={loading}
         />
         <StatsCard
           label="Social Clicks"
           value={analytics?.clicks ?? 0}
-          hint="All-time taps on your social icons — including platforms you've since removed or turned off."
+          hint="All-time taps on your social icons — including platforms you've since removed or turned off"
           icon={MousePointerClick}
           loading={loading}
         />
         <StatsCard
           label="Custom Link Clicks"
           value={analytics?.customLinkClicks ?? 0}
-          hint="Times a visitor tapped one of your custom links."
+          hint="Times a visitor tapped one of your custom links"
           icon={Link2}
           loading={loading}
         />

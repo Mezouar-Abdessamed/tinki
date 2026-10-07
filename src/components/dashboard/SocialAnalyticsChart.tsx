@@ -26,7 +26,7 @@ export function SocialAnalyticsChart({
   return (
     <section className="panel p-6">
       <h2 className="font-display text-lg font-semibold">Social Analytics</h2>
-      <p className="mt-2 text-sm text-muted-foreground">Clicks broken down by platform.</p>
+      <p className="mt-2 text-sm text-muted-foreground">Clicks broken down by platform</p>
 
       {loading ? (
         <div className="mt-6 h-64 animate-pulse rounded-lg bg-muted" />
@@ -35,8 +35,8 @@ export function SocialAnalyticsChart({
           <BarChart3 className="mx-auto h-6 w-6 text-muted-foreground" />
           <p className="mt-3 text-sm text-muted-foreground">
             {activePlatforms.length === 0
-              ? "No active social icons yet. Add a link to see clicks here."
-              : "No social clicks yet. Share your link and they'll show up here."}
+              ? "No active social icons yet. Add a link to see clicks here"
+              : "No social clicks yet. Share your link and they'll show up here"}
           </p>
         </div>
       ) : (

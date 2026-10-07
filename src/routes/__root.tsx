@@ -23,7 +23,7 @@ function NotFoundComponent() {
         <h1 className="text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+          The page you're looking for doesn't exist or has been moved
         </p>
         <div className="mt-6">
           <Link
@@ -52,7 +52,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
           This page didn't load
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+          Something went wrong on our end. You can try refreshing or head back home
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
@@ -81,16 +81,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Tinki — All Your Socials. One Link." },
+      { title: "Tinki — All Your Socials. One Link" },
       {
         name: "description",
         content:
-          "Create your personal social profile, share one link and a QR code, and let people find all your social accounts in one place.",
+          "Create your personal social profile, share one link and a QR code, and let people find all your social accounts in one place",
       },
-      { property: "og:title", content: "Tinki — All Your Socials. One Link." },
+      { property: "og:title", content: "Tinki — All Your Socials. One Link" },
       {
         property: "og:description",
-        content: "One link and one QR code for every social account you have.",
+        content: "One link and one QR code for every social account you have",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

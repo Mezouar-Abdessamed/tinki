@@ -41,21 +41,21 @@ function translateString(src: string): string | null {
   // Sentences with a user's name, email, or count retain those values.
   const patterns: Array<[RegExp, (matches: RegExpMatchArray) => string]> = [
     [/^Your page lives at \/(.+)$/, (m) => `${AR["Your page lives at"]} /${m[1]}`],
-    [/^We sent a 6-digit code to (.+)\. Enter it to activate your account\.$/, (m) => `أرسلنا رمزًا من 6 أرقام إلى ${m[1]}. أدخله لتفعيل حسابك.`],
-    [/^Enter the 6-digit code we sent to (.+)\.$/, (m) => `أدخل الرمز المكون من 6 أرقام الذي أرسلناه إلى ${m[1]}.`],
+    [/^We sent a 6-digit code to (.+)\. Enter it to activate your account\.?$/, (m) => `أرسلنا رمزًا من 6 أرقام إلى ${m[1]}. أدخله لتفعيل حسابك`],
+    [/^Enter the 6-digit code we sent to (.+?)\.?$/, (m) => `أدخل الرمز المكون من 6 أرقام الذي أرسلناه إلى ${m[1]}`],
     [/^Resend code in (\d+)s$/, (m) => `إعادة إرسال الرمز خلال ${m[1]} ث`],
     [/^Bio must be (\d+) characters or fewer$/, (m) => `يجب ألا تتجاوز النبذة ${m[1]} حرفًا`],
-    [/^Nobody has claimed \/(.+) yet\. It could be yours\.$/, (m) => `لم يحجز أحد /${m[1]} بعد. يمكنك حجزه.`],
-    [/^Deleting your account is permanent\. Your page at \/(.+), your links and your picture are removed for good and cannot be recovered\.$/, (m) => `حذف حسابك نهائي. ستُحذف صفحتك على /${m[1]} وروابطك وصورتك ولا يمكن استعادتها.`],
-    [/^This can't be undone\. Your page at \/(.+) will stop working immediately\.$/, (m) => `لا يمكن التراجع عن هذا. ستتوقف صفحتك على /${m[1]} عن العمل فورًا.`],
-    [/^(\d+)\/(\d+) — clear the field to remove your bio\.$/, (m) => `${m[1]}/${m[2]} — امسح الحقل لإزالة نبذتك.`],
+    [/^Nobody has claimed \/(.+) yet\. It could be yours\.?$/, (m) => `لم يحجز أحد /${m[1]} بعد. يمكنك حجزه`],
+    [/^Deleting your account is permanent\. Your page at \/(.+), your links and your picture are removed for good and cannot be recovered\.?$/, (m) => `حذف حسابك نهائي. ستُحذف صفحتك على /${m[1]} وروابطك وصورتك ولا يمكن استعادتها`],
+    [/^This can't be undone\. Your page at \/(.+) will stop working immediately\.?$/, (m) => `لا يمكن التراجع عن هذا. ستتوقف صفحتك على /${m[1]} عن العمل فورًا`],
+    [/^(\d+)\/(\d+) — clear the field to remove your bio\.?$/, (m) => `${m[1]}/${m[2]} — امسح الحقل لإزالة نبذتك`],
     [/^Type "(.+)" to confirm$/, (m) => `اكتب "${m[1]}" للتأكيد`],
     [/^Edit (.+)$/, (m) => `تعديل ${m[1]}`],
     [/^Delete your (.+) link\?$/, (m) => `حذف رابط ${m[1]}؟`],
     [/^Delete “(.+)”\?$/, (m) => `حذف «${m[1]}»؟`],
-    [/^(.+) link deleted\.$/, (m) => `تم حذف رابط ${m[1]}.`],
-    [/^(.+) updated\.$/, (m) => `تم تحديث ${m[1]}.`],
-    [/^Yes\. You can add (\d+) platforms including (.+)\.$/, (m) => `نعم. يمكنك إضافة ${m[1]} منصة، منها ${m[2]}.`],
+    [/^(.+) link deleted\.?$/, (m) => `تم حذف رابط ${m[1]}`],
+    [/^(.+) updated\.?$/, (m) => `تم تحديث ${m[1]}`],
+    [/^Yes\. You can add (\d+) platforms including (.+?)\.?$/, (m) => `نعم. يمكنك إضافة ${m[1]} منصة، منها ${m[2]}`],
   ];
   for (const [pattern, format] of patterns) {
     const match = trimmed.match(pattern);

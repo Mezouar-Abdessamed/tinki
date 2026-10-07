@@ -27,11 +27,11 @@ export const Route = createFileRoute("/dashboard/customize-qr-code")({
   head: () => ({
     meta: [
       { title: "Costumize QR Code — Tinki" },
-      { name: "description", content: "Customize the QR code for your Tinki profile." },
+      { name: "description", content: "Customize the QR code for your Tinki profile" },
       { property: "og:title", content: "Costumize QR Code — Tinki" },
       {
         property: "og:description",
-        content: "Customize the QR code for your Tinki profile.",
+        content: "Customize the QR code for your Tinki profile",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -252,7 +252,7 @@ function CustomizeQrCodePage() {
       <header>
         <h1 className="font-display text-3xl font-semibold">Costumize QR Code</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Change how your QR code looks. It always points to your page — only the style changes.
+          Change how your QR code looks. It always points to your page — only the style changes
         </p>
       </header>
 

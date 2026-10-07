@@ -20,7 +20,7 @@ const DECODE_FAILURE: QrIssue = {
   id: "decode",
   severity: "error",
   message:
-    "We tried to scan this QR code and could not read it back. Adjust the colours, shapes or margin until the check passes.",
+    "We tried to scan this QR code and could not read it back. Adjust the colours, shapes or margin until the check passes",
 };
 
 /**

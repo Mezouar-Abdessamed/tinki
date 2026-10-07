@@ -32,14 +32,14 @@ export const Route = createFileRoute("/$username")({
         { title: `@${name} — all their socials, one link` },
         {
           name: "description",
-          content: `Find every social account of @${name} in one place, or scan their QR code.`,
+          content: `Find every social account of @${name} in one place, or scan their QR code`,
         },
         { property: "og:title", content: `@${name} — all their socials, one link` },
         { property: "og:type", content: "profile" },
         { name: "twitter:card", content: "summary" },
         {
           property: "og:description",
-          content: `Find every social account of @${name} in one place, or scan their QR code.`,
+          content: `Find every social account of @${name} in one place, or scan their QR code`,
         },
       ],
     };
@@ -129,7 +129,7 @@ function PublicProfilePage() {
           <h1 className="font-display text-7xl font-bold">404</h1>
           <h2 className="mt-4 font-display text-xl font-semibold">No page here</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Nobody has claimed /{username} yet. It could be yours.
+            Nobody has claimed /{username} yet. It could be yours
           </p>
           <Button asChild className="mt-6">
             <Link to="/register">Create your page</Link>

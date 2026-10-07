@@ -19,14 +19,14 @@ export const Route = createFileRoute("/register")({
       { title: "Create your Tinki page" },
       {
         name: "description",
-        content: "Sign up free, pick your username, and start sharing one link to all your socials.",
+        content: "Sign up free, pick your username, and start sharing one link to all your socials",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { property: "og:title", content: "Create your Tinki page" },
       {
         property: "og:description",
-        content: "Sign up free, pick your username, and start sharing one link to all your socials.",
+        content: "Sign up free, pick your username, and start sharing one link to all your socials",
       },
     ],
   }),
@@ -92,7 +92,7 @@ function RegisterPage() {
 
       if (error) {
         if (error.message.toLowerCase().includes("already registered")) {
-          setErrors({ email: "That email already has an account. Try logging in instead." });
+          setErrors({ email: "That email already has an account. Try logging in instead" });
           return;
         }
         toast.error(error.message);
@@ -132,7 +132,7 @@ function RegisterPage() {
       redirect_uri: `${window.location.origin}/auth/callback`,
     });
     if (result.error) {
-      toast.error("Google sign-in didn't work. Please try again.");
+      toast.error("Google sign-in didn't work. Please try again");
       return;
     }
     if (result.redirected) return;
@@ -143,7 +143,7 @@ function RegisterPage() {
   return (
     <AuthShell
       title="Create your page"
-      subtitle="Pick a username — it becomes your public link."
+      subtitle="Pick a username — it becomes your public link"
       footer={
         <>
           Already have a page?{" "}

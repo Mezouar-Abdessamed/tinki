@@ -14,12 +14,12 @@ export const Route = createFileRoute("/dashboard/profile")({
       { title: "My Profile — Tinki" },
       {
         name: "description",
-        content: "Preview your public page, copy your link, and get your QR code.",
+        content: "Preview your public page, copy your link, and get your QR code",
       },
       { property: "og:title", content: "My Profile — Tinki" },
       {
         property: "og:description",
-        content: "Preview your public page, copy your link, and get your QR code.",
+        content: "Preview your public page, copy your link, and get your QR code",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -39,7 +39,7 @@ function MyProfilePage() {
       <header>
         <h1 className="font-display text-3xl font-semibold">My Profile</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Exactly what visitors see, plus everything you need to share it.
+          Exactly what visitors see, plus everything you need to share it
         </p>
       </header>
 

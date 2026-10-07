@@ -26,7 +26,7 @@ export function QrButtonVisibility({
     setSaving(false);
     if (error) {
       setOn(!next);
-      toast.error("Could not save. Please try again.");
+      toast.error("Could not save. Please try again");
       return;
     }
     toast.success(next ? "QR button is now visible" : "QR button is now hidden");
@@ -38,7 +38,7 @@ export function QrButtonVisibility({
       <div>
         <h2 className="font-display text-lg font-semibold">QR code button</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Show the QR code button on your public page so visitors can open and download your QR code.
+          Show the QR code button on your public page so visitors can open and download your QR code
         </p>
       </div>
       <Switch

@@ -17,7 +17,7 @@ export function ProfileLinkCard({ url, username }: { url: string; username: stri
   async function share() {
     const shareData = {
       title: `@${username} on Tinki`,
-      text: `All my socials, one link.`,
+      text: `All my socials, one link`,
       url,
     };
     if (typeof navigator !== "undefined" && navigator.share) {
@@ -31,7 +31,7 @@ export function ProfileLinkCard({ url, username }: { url: string; username: stri
     }
     try {
       await copy(true);
-      toast.success("Sharing isn't available here, so the link was copied instead.");
+      toast.success("Sharing isn't available here, so the link was copied instead");
     } catch {
       toast.error("Couldn't share the link");
     }

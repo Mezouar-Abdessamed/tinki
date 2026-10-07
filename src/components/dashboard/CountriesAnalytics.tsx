@@ -60,7 +60,7 @@ export function CountriesAnalytics({
     <section className="panel p-6">
       <h2 className="font-display text-lg font-semibold">Views by Country</h2>
       <p className="mt-2 text-sm text-muted-foreground">
-        Where the people visiting your page are located.
+        Where the people visiting your page are located
       </p>
 
       {loading ? (
@@ -69,7 +69,7 @@ export function CountriesAnalytics({
         <div className="mt-5 rounded-lg border border-dashed border-border px-4 py-10 text-center">
           <Globe2 className="mx-auto h-6 w-6 text-muted-foreground" />
           <p className="mt-3 text-sm text-muted-foreground">
-            No country data yet. New visits will show up here with their country.
+            No country data yet. New visits will show up here with their country
           </p>
         </div>
       ) : (

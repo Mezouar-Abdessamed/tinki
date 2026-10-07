@@ -8,11 +8,11 @@ export const Route = createFileRoute("/dashboard/account")({
   head: () => ({
     meta: [
       { title: "Account & Deletion — Tinki" },
-      { name: "description", content: "Review your public page and delete your account." },
+      { name: "description", content: "Review your public page and delete your account" },
       { property: "og:title", content: "Account & Deletion — Tinki" },
       {
         property: "og:description",
-        content: "Review your public page and delete your account.",
+        content: "Review your public page and delete your account",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -30,7 +30,7 @@ function AccountPage() {
       <header>
         <h1 className="font-display text-3xl font-semibold">Account &amp; Deletion</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          This is what disappears if you delete your account.
+          This is what disappears if you delete your account
         </p>
       </header>
 

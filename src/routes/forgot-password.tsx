@@ -11,9 +11,9 @@ export const Route = createFileRoute("/forgot-password")({
   head: () => ({
     meta: [
       { title: "Reset your Tinki password" },
-      { name: "description", content: "Send yourself a link to choose a new password." },
+      { name: "description", content: "Send yourself a link to choose a new password" },
       { property: "og:title", content: "Reset your Tinki password" },
-      { property: "og:description", content: "Send yourself a link to choose a new password." },
+      { property: "og:description", content: "Send yourself a link to choose a new password" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -43,7 +43,7 @@ function ForgotPasswordPage() {
   return (
     <AuthShell
       title="Forgot your password?"
-      subtitle="Enter your email and we'll send you a reset link."
+      subtitle="Enter your email and we'll send you a reset link"
       footer={
         <Link to="/login" className="text-primary hover:underline">
           Back to log in
@@ -53,7 +53,7 @@ function ForgotPasswordPage() {
       {sent ? (
         <p className="rounded-md border border-border bg-secondary p-4 text-sm text-muted-foreground">
           If an account exists for that email, a password reset link is on its way. The link works
-          once and expires after an hour.
+          once and expires after an hour
         </p>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">

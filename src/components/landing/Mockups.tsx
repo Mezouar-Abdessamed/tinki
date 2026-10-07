@@ -15,7 +15,7 @@ export const DEMO_URL = "https://tinki.lovable.app/sara.designs";
 export const demoProfile: ProfileCardData = {
   username: "sara.designs",
   display_name: "Sara Benali",
-  bio: "Product designer in Algiers. Portfolio, shop and everything I post — right here.",
+  bio: "Product designer in Algiers. Portfolio, shop and everything I post — right here",
   instagram_url: "https://instagram.com/sara.designs",
   tiktok_url: "https://tiktok.com/@sara.designs",
   linkedin_url: "https://linkedin.com/in/sara",

@@ -52,7 +52,7 @@ export function ChangePasswordForm() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      toast.success("Your password has been changed.");
+      toast.success("Your password has been changed");
     } catch (updateError) {
       toast.error(
         updateError instanceof Error ? updateError.message : "Couldn't change the password",

@@ -15,11 +15,11 @@ export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Log in to Tinki" },
-      { name: "description", content: "Log in to edit your social profile page and QR code." },
+      { name: "description", content: "Log in to edit your social profile page and QR code" },
       { property: "og:title", content: "Log in to Tinki" },
       {
         property: "og:description",
-        content: "Log in to edit your social profile page and QR code.",
+        content: "Log in to edit your social profile page and QR code",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -54,11 +54,11 @@ function LoginPage() {
         const message = error.message.toLowerCase();
         if (message.includes("not confirmed") || message.includes("email_not_confirmed")) {
           setNeedsConfirmation(true);
-          toast.error("Please verify your email first — enter the code we sent you.");
+          toast.error("Please verify your email first — enter the code we sent you");
           navigate({ to: "/verify-email", search: { email: email.trim().toLowerCase() } });
           return;
         }
-        toast.error("Those details don't match an account.");
+        toast.error("Those details don't match an account");
         return;
       }
       navigate({ to: "/dashboard" });
@@ -73,7 +73,7 @@ function LoginPage() {
       redirect_uri: `${window.location.origin}/auth/callback`,
     });
     if (result.error) {
-      toast.error("Google sign-in didn't work. Please try again.");
+      toast.error("Google sign-in didn't work. Please try again");
       return;
     }
     if (result.redirected) return;
@@ -83,7 +83,7 @@ function LoginPage() {
   return (
     <AuthShell
       title="Welcome back"
-      subtitle="Log in to manage your page."
+      subtitle="Log in to manage your page"
       footer={
         <>
           No page yet?{" "}
@@ -128,7 +128,7 @@ function LoginPage() {
       {needsConfirmation ? (
         <div className="mt-4 space-y-3 rounded-md border border-border bg-secondary p-4">
           <p className="text-sm text-muted-foreground">
-            Your account isn't verified yet. Enter the 6-digit code we emailed you.
+            Your account isn't verified yet. Enter the 6-digit code we emailed you
           </p>
           <Button variant="outline" size="sm" className="w-full" asChild>
             <Link to="/verify-email" search={{ email: email.trim().toLowerCase() }}>

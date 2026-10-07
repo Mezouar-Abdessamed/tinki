@@ -11,9 +11,9 @@ import { useMyProfile } from "@/lib/use-profile";
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [
     { title: "Dashboard — Tinki" },
-    { name: "description", content: "Manage your Tinki profile and links." },
+    { name: "description", content: "Manage your Tinki profile and links" },
     { property: "og:title", content: "Dashboard — Tinki" },
-    { property: "og:description", content: "Manage your Tinki profile and links." },
+    { property: "og:description", content: "Manage your Tinki profile and links" },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
   ] }),
@@ -53,7 +53,7 @@ function DashboardLayout() {
         <div className="panel max-w-md p-7 text-center">
           <h1 className="font-display text-2xl font-semibold">Verify your email first</h1>
           <p className="mt-3 text-sm text-muted-foreground">
-            We sent a 6-digit code to {user?.email}. Enter it to activate your account.
+            We sent a 6-digit code to {user?.email}. Enter it to activate your account
           </p>
           <Button className="mt-6" asChild>
             <Link to="/verify-email" search={{ email: user?.email ?? "" }}>

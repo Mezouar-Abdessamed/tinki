@@ -9,12 +9,12 @@ export const Route = createFileRoute("/dashboard/informations")({
       { title: "My Informations & Security — Tinki" },
       {
         name: "description",
-        content: "Edit your picture, username, bio, social links and password.",
+        content: "Edit your picture, username, bio, social links and password",
       },
       { property: "og:title", content: "My Informations & Security — Tinki" },
       {
         property: "og:description",
-        content: "Edit your picture, username, bio, social links and password.",
+        content: "Edit your picture, username, bio, social links and password",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -32,7 +32,7 @@ function InformationsPage() {
       <header>
         <h1 className="font-display text-3xl font-semibold">My Informations &amp; Security</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Everything about your page and your account sign-in.
+          Everything about your page and your account sign-in
         </p>
       </header>
 

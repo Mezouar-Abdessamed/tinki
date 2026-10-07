@@ -192,7 +192,7 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
       await saveSocialLinkSettings(next);
       await settingsQuery.refetch();
     } catch {
-      toast.error("Couldn't update your social links.");
+      toast.error("Couldn't update your social links");
       setSocialSettings(settingsQuery.data ?? []);
     }
   }
@@ -234,7 +234,7 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
     });
     if (reorderError) {
       setCustomLinks(customQuery.data ?? []);
-      toast.error("Couldn't reorder your custom links.");
+      toast.error("Couldn't reorder your custom links");
       return;
     }
     await customQuery.refetch();
@@ -266,7 +266,7 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
     if (updateError) return setError(updateError.message);
     setSocialEditing(null);
     onProfileSaved();
-    toast.success(`${socialEditing.label} updated.`);
+    toast.success(`${socialEditing.label} updated`);
   }
 
   function removeSocial(platform: SocialPlatform) {
@@ -288,8 +288,8 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
   async function saveCustom(event: React.FormEvent) {
     event.preventDefault();
     const name = customDraft.name.trim();
-    if (!name) return setError("Enter a link name.");
-    if (name.length > 80) return setError("Keep the link name under 80 characters.");
+    if (!name) return setError("Enter a link name");
+    if (name.length > 80) return setError("Keep the link name under 80 characters");
     const destinationError = validateCustomDestination(customDraft.destination, customDraft.linkType);
     if (destinationError) return setError(destinationError);
     setSaving(true);
@@ -312,13 +312,13 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
     setCustomEditing(null);
     setCustomDraft(EMPTY_CUSTOM);
     await customQuery.refetch();
-    toast.success(customEditing ? "Custom link updated." : "Custom link added.");
+    toast.success(customEditing ? "Custom link updated" : "Custom link added");
   }
 
   async function toggleCustom(link: CustomLink, enabled: boolean) {
     setCustomLinks((items) => items.map((item) => item.id === link.id ? { ...item, enabled } : item));
     const { error: updateError } = await supabase.from("custom_links").update({ enabled }).eq("id", link.id);
-    if (updateError) toast.error("Couldn't update that link.");
+    if (updateError) toast.error("Couldn't update that link");
     await customQuery.refetch();
   }
 
@@ -337,21 +337,21 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
       const { error: deleteError } = await supabase.from("profiles").update(profileUpdate).eq("id", profile.id);
       setDeleting(false);
       if (deleteError) {
-        toast.error("Couldn't delete that link.");
+        toast.error("Couldn't delete that link");
         return;
       }
       onProfileSaved();
-      toast.success(`${target.platform.label} link deleted.`);
+      toast.success(`${target.platform.label} link deleted`);
       return;
     }
     const { error: deleteError } = await supabase.from("custom_links").delete().eq("id", target.link.id);
     setDeleting(false);
     if (deleteError) {
-      toast.error("Couldn't delete that link.");
+      toast.error("Couldn't delete that link");
       return;
     }
     await customQuery.refetch();
-    toast.success("Custom link deleted.");
+    toast.success("Custom link deleted");
   }
 
   return (
@@ -359,7 +359,7 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
         <header className="min-w-0">
           <h1 className="font-display text-3xl font-semibold">My Links</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Manage, order, and control every link shown on your public profile.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Manage, order, and control every link shown on your public profile</p>
         </header>
         <Button type="button" onClick={() => setPickerOpen(true)}><Plus /> Add Link</Button>
       </div>
@@ -367,14 +367,14 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
       <section aria-labelledby="social-links-heading">
         <div className="mb-4">
           <h2 id="social-links-heading" className="font-display text-lg font-semibold">Social & platform links</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Drag to set the order of your profile icons.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Drag to set the order of your profile icons</p>
         </div>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={endSocialDrag}>
           <SortableContext items={platforms.map((item) => item.key)} strategy={verticalListSortingStrategy}>
             <div className="grid gap-2.5">
               {platforms.length === 0 ? (
                 <div className="rounded-lg border border-dashed border-border px-5 py-8 text-center text-sm text-muted-foreground">
-                  No social links yet. Use Add Link to add one.
+                  No social links yet. Use Add Link to add one
                 </div>
               ) : null}
               {platforms.map((platform) => {
@@ -404,11 +404,11 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
       <section aria-labelledby="custom-links-heading">
         <div className="mb-4">
           <h2 id="custom-links-heading" className="font-display text-lg font-semibold">Custom Links</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Websites, phone contacts, email addresses, and more.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Websites, phone contacts, email addresses, and more</p>
         </div>
         {customQuery.isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : null}
         {!customQuery.isLoading && customLinks.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border px-5 py-8 text-center text-sm text-muted-foreground">No custom links yet.</div>
+          <div className="rounded-lg border border-dashed border-border px-5 py-8 text-center text-sm text-muted-foreground">No custom links yet</div>
         ) : null}
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(event) => void endCustomDrag(event)}>
           <SortableContext items={customLinks.map((item) => item.id)} strategy={verticalListSortingStrategy}>
@@ -432,11 +432,11 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
         </DndContext>
       </section>
 
-      <div className="rounded-lg border border-border bg-secondary/40 px-4 py-3 text-xs text-muted-foreground">Changes go live on your public profile immediately.</div>
+      <div className="rounded-lg border border-border bg-secondary/40 px-4 py-3 text-xs text-muted-foreground">Changes go live on your public profile immediately</div>
 
       <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
-          <DialogHeader><DialogTitle>Add a new link</DialogTitle><DialogDescription>Choose what you want to add to your profile.</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle>Add a new link</DialogTitle><DialogDescription>Choose what you want to add to your profile</DialogDescription></DialogHeader>
           <div className="grid grid-cols-2 gap-2 rounded-lg bg-secondary p-1">
             <Button type="button" variant={pickerMode === "social" ? "default" : "ghost"} onClick={() => setPickerMode("social")}>Social / Platform</Button>
             <Button type="button" variant={pickerMode === "custom" ? "default" : "ghost"} onClick={() => setPickerMode("custom")}>Custom Link</Button>
@@ -463,7 +463,7 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
       <Dialog open={Boolean(socialEditing)} onOpenChange={(open) => !open && setSocialEditing(null)}>
         <DialogContent>
           <form onSubmit={saveSocial} className="grid gap-5" noValidate>
-            <DialogHeader><DialogTitle>{socialEditing ? `Edit ${socialEditing.label}` : "Edit social link"}</DialogTitle><DialogDescription>Paste the full profile URL visitors should open.</DialogDescription></DialogHeader>
+            <DialogHeader><DialogTitle>{socialEditing ? `Edit ${socialEditing.label}` : "Edit social link"}</DialogTitle><DialogDescription>Paste the full profile URL visitors should open</DialogDescription></DialogHeader>
             <div className="grid gap-2"><Label htmlFor="social-url">Profile URL</Label><Input id="social-url" value={socialValue} onChange={(event) => setSocialValue(event.target.value)} placeholder={socialEditing?.placeholder} autoFocus /></div>
             {error ? <p className="text-sm text-destructive">{error}</p> : null}
             <DialogFooter><Button type="button" variant="outline" onClick={() => setSocialEditing(null)}>Cancel</Button><Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save Changes"}</Button></DialogFooter>
@@ -474,7 +474,7 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
       <Dialog open={Boolean(customEditing) || customDraft !== EMPTY_CUSTOM} onOpenChange={(open) => { if (!open) { setCustomEditing(null); setCustomDraft(EMPTY_CUSTOM); } }}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <form onSubmit={saveCustom} className="grid gap-5" noValidate>
-            <DialogHeader><DialogTitle>{customEditing ? "Edit custom link" : "Add custom link"}</DialogTitle><DialogDescription>Choose the destination, label, and icon visitors will see.</DialogDescription></DialogHeader>
+            <DialogHeader><DialogTitle>{customEditing ? "Edit custom link" : "Add custom link"}</DialogTitle><DialogDescription>Choose the destination, label, and icon visitors will see</DialogDescription></DialogHeader>
             <div className="grid gap-2"><Label>Type</Label><div className="grid grid-cols-3 gap-2">{CUSTOM_LINK_TYPES.map((type) => <Button key={type.key} type="button" variant={customDraft.linkType === type.key ? "default" : "outline"} onClick={() => setCustomDraft((value) => ({ ...value, linkType: type.key, icon: value.icon === "globe" || value.icon === "phone" || value.icon === "email" ? (type.key === "link" ? "globe" : type.key) : value.icon }))}><type.icon /> {type.label}</Button>)}</div></div>
             <div className="grid gap-2"><Label htmlFor="custom-name">Name</Label><Input id="custom-name" value={customDraft.name} maxLength={80} onChange={(event) => setCustomDraft((value) => ({ ...value, name: event.target.value }))} placeholder={customDraft.linkType === "phone" ? "Contact Me" : customDraft.linkType === "email" ? "Email Me" : "My Portfolio"} autoFocus /></div>
             <div className="grid gap-2"><Label htmlFor="custom-destination">{customDraft.linkType === "phone" ? "Phone number" : customDraft.linkType === "email" ? "Email address" : "URL"}</Label><Input id="custom-destination" type={customDraft.linkType === "email" ? "email" : customDraft.linkType === "phone" ? "tel" : "url"} value={customDraft.destination} maxLength={2048} onChange={(event) => setCustomDraft((value) => ({ ...value, destination: event.target.value }))} placeholder={customDraft.linkType === "phone" ? "+213555123456" : customDraft.linkType === "email" ? "example@email.com" : "https://example.com"} /></div>
@@ -492,7 +492,7 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
               {deleteTarget?.kind === "custom" ? `Delete “${deleteTarget.link.name}”?` : deleteTarget ? `Delete your ${deleteTarget.platform.label} link?` : "Delete link?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove the link from your public profile. You can add it back later, but the old link settings won't be restored.
+              This will remove the link from your public profile. You can add it back later, but the old link settings won't be restored
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

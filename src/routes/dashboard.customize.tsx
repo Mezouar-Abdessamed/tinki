@@ -7,9 +7,9 @@ export const Route = createFileRoute("/dashboard/customize")({
   head: () => ({
     meta: [
       { title: "Customize Profile — Tinki" },
-      { name: "description", content: "Customize the colors of your public Tinki profile page and card." },
+      { name: "description", content: "Customize the colors of your public Tinki profile page and card" },
       { property: "og:title", content: "Customize Profile — Tinki" },
-      { property: "og:description", content: "Customize the colors of your public Tinki profile page and card." },
+      { property: "og:description", content: "Customize the colors of your public Tinki profile page and card" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -25,7 +25,7 @@ function CustomizeProfilePage() {
     <div className="space-y-8">
       <header>
         <h1 className="font-display text-3xl font-semibold">Customize profile</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Choose how your public page looks to visitors.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Choose how your public page looks to visitors</p>
       </header>
       <ProfileAppearanceEditor profile={profile} avatarUrl={avatarUrl} onSaved={() => void refetch()} />
     </div>
