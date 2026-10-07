@@ -116,14 +116,14 @@ export function validateQrSettings(
       id: "contrast",
       severity: "error",
       message:
-        "These colors do not provide enough contrast for reliable scanning. Use a dark code colour on a light background.",
+        "These colors do not provide enough contrast for reliable scanning. Use a dark code colour on a light background",
     });
   } else if (contrast < COMFORTABLE_CONTRAST) {
     issues.push({
       id: "contrast-low",
       severity: "warning",
       message:
-        "The contrast between your two colours is on the low side. A darker code on a lighter background scans faster.",
+        "The contrast between your two colours is on the low side. A darker code on a lighter background scans faster",
     });
   }
 
@@ -132,7 +132,7 @@ export function validateQrSettings(
       id: "inverted",
       severity: "warning",
       message:
-        "A light code on a dark background is not read by every phone camera. Consider swapping the two colours.",
+        "A light code on a dark background is not read by every phone camera. Consider swapping the two colours",
     });
   }
 
@@ -142,14 +142,14 @@ export function validateQrSettings(
       id: "quiet-zone",
       severity: "error",
       message:
-        "There is no empty space around the code. Scanners need a clear border, so the margin must be at least 1.",
+        "There is no empty space around the code. Scanners need a clear border, so the margin must be at least 1",
     });
   } else if (settings.margin < COMFORTABLE_MARGIN) {
     issues.push({
       id: "quiet-zone-small",
       severity: "warning",
       message:
-        "The empty border around the code is quite small, which can slow scanning on busy backgrounds.",
+        "The empty border around the code is quite small, which can slow scanning on busy backgrounds",
     });
   }
 
@@ -167,14 +167,14 @@ export function validateQrSettings(
         id: "logo-coverage",
         severity: "error",
         message:
-          "The centre logo is too large and may prevent the QR code from being scanned. Reduce its size or remove it.",
+          "The centre logo is too large and may prevent the QR code from being scanned. Reduce its size or remove it",
       });
     } else if (coverage > COMFORTABLE_LOGO_COVERAGE) {
       issues.push({
         id: "logo-coverage-high",
         severity: "warning",
         message:
-          "The centre logo covers a fair share of the code. Keep it small for the best results.",
+          "The centre logo covers a fair share of the code. Keep it small for the best results",
       });
     }
   }
@@ -188,14 +188,14 @@ export function validateQrSettings(
         id: "avatar-overlap",
         severity: "error",
         message:
-          "The profile picture covers too much of the code. Increase the margin so it sits clear of the pattern.",
+          "The profile picture covers too much of the code. Increase the margin so it sits clear of the pattern",
       });
     } else if (overlapIntoCode > 0.3) {
       issues.push({
         id: "avatar-overlap-small",
         severity: "warning",
         message:
-          "The profile picture slightly overlaps the top of the code. A larger margin keeps it perfectly clear.",
+          "The profile picture slightly overlaps the top of the code. A larger margin keeps it perfectly clear",
       });
     }
   }
@@ -206,13 +206,13 @@ export function validateQrSettings(
       id: "resolution",
       severity: "error",
       message:
-        "The code is rendered too small for its amount of data, so the dots blur together. Show it at a larger size.",
+        "The code is rendered too small for its amount of data, so the dots blur together. Show it at a larger size",
     });
   } else if (pixelsPerModule < COMFORTABLE_PIXELS_PER_MODULE) {
     issues.push({
       id: "resolution-low",
       severity: "warning",
-      message: "The code is quite small on screen, which can make scanning from a distance harder.",
+      message: "The code is quite small on screen, which can make scanning from a distance harder",
     });
   }
 
@@ -224,20 +224,20 @@ export function validateQrSettings(
       id: "shapes",
       severity: "error",
       message:
-        "This dot and corner shape combination loses too much detail at this contrast. Pick a squarer shape or stronger colours.",
+        "This dot and corner shape combination loses too much detail at this contrast. Pick a squarer shape or stronger colours",
     });
   } else if (riskyModules && riskyEyes) {
     issues.push({
       id: "shapes-soft",
       severity: "warning",
       message:
-        "Rounded dots together with rounded corners make the pattern softer. Test it with your phone before printing.",
+        "Rounded dots together with rounded corners make the pattern softer. Test it with your phone before printing",
     });
   } else if (riskyEyes) {
     issues.push({
       id: "eyes-soft",
       severity: "warning",
-      message: "Non-square corner markers can be slower to recognise on older phones.",
+      message: "Non-square corner markers can be slower to recognise on older phones",
     });
   }
 

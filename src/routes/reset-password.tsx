@@ -14,9 +14,9 @@ export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
       { title: "Choose a new password" },
-      { name: "description", content: "Set a new password for your Tinki account." },
+      { name: "description", content: "Set a new password for your Tinki account" },
       { property: "og:title", content: "Choose a new password" },
-      { property: "og:description", content: "Set a new password for your Tinki account." },
+      { property: "og:description", content: "Set a new password for your Tinki account" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -49,11 +49,11 @@ function ResetPasswordPage() {
       const { error: updateError } = await supabase.auth.updateUser({ password });
       if (updateError) throw updateError;
       await supabase.auth.signOut();
-      toast.success("Password updated. Please log in again.");
+      toast.success("Password updated. Please log in again");
       navigate({ to: "/login" });
     } catch (updateError) {
       toast.error(
-        updateError instanceof Error ? updateError.message : "That reset link is no longer valid.",
+        updateError instanceof Error ? updateError.message : "That reset link is no longer valid",
       );
     } finally {
       setSubmitting(false);
@@ -64,7 +64,7 @@ function ResetPasswordPage() {
     return (
       <AuthShell
         title="Reset link expired"
-        subtitle="This link has already been used or is more than an hour old."
+        subtitle="This link has already been used or is more than an hour old"
         footer={
           <Link to="/forgot-password" className="text-primary hover:underline">
             Request a new link
@@ -72,14 +72,14 @@ function ResetPasswordPage() {
         }
       >
         <p className="text-sm text-muted-foreground">
-          Request a fresh reset link and open it from the newest email.
+          Request a fresh reset link and open it from the newest email
         </p>
       </AuthShell>
     );
   }
 
   return (
-    <AuthShell title="Choose a new password" subtitle="You'll log in again with the new one.">
+    <AuthShell title="Choose a new password" subtitle="You'll log in again with the new one">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="password">New password</Label>

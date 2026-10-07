@@ -7,11 +7,11 @@ export const Route = createFileRoute("/dashboard/links")({
   head: () => ({
     meta: [
       { title: "My Links — Tinki" },
-      { name: "description", content: "Add, edit and remove the social links on your page." },
+      { name: "description", content: "Add, edit and remove the social links on your page" },
       { property: "og:title", content: "My Links — Tinki" },
       {
         property: "og:description",
-        content: "Add, edit and remove the social links on your page.",
+        content: "Add, edit and remove the social links on your page",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

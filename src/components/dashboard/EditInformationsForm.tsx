@@ -166,7 +166,7 @@ export function EditInformationsForm({
     try {
       if (coverFile) {
         const { blob, contentType } = await reencodeAvatar(coverFile, 1600);
-        if (blob.size > MAX_COVER_BYTES) throw new Error("Processed cover exceeds 5 MB. Try a smaller image.");
+        if (blob.size > MAX_COVER_BYTES) throw new Error("Processed cover exceeds 5 MB. Try a smaller image");
         const path = `${profile.id}/${crypto.randomUUID()}.${extensionForType(contentType)}`;
         const { error } = await supabase.storage.from("covers").upload(path, blob, { upsert: false, contentType });
         if (error) throw error;
@@ -209,8 +209,8 @@ export function EditInformationsForm({
         // Storage deletion failed after retries: restore the reference so the
         // database never points at a deleted cover, then report the failure.
         const { error: restoreError } = await supabase.from("profiles").update({ cover_photo_path: profile.cover_photo_path, cover_photo_x: profile.cover_photo_x, cover_photo_y: profile.cover_photo_y }).eq("id", profile.id);
-        if (restoreError) throw new Error("Cover removal failed and its reference could not be restored. Please refresh your profile.");
-        throw new Error("Cover removal failed. Please try again.");
+        if (restoreError) throw new Error("Cover removal failed and its reference could not be restored. Please refresh your profile");
+        throw new Error("Cover removal failed. Please try again");
       }
       setCoverFile(null);
       setSavedCoverUrl(null);
@@ -313,7 +313,7 @@ export function EditInformationsForm({
 
       setPickedFile(null);
       setRemoveAvatar(false);
-      toast.success("Your changes have been saved.");
+      toast.success("Your changes have been saved");
       onSaved();
     } catch (saveError) {
       // Clean up an orphaned upload so storage doesn't collect dead files.
@@ -389,7 +389,7 @@ export function EditInformationsForm({
               placeholder="Your name"
               maxLength={60}
             />
-            <p className="text-xs text-muted-foreground">Emojis aren't allowed in your name.</p>
+            <p className="text-xs text-muted-foreground">Emojis aren't allowed in your name</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="bio">Bio</Label>
@@ -402,7 +402,7 @@ export function EditInformationsForm({
               placeholder="Say something about yourself"
             />
             <p className="text-xs text-muted-foreground">
-              {bio.length}/{BIO_MAX} — clear the field to remove your bio.
+              {bio.length}/{BIO_MAX} — clear the field to remove your bio
             </p>
           </div>
         </div>
@@ -437,7 +437,7 @@ export function EditInformationsForm({
             <p className="text-sm text-destructive">{error}</p>
           ) : (
             <p className="text-sm text-muted-foreground">
-              Changes go live on your public page immediately.
+              Changes go live on your public page immediately
             </p>
           )}
         </div>

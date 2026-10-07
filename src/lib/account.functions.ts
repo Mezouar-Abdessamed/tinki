@@ -57,9 +57,9 @@ export const deleteMyAccount = createServerFn({ method: "POST" })
       .eq("id", userId)
       .maybeSingle();
 
-    if (error) throw new Error("Could not verify the account.");
+    if (error) throw new Error("Could not verify the account");
     if (profile && profile.username !== data.username.toLowerCase()) {
-      throw new Error("The username you typed does not match this account.");
+      throw new Error("The username you typed does not match this account");
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -74,7 +74,7 @@ export const deleteMyAccount = createServerFn({ method: "POST" })
           bucket,
           listError,
         });
-        throw new Error("Could not delete the account. Please try again.");
+        throw new Error("Could not delete the account. Please try again");
       }
 
       // Include the recorded file only if it belongs to this user's folder.
@@ -93,7 +93,7 @@ export const deleteMyAccount = createServerFn({ method: "POST" })
             count: chunk.length,
             removeError,
           });
-          throw new Error("Could not delete the account. Please try again.");
+          throw new Error("Could not delete the account. Please try again");
         }
       }
 
@@ -107,7 +107,7 @@ export const deleteMyAccount = createServerFn({ method: "POST" })
           bucket,
           verifyError,
         });
-        throw new Error("Could not delete the account. Please try again.");
+        throw new Error("Could not delete the account. Please try again");
       }
       if (remaining.length > 0) {
         console.error("[deleteMyAccount] storage files still present after cleanup", {
@@ -115,7 +115,7 @@ export const deleteMyAccount = createServerFn({ method: "POST" })
           bucket,
           remaining: remaining.length,
         });
-        throw new Error("Could not delete the account. Please try again.");
+        throw new Error("Could not delete the account. Please try again");
       }
     }
 
@@ -127,7 +127,7 @@ export const deleteMyAccount = createServerFn({ method: "POST" })
         /not\s*found/i.test(deleteError.message ?? "");
       if (!alreadyGone) {
         console.error("[deleteMyAccount] auth user deletion failed", { userId, deleteError });
-        throw new Error("Could not delete the account. Please try again.");
+        throw new Error("Could not delete the account. Please try again");
       }
     }
 

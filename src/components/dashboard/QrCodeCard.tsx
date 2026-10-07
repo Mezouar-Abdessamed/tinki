@@ -17,7 +17,7 @@ export function QrCodeCard({
     <section className="panel p-6">
       <h2 className="font-display text-lg font-semibold">My QR Code</h2>
       <p className="mt-2 text-sm text-muted-foreground">
-        Always points to your current link. Print it, post it, or show it on your phone.
+        Always points to your current link. Print it, post it, or show it on your phone
       </p>
       <div className="mt-5 flex justify-center">
         {/* Regenerated from the live profile URL, so a username change updates it. */}

@@ -38,9 +38,9 @@ import { useAuth } from "@/lib/auth";
 import { useLanguage } from "@/lib/i18n";
 import { SOCIAL_PLATFORMS } from "@/lib/socials";
 
-const TITLE = "Tinki — All your links. One simple page.";
+const TITLE = "Tinki — All your links. One simple page";
 const DESCRIPTION =
-  "Create your personal link page with your social profiles, custom links and a QR code. Share it anywhere and see how people interact with it.";
+  "Create your personal link page with your social profiles, custom links and a QR code. Share it anywhere and see how people interact with it";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -63,39 +63,39 @@ const NAV = [
 ];
 
 const FEATURES = [
-  { icon: Users, title: "Social profiles", body: "Connect Instagram, Facebook, Snapchat, TikTok, LinkedIn, X and 10 more platforms." },
-  { icon: Link2, title: "Custom links", body: "Add any website, portfolio, store or article — plus phone and email links." },
-  { icon: UserRound, title: "Personalized profile", body: "Your photo, name, username and bio, with your own fonts, colors and background." },
-  { icon: QrCodeIcon, title: "QR code", body: "A QR code for your page, ready for posters, business cards and events." },
-  { icon: Send, title: "Share anywhere", body: "One link for Instagram bios, TikTok, WhatsApp, Telegram and business cards." },
-  { icon: BarChart3, title: "Analytics", body: "See profile views and which social icons and links people tap." },
+  { icon: Users, title: "Social profiles", body: "Connect Instagram, Facebook, Snapchat, TikTok, LinkedIn, X and 10 more platforms" },
+  { icon: Link2, title: "Custom links", body: "Add any website, portfolio, store or article — plus phone and email links" },
+  { icon: UserRound, title: "Personalized profile", body: "Your photo, name, username and bio, with your own fonts, colors and background" },
+  { icon: QrCodeIcon, title: "QR code", body: "A QR code for your page, ready for posters, business cards and events" },
+  { icon: Send, title: "Share anywhere", body: "One link for Instagram bios, TikTok, WhatsApp, Telegram and business cards" },
+  { icon: BarChart3, title: "Analytics", body: "See profile views and which social icons and links people tap" },
 ];
 
 const STEPS = [
-  { title: "Create your account", body: "Sign up and choose your username." },
-  { title: "Build your page", body: "Add your social profiles, custom links, profile information, and personalize your page." },
-  { title: "Share it", body: "Share one link or QR code and let people discover everything you want them to see." },
+  { title: "Create your account", body: "Sign up and choose your username" },
+  { title: "Build your page", body: "Add your social profiles, custom links, profile information, and personalize your page" },
+  { title: "Share it", body: "Share one link or QR code and let people discover everything you want them to see" },
 ];
 
 const ACCOUNT = [
-  { icon: UserCircle, title: "My Profile", body: "Preview your public page, copy your link, share it, and access your QR code." },
-  { icon: BarChart3, title: "Dashboard", body: "See visits and link interactions through your profile analytics." },
-  { icon: Link2, title: "My Links", body: "Add, reorder, and switch custom links and social icons on or off." },
-  { icon: Palette, title: "Customize profile", body: "Change fonts, colors, card style and your page background." },
-  { icon: QrCodeIcon, title: "Customize QR Code", body: "Personalize your QR code while keeping it readable and usable." },
-  { icon: ShieldCheck, title: "My Informations & Security", body: "Manage your profile information, social links, profile picture and password." },
-  { icon: UserCog, title: "Account & Deletion", body: "Review your account details or permanently delete your account." },
+  { icon: UserCircle, title: "My Profile", body: "Preview your public page, copy your link, share it, and access your QR code" },
+  { icon: BarChart3, title: "Dashboard", body: "See visits and link interactions through your profile analytics" },
+  { icon: Link2, title: "My Links", body: "Add, reorder, and switch custom links and social icons on or off" },
+  { icon: Palette, title: "Customize profile", body: "Change fonts, colors, card style and your page background" },
+  { icon: QrCodeIcon, title: "Customize QR Code", body: "Personalize your QR code while keeping it readable and usable" },
+  { icon: ShieldCheck, title: "My Informations & Security", body: "Manage your profile information, social links, profile picture and password" },
+  { icon: UserCog, title: "Account & Deletion", body: "Review your account details or permanently delete your account" },
 ];
 
 const FAQ = [
-  ["What is this platform?", "Tinki gives you one personal page that collects your social profiles and important links, so you can share a single link instead of many."],
-  ["How does my profile link work?", "When you sign up you choose a username. Your public page lives at that address — for example tinki.lovable.app/yourname."],
-   ["Can I add social media accounts?", `Yes. You can add ${SOCIAL_PLATFORMS.length} platforms including Instagram, Facebook, TikTok, Snapchat, LinkedIn, X, YouTube, WhatsApp and Telegram.`],
-  ["Can I add custom links?", "Yes. Add websites, portfolios or stores, plus phone and email links, and choose an icon for each."],
-  ["Can I customize my page?", "Yes. Upload a profile photo, write a bio, and change fonts, colors, the card style and the page background — a color, gradient, image or video."],
-  ["Can I use a QR code?", "Every page has its own QR code. You can change its colors and shapes, add your profile picture in the center, and download it."],
-  ["Can I see page analytics?", "Yes. Your dashboard shows profile views, social icon clicks and custom link clicks. Your own visits are not counted."],
-  ["Can I delete my account?", "Yes. From Account & Deletion you can permanently delete your account and your page at any time."],
+  ["What is this platform?", "Tinki gives you one personal page that collects your social profiles and important links, so you can share a single link instead of many"],
+  ["How does my profile link work?", "When you sign up you choose a username. Your public page lives at that address — for example tinki.lovable.app/yourname"],
+   ["Can I add social media accounts?", `Yes. You can add ${SOCIAL_PLATFORMS.length} platforms including Instagram, Facebook, TikTok, Snapchat, LinkedIn, X, YouTube, WhatsApp and Telegram`],
+  ["Can I add custom links?", "Yes. Add websites, portfolios or stores, plus phone and email links, and choose an icon for each"],
+  ["Can I customize my page?", "Yes. Upload a profile photo, write a bio, and change fonts, colors, the card style and the page background — a color, gradient, image or video"],
+  ["Can I use a QR code?", "Every page has its own QR code. You can change its colors and shapes, add your profile picture in the center, and download it"],
+  ["Can I see page analytics?", "Yes. Your dashboard shows profile views, social icon clicks and custom link clicks. Your own visits are not counted"],
+  ["Can I delete my account?", "Yes. From Account & Deletion you can permanently delete your account and your page at any time"],
 ] as const;
 
 function Logo() {
@@ -237,12 +237,12 @@ function Landing() {
               {t("Free personal link page")}
             </p>
             <h1 className="mt-6 max-w-4xl font-display text-[2.6rem] leading-[1.02] font-bold text-balance sm:text-6xl lg:text-[4.25rem]">
-              {t("All your links.")}
+              {t("All your links")}
               <br />
-              <span className="text-primary">{t("One simple page.")}</span>
+              <span className="text-primary">{t("One simple page")}</span>
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-              {t("Bring your social profiles, custom links, contact information, and everything you want to share into one beautiful page.")}
+              {t("Bring your social profiles, custom links, contact information, and everything you want to share into one beautiful page")}
             </p>
             <div className="mt-9 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
               <Button asChild size="lg" className="btn-hero group h-12 rounded-full bg-gradient-primary px-7 text-base font-semibold shadow-[var(--shadow-glow)]">{primaryCta}</Button>
@@ -275,7 +275,7 @@ function Landing() {
         {/* 3. Features */}
         <section id="features" className="scroll-mt-20 border-t border-border">
           <div className="mx-auto max-w-6xl px-5 py-24">
-            <SectionHead eyebrow="Features" title="Everything you want to share. In one place." />
+            <SectionHead eyebrow="Features" title="Everything you want to share. In one place" />
             <div className="mt-12 grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
               {FEATURES.map((f, i) => (
                 <Reveal key={f.title} delay={i * 50} className="bg-background p-7 transition-colors hover:bg-surface">
@@ -294,8 +294,8 @@ function Landing() {
             <SectionHead
               center
               eyebrow="The product"
-              title="One profile. Everything connected."
-              body="The same page adapts to every screen — opened from a link on desktop, a bio on mobile, or a QR code on a poster."
+              title="One profile. Everything connected"
+              body="The same page adapts to every screen — opened from a link on desktop, a bio on mobile, or a QR code on a poster"
             />
             <Reveal className="relative mt-14">
               <BrowserFrame url="tinki.lovable.app/sara.designs" className="mx-auto max-w-4xl">
@@ -312,7 +312,7 @@ function Landing() {
         {/* 5. How it works */}
         <section id="how-it-works" className="scroll-mt-20 border-t border-border">
           <div className="mx-auto max-w-6xl px-5 py-24">
-            <SectionHead eyebrow="How it works" title="Live in three steps." />
+            <SectionHead eyebrow="How it works" title="Live in three steps" />
             <ol className="mt-12 grid gap-10 md:grid-cols-3 md:gap-8">
               {STEPS.map((s, i) => (
                 <Reveal key={s.title} delay={i * 80}>
@@ -332,8 +332,8 @@ function Landing() {
           <div className="mx-auto max-w-6xl px-5 py-24">
             <SectionHead
               eyebrow="Your account"
-              title="Your page. Your control center."
-              body="After you sign in, everything about your page is managed from one simple dashboard."
+              title="Your page. Your control center"
+              body="After you sign in, everything about your page is managed from one simple dashboard"
             />
             <Reveal className="mt-12">
               <ul className="overflow-hidden rounded-xl border border-border bg-background">
@@ -359,16 +359,16 @@ function Landing() {
             <div>
               <SectionHead
                 eyebrow="Customization"
-                title="Make your page feel like you."
-                body="Your photo, your words, your style. Everything visitors see can reflect who you are."
+                title="Make your page feel like you"
+                body="Your photo, your words, your style. Everything visitors see can reflect who you are"
               />
               <Reveal>
                 <dl className="mt-10 grid gap-x-8 gap-y-6 sm:grid-cols-2">
                   {[
-                    ["Profile photo & bio", "Upload a picture and describe yourself in a few words."],
-                    ["Fonts & colors", "Pick fonts, weights and colors for your name and bio."],
-                    ["Social icons & links", "Choose icon colors and which links are visible."],
-                    ["Background", "Solid color, gradient, image, or a looping video."],
+                    ["Profile photo & bio", "Upload a picture and describe yourself in a few words"],
+                    ["Fonts & colors", "Pick fonts, weights and colors for your name and bio"],
+                    ["Social icons & links", "Choose icon colors and which links are visible"],
+                    ["Background", "Solid color, gradient, image, or a looping video"],
                    ].map(([heading, b]) => (
                      <div key={heading} className="border-s-2 border-primary/60 ps-4">
                        <dt className="font-medium">{t(heading ?? "")}</dt>
@@ -422,8 +422,8 @@ function Landing() {
             <div className="order-1 lg:order-2">
               <SectionHead
                 eyebrow="QR code"
-                title="Your page, one scan away."
-                body="Every page comes with its own QR code. Print it on cards, posters or packaging — one scan opens your profile."
+                title="Your page, one scan away"
+                body="Every page comes with its own QR code. Print it on cards, posters or packaging — one scan opens your profile"
               />
               <Reveal>
                 <ul className="mt-8 space-y-3 text-sm">
@@ -449,12 +449,12 @@ function Landing() {
           <div className="mx-auto grid max-w-6xl items-center gap-14 px-5 py-24 lg:grid-cols-[0.85fr_1.15fr]">
             <SectionHead
               eyebrow="Analytics"
-              title="Know how your page performs."
-              body="Your dashboard shows how many people open your page and which social icons and links they tap. Your own visits are never counted."
+              title="Know how your page performs"
+              body="Your dashboard shows how many people open your page and which social icons and links they tap. Your own visits are never counted"
             />
             <Reveal delay={100}>
               <AnalyticsMock />
-              <p className="mt-3 text-xs text-muted-foreground">{t("Illustration with sample numbers — not real user data.")}</p>
+              <p className="mt-3 text-xs text-muted-foreground">{t("Illustration with sample numbers — not real user data")}</p>
             </Reveal>
           </div>
         </section>
@@ -462,7 +462,7 @@ function Landing() {
         {/* 10. FAQ */}
         <section id="faq" className="scroll-mt-20 border-t border-border bg-surface/40">
           <div className="mx-auto max-w-6xl px-5 py-24">
-            <SectionHead eyebrow="FAQ" title="Questions, answered." />
+            <SectionHead eyebrow="FAQ" title="Questions, answered" />
             <Reveal className="mt-12">
               <Accordion type="single" collapsible className="w-full">
                 {FAQ.map(([q, a]) => (
@@ -481,8 +481,8 @@ function Landing() {
           <Reveal className="mx-auto max-w-6xl px-5 py-24">
             <div className="panel flex flex-col items-start justify-between gap-8 p-8 sm:p-12 md:flex-row md:items-center">
               <div className="max-w-xl">
-                <h2 className="font-display text-3xl font-semibold sm:text-4xl">{t("Everything you share, one link.")}</h2>
-                <p className="mt-3 text-muted-foreground">{t("Create your page and give people one simple place to find you.")}</p>
+                <h2 className="font-display text-3xl font-semibold sm:text-4xl">{t("Everything you share, one link")}</h2>
+                <p className="mt-3 text-muted-foreground">{t("Create your page and give people one simple place to find you")}</p>
                 <div className="mt-6 hidden max-w-sm sm:block"><ShareStrip /></div>
               </div>
               <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
@@ -504,7 +504,7 @@ function Landing() {
           <div>
             <Logo />
             <p className="mt-3 max-w-xs text-sm text-muted-foreground">
-              {t("One personal page for your social profiles, custom links and QR code.")}
+              {t("One personal page for your social profiles, custom links and QR code")}
             </p>
           </div>
           <div>
@@ -531,7 +531,7 @@ function Landing() {
         </div>
         <div className="border-t border-border">
           <p className="mx-auto max-w-6xl px-5 py-6 text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Tinki. {t("All rights reserved.")}
+            © {new Date().getFullYear()} Tinki {t("All rights reserved")}
           </p>
         </div>
       </footer>

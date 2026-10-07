@@ -22,14 +22,14 @@ export const Route = createFileRoute("/verify-email")({
       { title: "Verify your email — Tinki" },
       {
         name: "description",
-        content: "Enter the 6-digit code we emailed you to activate your Tinki page.",
+        content: "Enter the 6-digit code we emailed you to activate your Tinki page",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { property: "og:title", content: "Verify your email — Tinki" },
       {
         property: "og:description",
-        content: "Enter the 6-digit code we emailed you to activate your Tinki page.",
+        content: "Enter the 6-digit code we emailed you to activate your Tinki page",
       },
     ],
   }),
@@ -63,11 +63,11 @@ function VerifyEmailPage() {
     setError(null);
 
     if (attempts >= MAX_ATTEMPTS) {
-      setError("Too many attempts. Ask for a new code and try again.");
+      setError("Too many attempts. Ask for a new code and try again");
       return;
     }
     if (!/^\d{6}$/.test(code)) {
-      setError("Enter the 6-digit code from the email.");
+      setError("Enter the 6-digit code from the email");
       return;
     }
 
@@ -83,11 +83,11 @@ function VerifyEmailPage() {
         setAttempts((value) => value + 1);
         const message = (verifyError?.message ?? "").toLowerCase();
         if (message.includes("expired")) {
-          setError("That code has expired. Ask for a new one below.");
+          setError("That code has expired. Ask for a new one below");
         } else if (message.includes("rate") || message.includes("too many")) {
-          setError("Too many tries. Please wait a moment and try again.");
+          setError("Too many tries. Please wait a moment and try again");
         } else {
-          setError("That code isn't right. Check the email and try again.");
+          setError("That code isn't right. Check the email and try again");
         }
         return;
       }
@@ -113,15 +113,15 @@ function VerifyEmailPage() {
       if (resendError) {
         setError(
           resendError.message.toLowerCase().includes("rate")
-            ? "Please wait a minute before asking for another code."
-            : "We couldn't send another code right now. Please try again shortly.",
+            ? "Please wait a minute before asking for another code"
+            : "We couldn't send another code right now. Please try again shortly",
         );
         return;
       }
       setAttempts(0);
       setCode("");
       setCooldown(RESEND_COOLDOWN_SECONDS);
-      toast.success("New code sent.");
+      toast.success("New code sent");
     } finally {
       setResending(false);
     }
@@ -131,7 +131,7 @@ function VerifyEmailPage() {
     return (
       <AuthShell
         title="Verify your email"
-        subtitle="We need to know which address to check."
+        subtitle="We need to know which address to check"
         footer={
           <Link to="/register" className="text-primary hover:underline">
             Back to sign up
@@ -139,7 +139,7 @@ function VerifyEmailPage() {
         }
       >
         <p className="text-sm text-muted-foreground">
-          Start the sign-up again so we can send your code.
+          Start the sign-up again so we can send your code
         </p>
       </AuthShell>
     );
@@ -149,7 +149,7 @@ function VerifyEmailPage() {
     return (
       <AuthShell title="You're verified" subtitle="Taking you to your dashboard…">
         <p className="rounded-md border border-border bg-secondary p-4 text-sm text-muted-foreground">
-          Your email is confirmed and your account is active.
+          Your email is confirmed and your account is active
         </p>
       </AuthShell>
     );
@@ -187,7 +187,7 @@ function VerifyEmailPage() {
 
       <div className="mt-4 space-y-3 rounded-md border border-border bg-secondary p-4">
         <p className="text-xs text-muted-foreground">
-          Nothing in your inbox? Check spam, then ask for a new code.
+          Nothing in your inbox? Check spam, then ask for a new code
         </p>
         <Button
           variant="outline"

@@ -83,8 +83,8 @@ export function ClaimUsername({
       <h1 className="font-display text-2xl font-semibold">Pick your username</h1>
       <p className="mt-2 text-sm text-muted-foreground">
         {requirePassword
-          ? "This becomes your public link. Also set a password so you can sign in with your email too."
-          : "This becomes your public link, so choose carefully."}
+          ? "This becomes your public link. Also set a password so you can sign in with your email too"
+          : "This becomes your public link, so choose carefully"}
       </p>
       <form onSubmit={save} className="mt-6 space-y-4">
         <div className="space-y-2">

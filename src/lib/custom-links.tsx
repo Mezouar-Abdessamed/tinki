@@ -73,16 +73,16 @@ export function normalizeCustomDestination(raw: string, type: CustomLinkType) {
 
 export function validateCustomDestination(raw: string, type: CustomLinkType) {
   const clean = raw.trim().replace(/^(tel:|mailto:)/i, "");
-  if (!clean) return type === "link" ? "Enter a URL." : type === "phone" ? "Enter a phone number." : "Enter an email address.";
-  if (type === "phone" && !/^\+?[0-9\s()-]{7,20}$/.test(clean)) return "Enter a valid phone number.";
-  if (type === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(clean)) return "Enter a valid email address.";
+  if (!clean) return type === "link" ? "Enter a URL" : type === "phone" ? "Enter a phone number" : "Enter an email address";
+  if (type === "phone" && !/^\+?[0-9\s()-]{7,20}$/.test(clean)) return "Enter a valid phone number";
+  if (type === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(clean)) return "Enter a valid email address";
   const value = normalizeCustomDestination(raw, type);
   try {
     const parsed = new URL(value);
-    if (type === "link" && !["https:", "http:"].includes(parsed.protocol)) return "Enter a valid website URL.";
+    if (type === "link" && !["https:", "http:"].includes(parsed.protocol)) return "Enter a valid website URL";
     return null;
   } catch {
-    return "Enter a valid destination.";
+    return "Enter a valid destination";
   }
 }
 

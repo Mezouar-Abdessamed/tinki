@@ -22,7 +22,7 @@ export function SocialLinksReadonly({ profile }: Props) {
         <div className="mt-4 rounded-lg border border-dashed border-border px-4 py-8 text-center">
           <LinkIcon className="mx-auto h-6 w-6 text-muted-foreground" />
           <p className="mt-3 text-sm text-muted-foreground">
-            You haven't added any social links yet.
+            You haven't added any social links yet
           </p>
           <Button asChild size="sm" className="mt-4">
             <Link to="/dashboard/informations">Add your links</Link>

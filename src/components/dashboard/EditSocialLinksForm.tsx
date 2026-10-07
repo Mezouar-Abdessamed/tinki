@@ -58,7 +58,7 @@ export function EditSocialLinksForm({
 
       if (updateError) throw updateError;
 
-      toast.success("Your links have been saved.");
+      toast.success("Your links have been saved");
       onSaved();
     } catch (saveError) {
       const message = saveError instanceof Error ? saveError.message : "Couldn't save your links";
@@ -74,7 +74,7 @@ export function EditSocialLinksForm({
       <section className="panel p-6">
         <h2 className="font-display text-lg font-semibold">My Social Links</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Paste a full https link, or clear a field to remove that platform.
+          Paste a full https link, or clear a field to remove that platform
         </p>
         <div className="mt-5 grid gap-4">
           {SOCIAL_PLATFORMS.map((platform) => (
@@ -104,7 +104,7 @@ export function EditSocialLinksForm({
             <p className="text-sm text-destructive">{error}</p>
           ) : (
             <p className="text-sm text-muted-foreground">
-              Changes go live on your public page immediately.
+              Changes go live on your public page immediately
             </p>
           )}
         </div>

@@ -46,7 +46,7 @@ export function DeleteAccountSection({ username }: { username: string }) {
       }
       await deleteMyAccount({ data: { username: confirmName.trim().toLowerCase() } });
       await supabase.auth.signOut();
-      toast.success("Your account has been deleted.");
+      toast.success("Your account has been deleted");
       navigate({ to: "/" });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Couldn't delete the account");
@@ -63,7 +63,7 @@ export function DeleteAccountSection({ username }: { username: string }) {
       </div>
       <p className="mt-3 text-sm text-muted-foreground">
         Deleting your account is permanent. Your page at /{username}, your links and your picture
-        are removed for good and cannot be recovered.
+        are removed for good and cannot be recovered
       </p>
 
       <AlertDialog>
@@ -76,7 +76,7 @@ export function DeleteAccountSection({ username }: { username: string }) {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete your account?</AlertDialogTitle>
             <AlertDialogDescription>
-              This can't be undone. Your page at /{username} will stop working immediately.
+              This can't be undone. Your page at /{username} will stop working immediately
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-3">

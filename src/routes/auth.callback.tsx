@@ -10,11 +10,11 @@ export const Route = createFileRoute("/auth/callback")({
   head: () => ({
     meta: [
       { title: "Signing you in — Tinki" },
-      { name: "description", content: "Finishing your sign-in and opening your dashboard." },
+      { name: "description", content: "Finishing your sign-in and opening your dashboard" },
       { property: "og:title", content: "Signing you in — Tinki" },
       {
         property: "og:description",
-        content: "Finishing your sign-in and opening your dashboard.",
+        content: "Finishing your sign-in and opening your dashboard",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -32,9 +32,9 @@ function readCallbackError(): string | null {
   const description = query.get("error_description") ?? hash.get("error_description");
   if (!code && !description) return null;
   if (code === "otp_expired" || description?.toLowerCase().includes("expired")) {
-    return "That link has expired. Please request a new one.";
+    return "That link has expired. Please request a new one";
   }
-  return description ? description.replace(/\+/g, " ") : "That link is no longer valid.";
+  return description ? description.replace(/\+/g, " ") : "That link is no longer valid";
 }
 
 function AuthCallbackPage() {
@@ -62,7 +62,7 @@ function AuthCallbackPage() {
     return (
       <AuthShell
         title="We couldn't finish signing you in"
-        subtitle={linkError ?? "The sign-in didn't complete. Please try again."}
+        subtitle={linkError ?? "The sign-in didn't complete. Please try again"}
         footer={
           <Link to="/" className="text-primary hover:underline">
             Back to home
@@ -77,7 +77,7 @@ function AuthCallbackPage() {
   }
 
   return (
-    <AuthShell title="Signing you in…" subtitle="One moment, opening your dashboard.">
+    <AuthShell title="Signing you in…" subtitle="One moment, opening your dashboard">
       <p className="text-center text-sm text-muted-foreground">Please wait…</p>
     </AuthShell>
   );

@@ -13,9 +13,9 @@ export const Route = createFileRoute("/dashboard/settings")({
   head: () => ({
     meta: [
       { title: "Settings — Tinki" },
-      { name: "description", content: "Manage your Tinki account, page style and QR code in one place." },
+      { name: "description", content: "Manage your Tinki account, page style and QR code in one place" },
       { property: "og:title", content: "Settings — Tinki" },
-      { property: "og:description", content: "Manage your Tinki account, page style and QR code in one place." },
+      { property: "og:description", content: "Manage your Tinki account, page style and QR code in one place" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -24,10 +24,10 @@ export const Route = createFileRoute("/dashboard/settings")({
 });
 
 const SECTIONS = [
-  { to: "/dashboard/informations", label: "My Informations & Security", desc: "Picture, username, bio and social links.", icon: ShieldCheck },
-  { to: "/dashboard/customize", label: "Customize profile", desc: "Colors, fonts and backgrounds of your public page.", icon: Palette },
-  { to: "/dashboard/customize-qr-code", label: "Costumize QR Code", desc: "Colors and shapes of your QR code.", icon: QrCode },
-  { to: "/dashboard/account", label: "Account & Deletion", desc: "Manage or permanently delete your account.", icon: UserCog },
+  { to: "/dashboard/informations", label: "My Informations & Security", desc: "Picture, username, bio and social links", icon: ShieldCheck },
+  { to: "/dashboard/customize", label: "Customize profile", desc: "Colors, fonts and backgrounds of your public page", icon: Palette },
+  { to: "/dashboard/customize-qr-code", label: "Costumize QR Code", desc: "Colors and shapes of your QR code", icon: QrCode },
+  { to: "/dashboard/account", label: "Account & Deletion", desc: "Manage or permanently delete your account", icon: UserCog },
 ] as const;
 
 function SettingsPage() {
@@ -40,7 +40,7 @@ function SettingsPage() {
     <div className="space-y-8">
       <header>
         <h1 className="font-display text-3xl font-semibold">Settings</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Everything about your account in one place.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Everything about your account in one place</p>
       </header>
 
       <section className="panel space-y-3 p-6 text-sm">
@@ -53,7 +53,7 @@ function SettingsPage() {
       <section className="panel space-y-4 p-6">
         <div>
           <h2 className="font-display text-lg font-semibold">Language</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Choose the language of the whole site.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Choose the language of the whole site</p>
         </div>
         <div className="grid grid-cols-2 gap-2 rounded-lg bg-secondary p-1 sm:max-w-md sm:grid-cols-4">
           {([["en", "English"], ["fr", "Français"], ["es", "Español"], ["de", "Deutsch"], ["ar", "العربية"]] as const).map(([code, label]) => (

@@ -249,11 +249,11 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
 
   async function uploadBackgroundVideo(file: File) {
     if (!file.type.startsWith("video/")) {
-      toast.error("Please choose a video file from your device.");
+      toast.error("Please choose a video file from your device");
       return;
     }
     if (file.size > MAX_VIDEO_BYTES) {
-      toast.error("That video is larger than 5 MB. Please choose a smaller one.");
+      toast.error("That video is larger than 5 MB. Please choose a smaller one");
       return;
     }
     setUploadingVideo(true);
@@ -269,7 +269,7 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
       setVideoUrl(path);
       setMediaType("video");
       setImageEnabled(true);
-      toast.success("Video uploaded. Press Save to publish it.");
+      toast.success("Video uploaded. Press Save to publish it");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Couldn't upload that video");
     } finally {
@@ -280,11 +280,11 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
 
   async function uploadBackground(file: File) {
     if (!file.type.startsWith("image/")) {
-      toast.error("Please choose an image file.");
+      toast.error("Please choose an image file");
       return;
     }
     if (file.size > 4 * 1024 * 1024) {
-      toast.error("That photo is larger than 4 MB.");
+      toast.error("That photo is larger than 4 MB");
       return;
     }
     setUploading(true);
@@ -299,7 +299,7 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
       setLocalPreview(path, file);
       setImageUrl(path);
       setImageEnabled(true);
-      toast.success("Photo uploaded. Press Save to publish it.");
+      toast.success("Photo uploaded. Press Save to publish it");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Couldn't upload that photo");
     } finally {
@@ -347,7 +347,7 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
     stagedPathsRef.current = new Set();
     if (savedImage !== nextImage) setImageUrl(savedImage ?? PAGE_BACKGROUND_PRESETS[0]!.url);
     if (savedVideo !== nextVideo) setVideoUrl(savedVideo ?? "");
-    toast.success("Profile style saved.");
+    toast.success("Profile style saved");
     onSaved();
   }
 
@@ -359,7 +359,7 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
         <div className="relative flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="font-display text-lg font-semibold">Live preview of links</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Exactly what visitors see on your public page.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Exactly what visitors see on your public page</p>
           </div>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary/70 px-3 py-1 text-xs text-muted-foreground">
             <Sparkles className="h-3.5 w-3.5 text-primary" />
@@ -373,7 +373,7 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
 
       <section className="panel p-6 sm:p-8">
         <h2 className="font-display text-lg font-semibold">Public page background</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Choose the background behind your profile card.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Choose the background behind your profile card</p>
 
         <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-3" role="group" aria-label="Public page background style">
           {MODES.map((mode) => {
@@ -408,7 +408,7 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 className="font-display text-base font-semibold">Background photo or video</h3>
-              <p className="mt-1 text-sm text-muted-foreground">Use a photo or a short video instead of the color behind your card.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Use a photo or a short video instead of the color behind your card</p>
             </div>
             <Button type="button" variant={imageEnabled ? "default" : "outline"} size="sm" onClick={() => setImageEnabled(!imageEnabled)} aria-pressed={imageEnabled}>
               <ImageIcon className="h-4 w-4" />
@@ -450,7 +450,7 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
                         {uploadingVideo ? "Uploading…" : videoUrl ? "Replace video" : "Choose a video"}
                       </Button>
                     </div>
-                    <p className="text-xs text-muted-foreground">MP4, WebM or MOV up to 5 MB. It plays muted and loops. Videos can only be uploaded from your device.</p>
+                    <p className="text-xs text-muted-foreground">MP4, WebM or MOV up to 5 MB. It plays muted and loops. Videos can only be uploaded from your device</p>
                   </div>
 
                   {videoUrl ? (
@@ -508,7 +508,7 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
                     {uploading ? "Uploading…" : "Choose a photo"}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">JPG, PNG, GIF or WebP up to 4 MB.</p>
+                <p className="text-xs text-muted-foreground">JPG, PNG, GIF or WebP up to 4 MB</p>
               </div>
 
               <div className="space-y-2">
@@ -537,7 +537,7 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
       {/* Controls */}
       <section className="panel p-6 sm:p-8">
         <h2 className="font-display text-lg font-semibold">Card background</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Pick a style, then tune the colors.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Pick a style, then tune the colors</p>
 
         <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-3" role="group" aria-label="Background style">
           {MODES.map((mode) => {
@@ -579,7 +579,7 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
 
       <section className="panel p-6 sm:p-8">
         <h2 className="font-display text-lg font-semibold">Link icons</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Choose the icon and circle colors for social and custom links.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Choose the icon and circle colors for social and custom links</p>
 
         <div className="mt-7 grid gap-5 sm:grid-cols-2">
           <ColorField id="social-icon-color" label="Icon color" value={socialIconColor} onChange={setSocialIconColor} />
@@ -589,7 +589,7 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
 
       <section className="panel p-6 sm:p-8">
         <h2 className="font-display text-lg font-semibold">Name & bio typography</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Pick the font family, weight, style and color for your full name and your bio.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Pick the font family, weight, style and color for your full name and your bio</p>
 
         <div className="mt-7 grid gap-8 lg:grid-cols-2">
           <TypographyFields
@@ -625,7 +625,7 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
           {saving ? "Saving…" : "Save colors"}
         </Button>
         <p className="text-xs text-muted-foreground" aria-live="polite">
-          {canSave ? "Changes are visible in the preview before saving." : "Enter a complete hex color like #1A2B3C to enable saving."}
+          {canSave ? "Changes are visible in the preview before saving" : "Enter a complete hex color like #1A2B3C to enable saving"}
         </p>
       </div>
 
