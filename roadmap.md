@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Remove unnecessary final dots from site-authored titles and text across all languages, preserving meaningful punctuation.
+- [x] Remove unnecessary final dots from site-authored titles and text across all languages, preserving meaningful punctuation (public pages and five languages verified).
 
 - [x] Restore sign-in and sign-up on the published site (live build was missing its public account-service settings; needs a republish).
 - [x] Rename visible site branding, metadata, language copy, sharing labels, and QR/browser icons to Tinki.
