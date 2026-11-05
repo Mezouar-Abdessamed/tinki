@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AlertTriangle, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Copy, Loader2, ShieldCheck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -39,6 +39,15 @@ export const Route = createFileRoute("/dashboard/customize-qr-code")({
   }),
   component: CustomizeQrCodePage,
 });
+
+/** One-tap looks; all keep strong contrast so they pass the scan check. */
+const QR_PRESETS: Array<{ label: string; patch: Partial<QrSettings> }> = [
+  { label: "Classic", patch: { foregroundColor: "#0d1117", backgroundColor: "#ffffff", moduleShape: "square", eyeShape: "square" } },
+  { label: "Soft", patch: { foregroundColor: "#0f766e", backgroundColor: "#ffffff", moduleShape: "rounded", eyeShape: "rounded" } },
+  { label: "Dots", patch: { foregroundColor: "#1e293b", backgroundColor: "#ffffff", moduleShape: "dots", eyeShape: "circle" } },
+  { label: "Elegant", patch: { foregroundColor: "#3b0764", backgroundColor: "#fdf4ff", moduleShape: "classy", eyeShape: "leaf" } },
+  { label: "Night", patch: { foregroundColor: "#f8fafc", backgroundColor: "#0d1117", moduleShape: "rounded", eyeShape: "rounded" } },
+];
 
 function ColorField({
   id,
@@ -256,8 +265,9 @@ function CustomizeQrCodePage() {
         </p>
       </header>
 
-      {/* Live preview first, the editing controls stacked underneath it. */}
-      <section className="panel flex flex-col items-center gap-4 p-6">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+      {/* Preview stays in view on wide screens while editing. */}
+      <section className="panel flex flex-col items-center gap-4 p-6 lg:sticky lg:top-6 lg:order-2">
         <h2 className="font-display text-lg font-semibold">Live preview</h2>
         <QrCode
           value={url}
@@ -267,9 +277,39 @@ function CustomizeQrCodePage() {
           {...(avatar ? { avatar } : {})}
         />
         <ReadabilityStatus readability={readability} />
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            void navigator.clipboard.writeText(url).then(
+              () => toast.success("Link copied"),
+              () => toast.error("Could not copy the link"),
+            );
+          }}
+        >
+          <Copy className="me-2 h-4 w-4" />
+          Copy page link
+        </Button>
       </section>
 
-      <section className="panel space-y-6 p-6">
+      <section className="panel space-y-6 p-6 lg:order-1">
+        <div className="space-y-3">
+          <Label>Quick styles</Label>
+          <div className="flex flex-wrap gap-3">
+            {QR_PRESETS.map((preset) => (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={() => update(preset.patch)}
+                className="flex flex-col items-center gap-2 rounded-lg border border-border p-2 transition hover:border-primary/50"
+              >
+                <ShapeThumb settings={{ ...settings, ...preset.patch, margin: 0 }} />
+                <span className="text-xs text-muted-foreground">{preset.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="grid gap-4 sm:grid-cols-2">
           <ColorField
             id="qr-foreground"
@@ -323,6 +363,7 @@ function CustomizeQrCodePage() {
           </Button>
         </div>
       </section>
+      </div>
     </div>
   );
 }
