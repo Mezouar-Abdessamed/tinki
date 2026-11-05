@@ -107,8 +107,13 @@ export function renderQrSvg(
   const topExtension = avatarRadius;
   const logoSize = Math.min(6.6, count * 0.22);
   const logoQuietSize = logoSize + 1.25;
+  // Rounded plate: a clearly rounded square rather than a sharp-edged patch.
+  const logoRadius = logoQuietSize * 0.3;
   const logoX = (total - logoSize) / 2;
   const logoY = (total - logoSize) / 2;
+  // Geometry-derived id: two codes with the same plate geometry share an
+  // identical definition, so a repeated id on one page is harmless.
+  const logoClipId = `qr-logo-clip-${total}-${Math.round(logoRadius * 100)}`;
 
   const modules: string[] = [];
   for (let row = 0; row < count; row += 1) {
@@ -146,8 +151,9 @@ export function renderQrSvg(
 
   const centerLogoMarkup = centerLogoUrl
     ? [
-        `<rect x="${(total - logoQuietSize) / 2}" y="${(total - logoQuietSize) / 2}" width="${logoQuietSize}" height="${logoQuietSize}" rx="0.6" fill="${settings.backgroundColor}"/>`,
-        `<image href="${escapeXml(centerLogoUrl)}" x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" preserveAspectRatio="xMidYMid meet"/>`,
+        `<defs><clipPath id="${logoClipId}"><rect x="${(total - logoQuietSize) / 2}" y="${(total - logoQuietSize) / 2}" width="${logoQuietSize}" height="${logoQuietSize}" rx="${logoRadius}" ry="${logoRadius}"/></clipPath></defs>`,
+        `<rect x="${(total - logoQuietSize) / 2}" y="${(total - logoQuietSize) / 2}" width="${logoQuietSize}" height="${logoQuietSize}" rx="${logoRadius}" ry="${logoRadius}" fill="${settings.backgroundColor}"/>`,
+        `<image href="${escapeXml(centerLogoUrl)}" x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" preserveAspectRatio="xMidYMid meet" clip-path="url(#${logoClipId})"/>`,
       ].join("")
     : "";
 

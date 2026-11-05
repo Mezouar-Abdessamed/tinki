@@ -25,6 +25,7 @@
 - [x] Make the homepage language selector compact and responsive while preserving synchronization.
 - [x] Add a Views by Country pie chart for the top five countries and an Other percentage.
 - [x] Restore country analytics and server-side repeat-view protection (country column, insert guard trigger, and byCountry analytics applied; verified a visit records with country and the dashboard reads totals).
+- [x] Round the background plate behind the QR center logo (rounded square in the code's background colour, logo clipped to it; verified the rounded plate renders and the code still decodes).
 - [ ] Validate cover upload, replacement, removal, and positioning end to end (blocked: requires a disposable test profile or permission to alter the existing user's cover photo).
 - [x] Move analytics insert hardening into supabase/migrations/ (verified compatible, no duplicates; applying it to the live database still blocked: migration tool unavailable and connected database lacks the project's tables).
 - [x] Add `getBackgroundUrl` to src/lib/profiles.ts so stored background values resolve to a displayable link (object paths get a short-lived signed URL, existing URLs pass through).
