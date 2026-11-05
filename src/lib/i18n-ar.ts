@@ -15,7 +15,6 @@ export const AR: Record<string, string> = {
   "Picture, username, bio and social links": "الصورة واسم المستخدم والنبذة وروابط التواصل",
   "Customize profile": "تخصيص الملف الشخصي",
   "Colors, fonts and backgrounds of your public page": "ألوان وخطوط وخلفيات صفحتك العامة",
-  "Customize QR Code": "تخصيص رمز QR",
   "Colors and shapes of your QR code": "ألوان وأشكال رمز QR الخاص بك",
   "Account & Deletion": "الحساب والحذف",
   "Manage or permanently delete your account": "إدارة حسابك أو حذفه نهائيًا",
