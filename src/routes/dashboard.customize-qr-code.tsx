@@ -26,9 +26,9 @@ import { UnsafeQrSettingsError } from "@/lib/qr-validation";
 export const Route = createFileRoute("/dashboard/customize-qr-code")({
   head: () => ({
     meta: [
-      { title: "Costumize QR Code — Tinki" },
+      { title: "Customize QR Code — Tinki" },
       { name: "description", content: "Customize the QR code for your Tinki profile" },
-      { property: "og:title", content: "Costumize QR Code — Tinki" },
+      { property: "og:title", content: "Customize QR Code — Tinki" },
       {
         property: "og:description",
         content: "Customize the QR code for your Tinki profile",
@@ -250,7 +250,7 @@ function CustomizeQrCodePage() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="font-display text-3xl font-semibold">Costumize QR Code</h1>
+        <h1 className="font-display text-3xl font-semibold">Customize QR Code</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Change how your QR code looks. It always points to your page — only the style changes
         </p>

@@ -10,7 +10,7 @@ type QrCodeProps = {
   username: string;
   size?: number;
   showDownload?: boolean;
-  /** Customization chosen on "Costumize QR Code"; falls back to the app defaults. */
+  /** Customization chosen on "Customize QR Code"; falls back to the app defaults. */
   settings?: QrSettings;
   /** Existing profile image and name; also drives the initials fallback. */
   avatar?: QrAvatar;

@@ -10,7 +10,7 @@ import {
 /**
  * Single source of truth for how a profile's QR code looks.
  * Every place that renders or downloads a QR code reads from here, so a change
- * made on "Costumize QR Code" shows up everywhere at once.
+ * made on "Customize QR Code" shows up everywhere at once.
  */
 export type QrErrorCorrection = "L" | "M" | "Q" | "H";
 

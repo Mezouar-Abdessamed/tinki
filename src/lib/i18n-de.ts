@@ -18,7 +18,7 @@ export const DE: Record<string, string> = {
   "Customize profile": "Profil anpassen",
   "Account & Deletion": "Konto & Löschung",
   "Dashboard menu": "Dashboard-Menü",
-  "Costumize QR Code": "QR-Code anpassen",
+  "Customize QR Code": "QR-Code anpassen",
   "Colors, fonts and backgrounds of your public page": "Farben, Schriftarten und Hintergründe deiner öffentlichen Seite",
   "Log out": "Abmelden",
   "Sign out": "Abmelden",

@@ -18,7 +18,7 @@ export const FR: Record<string, string> = {
   "Customize profile": "Personnaliser le profil",
   "Account & Deletion": "Compte et suppression",
   "Dashboard menu": "Menu du tableau de bord",
-  "Costumize QR Code": "Personnaliser le code QR",
+  "Customize QR Code": "Personnaliser le code QR",
   "Colors, fonts and backgrounds of your public page": "Couleurs, polices et arrière-plans de votre page publique",
   "Log out": "Se déconnecter",
   "Sign out": "se déconnecter",
