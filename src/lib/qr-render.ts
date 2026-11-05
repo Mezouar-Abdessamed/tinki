@@ -151,8 +151,9 @@ export function renderQrSvg(
 
   const centerLogoMarkup = centerLogoUrl
     ? [
-        `<rect x="${(total - logoQuietSize) / 2}" y="${(total - logoQuietSize) / 2}" width="${logoQuietSize}" height="${logoQuietSize}" rx="0.6" fill="${settings.backgroundColor}"/>`,
-        `<image href="${escapeXml(centerLogoUrl)}" x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" preserveAspectRatio="xMidYMid meet"/>`,
+        `<defs><clipPath id="${logoClipId}"><rect x="${(total - logoQuietSize) / 2}" y="${(total - logoQuietSize) / 2}" width="${logoQuietSize}" height="${logoQuietSize}" rx="${logoRadius}" ry="${logoRadius}"/></clipPath></defs>`,
+        `<rect x="${(total - logoQuietSize) / 2}" y="${(total - logoQuietSize) / 2}" width="${logoQuietSize}" height="${logoQuietSize}" rx="${logoRadius}" ry="${logoRadius}" fill="${settings.backgroundColor}"/>`,
+        `<image href="${escapeXml(centerLogoUrl)}" x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" preserveAspectRatio="xMidYMid meet" clip-path="url(#${logoClipId})"/>`,
       ].join("")
     : "";
 
