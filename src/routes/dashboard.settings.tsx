@@ -26,7 +26,7 @@ export const Route = createFileRoute("/dashboard/settings")({
 const SECTIONS = [
   { to: "/dashboard/informations", label: "My Informations & Security", desc: "Picture, username, bio and social links", icon: ShieldCheck },
   { to: "/dashboard/customize", label: "Customize profile", desc: "Colors, fonts and backgrounds of your public page", icon: Palette },
-  { to: "/dashboard/customize-qr-code", label: "Costumize QR Code", desc: "Colors and shapes of your QR code", icon: QrCode },
+  { to: "/dashboard/customize-qr-code", label: "Customize QR Code", desc: "Colors and shapes of your QR code", icon: QrCode },
   { to: "/dashboard/account", label: "Account & Deletion", desc: "Manage or permanently delete your account", icon: UserCog },
 ] as const;
 

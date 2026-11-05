@@ -21,7 +21,7 @@ export const DASHBOARD_NAV = [
   { to: "/dashboard/profile", label: "My Profile", icon: UserCircle },
   { to: "/dashboard", label: "Dashboard", icon: BarChart3 },
   { to: "/dashboard/links", label: "My Links", icon: Link2 },
-  { to: "/dashboard/customize-qr-code", label: "Costumize QR Code", icon: QrCode },
+  { to: "/dashboard/customize-qr-code", label: "Customize QR Code", icon: QrCode },
   { to: "/dashboard/customize", label: "Customize profile", icon: Palette },
   { to: "/dashboard/informations", label: "My Informations & Security", icon: ShieldCheck },
   { to: "/dashboard/account", label: "Account & Deletion", icon: UserCog },

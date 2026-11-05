@@ -18,7 +18,6 @@ export const ES: Record<string, string> = {
   "Customize profile": "Perfil personalizado",
   "Account & Deletion": "Supresión de la cuenta",
   "Dashboard menu": "Menú de panel",
-  "Costumize QR Code": "Personalizar código QR",
   "Colors, fonts and backgrounds of your public page": "Colores, fuentes y antecedentes de su página pública",
   "Log out": "Cerrar sesión",
   "Sign out": "Cerrar sesión",
