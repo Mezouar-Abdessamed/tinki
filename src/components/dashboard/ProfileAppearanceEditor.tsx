@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  AlertTriangle,
   ArrowDownRight,
   Check,
   Circle,
@@ -38,6 +39,39 @@ import {
 } from "@/lib/profiles";
 
 const MAX_VIDEO_BYTES = 5 * 1024 * 1024;
+
+type ProfileTheme = {
+  label: string;
+  page: [string, string];
+  pageAngle: number;
+  card: [string, string];
+  icon: string;
+  iconBg: string;
+  name: string;
+  bio: string;
+};
+
+const PROFILE_THEMES: ProfileTheme[] = [
+  { label: "Minimal", page: ["#F4F4F5", "#E4E4E7"], pageAngle: 180, card: ["#FFFFFF", "#FFFFFF"], icon: "#18181B", iconBg: "#F4F4F5", name: "#09090B", bio: "#52525B" },
+  { label: "Midnight", page: ["#0B1020", "#1E293B"], pageAngle: 160, card: ["#111827", "#1F2937"], icon: "#E8EDF4", iconBg: "#252A38", name: "#F8FAFC", bio: "#CBD5E1" },
+  { label: "Ocean", page: ["#0EA5E9", "#0F766E"], pageAngle: 135, card: ["#ECFEFF", "#CFFAFE"], icon: "#0F766E", iconBg: "#FFFFFF", name: "#083344", bio: "#155E75" },
+  { label: "Sunset", page: ["#F97316", "#DB2777"], pageAngle: 135, card: ["#FFF7ED", "#FFE4E6"], icon: "#9A3412", iconBg: "#FFFFFF", name: "#431407", bio: "#9F1239" },
+  { label: "Forest", page: ["#14532D", "#365314"], pageAngle: 150, card: ["#F0FDF4", "#ECFCCB"], icon: "#166534", iconBg: "#FFFFFF", name: "#052E16", bio: "#3F6212" },
+  { label: "Neon", page: ["#09090B", "#3B0764"], pageAngle: 135, card: ["#18181B", "#27272A"], icon: "#A3E635", iconBg: "#09090B", name: "#A3E635", bio: "#E4E4E7" },
+];
+
+function luminance(hex: string): number {
+  const v = [1, 3, 5].map((i) => {
+    const c = parseInt(hex.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * v[0]! + 0.7152 * v[1]! + 0.0722 * v[2]!;
+}
+
+function contrastRatio(a: string, b: string): number {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [number, number];
+  return (hi + 0.05) / (lo + 0.05);
+}
 
 // Returns the object path inside the "backgrounds" bucket only when the value is either a clean
 // "<user id>/<file>" storage path or a legacy signed link from this project's storage, and the
@@ -323,6 +357,31 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
   const typographyDirty = nameFontFamily !== (profile.name_font_family ?? "display") || nameFontWeight !== (profile.name_font_weight ?? 600) || nameFontStyle !== (profile.name_font_style ?? "normal") || bioFontFamily !== (profile.bio_font_family ?? "sans") || bioFontWeight !== (profile.bio_font_weight ?? 400) || bioFontStyle !== (profile.bio_font_style ?? "normal") || nameColor !== (profile.name_color ?? DEFAULT_NAME_COLOR) || bioColor !== (profile.bio_color ?? DEFAULT_BIO_COLOR);
   const dirty = type !== initialType || firstColor !== profile.card_background_color || secondColor !== profile.card_gradient_color || angle !== profile.card_gradient_angle || socialIconColor !== (profile.social_icon_color ?? "#E8EDF4") || socialIconBgColor !== (profile.social_icon_bg_color ?? "#252A38") || pageType !== profile.page_background_type || pageFirstColor !== profile.page_background_color || pageSecondColor !== profile.page_gradient_color || pageAngle !== profile.page_gradient_angle || imageEnabled !== (profile.page_background_use_image ?? false) || imageUrl !== (profile.page_background_image_url ?? PAGE_BACKGROUND_PRESETS[0]!.url) || imageMode !== ((profile.page_background_image_mode as PageImageMode) ?? "cover") || mediaType !== ((profile.page_background_media_type as PageMediaType) ?? "image") || videoUrl !== (profile.page_background_video_url ?? "") || typographyDirty;
 
+  function applyTheme(theme: ProfileTheme) {
+    setPageType("linear");
+    setPageFirstColor(theme.page[0]);
+    setPageSecondColor(theme.page[1]);
+    setPageAngle(theme.pageAngle);
+    setImageEnabled(false);
+    setType(theme.card[0] === theme.card[1] ? "solid" : "linear");
+    setFirstColor(theme.card[0]);
+    setSecondColor(theme.card[1]);
+    setAngle(135);
+    setSocialIconColor(theme.icon);
+    setSocialIconBgColor(theme.iconBg);
+    setNameColor(theme.name);
+    setBioColor(theme.bio);
+  }
+
+  const lowContrast =
+    canSave && (contrastRatio(nameColor, firstColor) < 3 || contrastRatio(bioColor, firstColor) < 3);
+
+  function fixContrast() {
+    const dark = luminance(firstColor) > 0.4;
+    setNameColor(dark ? "#0D1117" : "#F8FAFC");
+    setBioColor(dark ? "#334155" : "#CBD5E1");
+  }
+
   async function save() {
     if (!canSave) return;
     setSaving(true);
@@ -369,6 +428,38 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
         <div className="relative mt-6 rounded-2xl border border-border bg-background/60 p-4 sm:p-8">
           <ProfilePreview profile={previewProfile} avatarUrl={avatarUrl} />
         </div>
+      </section>
+
+      <section className="panel p-6 sm:p-8">
+        <h2 className="font-display text-lg font-semibold">Ready-made themes</h2>
+        <p className="mt-1 text-sm text-muted-foreground">One tap sets background, card, icons and text colors</p>
+        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {PROFILE_THEMES.map((theme) => (
+            <button
+              key={theme.label}
+              type="button"
+              onClick={() => applyTheme(theme)}
+              className="group flex flex-col gap-2 rounded-xl border border-border p-2 text-start transition hover:border-primary/60"
+            >
+              <span
+                className="flex h-16 items-center justify-center rounded-lg"
+                style={{ background: `linear-gradient(${theme.pageAngle}deg, ${theme.page[0]}, ${theme.page[1]})` }}
+              >
+                <span className="h-9 w-14 rounded-md" style={{ background: theme.card[0], color: theme.name }}>
+                  <span className="block px-1.5 pt-1 text-[10px] font-semibold">Aa</span>
+                </span>
+              </span>
+              <span className="text-xs font-medium">{theme.label}</span>
+            </button>
+          ))}
+        </div>
+        {lowContrast && (
+          <div role="status" className="mt-5 flex flex-wrap items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/5 p-3 text-sm">
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+            <span className="flex-1">Your name or bio may be hard to read on this card color</span>
+            <Button size="sm" variant="secondary" onClick={fixContrast}>Fix it for me</Button>
+          </div>
+        )}
       </section>
 
       <section className="panel p-6 sm:p-8">
@@ -619,7 +710,7 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
         </div>
       </section>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="sticky bottom-4 z-20 flex flex-col gap-3 rounded-xl border border-border bg-background/90 p-3 shadow-lg backdrop-blur sm:flex-row sm:items-center">
         <Button type="button" onClick={save} disabled={saving || !canSave} className="sm:w-44">
           {saving ? <Loader2 className="animate-spin" /> : <Check />}
           {saving ? "Saving…" : "Save colors"}
