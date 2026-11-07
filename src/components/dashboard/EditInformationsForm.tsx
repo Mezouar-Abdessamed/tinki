@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { useBlocker } from "@tanstack/react-router";
+import { Camera, ImagePlus, Save, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { CoverBanner } from "@/components/CoverBanner";
 
@@ -6,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Slider } from "@/components/ui/slider";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { hasProfileEdits } from "@/lib/profile-edit-state";
 import { supabase } from "@/lib/app-supabase";
 import {
   AVATAR_ACCEPT,
@@ -33,27 +38,11 @@ const COVER_CLEANUP_RETRIES = 2;
 const COVER_CLEANUP_RETRY_DELAY_MS = 600;
 
 /**
- * Deleting the previous cover can fail on a transient storage/network error.
- * Retry a couple of times with a short backoff; the caller decides what to do
- * when every attempt fails (never blocks the save for long).
- */
-async function removeCoverWithRetry(path: string): Promise<boolean> {
-  for (let attempt = 0; attempt <= COVER_CLEANUP_RETRIES; attempt++) {
-    if (attempt > 0) {
-      await new Promise((resolve) => setTimeout(resolve, COVER_CLEANUP_RETRY_DELAY_MS * attempt));
-    }
-    const { error } = await supabase.storage.from("covers").remove([path]);
-    if (!error) return true;
-  }
-  return false;
-}
-
-/**
  * After a new cover becomes active, remove every other object in the user's
  * covers folder (orphans from earlier failed cleanups included). Only touches
  * paths inside `${userId}/`; failures never affect the saved profile.
  */
-async function cleanupCoverFolder(userId: string, keepPath: string): Promise<boolean> {
+async function cleanupCoverFolder(userId: string, keepPath: string | null): Promise<boolean> {
   for (let attempt = 0; attempt <= COVER_CLEANUP_RETRIES; attempt++) {
     if (attempt > 0) {
       await new Promise((resolve) => setTimeout(resolve, COVER_CLEANUP_RETRY_DELAY_MS * attempt));
@@ -97,49 +86,57 @@ export function EditInformationsForm({
   profile,
   avatarUrl,
   onSaved,
+  onDirtyChange,
 }: {
   profile: Profile;
   avatarUrl: string | null;
-  onSaved: () => void;
+  onSaved: () => void | Promise<unknown>;
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
   const { t } = useLanguage();
   const fileInput = useRef<HTMLInputElement>(null);
   const coverInput = useRef<HTMLInputElement>(null);
-
   const [username, setUsername] = useState(profile.username);
   const [displayName, setDisplayName] = useState(profile.display_name ?? "");
   const [bio, setBio] = useState(profile.bio ?? "");
-
-
-  // Avatar is staged locally and only written after the profile save succeeds.
   const [pickedFile, setPickedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [removeAvatar, setRemoveAvatar] = useState(false);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [savedCoverUrl, setSavedCoverUrl] = useState<string | null>(null);
+  const [removeCover, setRemoveCover] = useState(false);
   const [coverX, setCoverX] = useState(profile.cover_photo_x ?? 50);
   const [coverY, setCoverY] = useState(profile.cover_photo_y ?? 50);
-  const [coverSaving, setCoverSaving] = useState(false);
-  const [coverError, setCoverError] = useState<string | null>(null);
-
   const [error, setError] = useState<string | null>(null);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [coverError, setCoverError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const busy = saving || refreshing;
+  const shownAvatar = previewUrl ?? (removeAvatar ? null : avatarUrl);
+  const shownCover = removeCover ? null : coverPreview ?? savedCoverUrl;
+  const hasCover = !removeCover && Boolean(coverFile || profile.cover_photo_path);
+  const dirty = hasProfileEdits(
+    { username: profile.username, displayName: profile.display_name ?? "", bio: profile.bio ?? "", avatarPath: profile.avatar_path, coverPath: profile.cover_photo_path ?? null, coverX: profile.cover_photo_x ?? 50, coverY: profile.cover_photo_y ?? 50 },
+    { username, displayName, bio, avatarPath: removeAvatar ? null : profile.avatar_path, coverPath: removeCover ? null : profile.cover_photo_path ?? null, coverX, coverY },
+    Boolean(pickedFile), Boolean(coverFile),
+  );
+  const blocker = useBlocker({ shouldBlockFn: () => dirty && !busy, enableBeforeUnload: dirty && !busy, withResolver: true });
+
+  useEffect(() => { onDirtyChange?.(dirty); }, [dirty, onDirtyChange]);
 
   useEffect(() => {
-    if (!pickedFile) {
-      setPreviewUrl(null);
-      return;
-    }
-    const objectUrl = URL.createObjectURL(pickedFile);
-    setPreviewUrl(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
+    if (!pickedFile) { setPreviewUrl(null); return; }
+    const url = URL.createObjectURL(pickedFile);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
   }, [pickedFile]);
 
   useEffect(() => {
     let active = true;
     if (!profile.cover_photo_path) { setSavedCoverUrl(null); return; }
-    void getCoverUrl(profile.cover_photo_path).then((url) => { if (active) setSavedCoverUrl(url); });
+    void getCoverUrl(profile.cover_photo_path).then((url) => { if (active) setSavedCoverUrl(url); }).catch(() => { if (active) setSavedCoverUrl(null); });
     return () => { active = false; };
   }, [profile.cover_photo_path]);
 
@@ -150,301 +147,166 @@ export function EditInformationsForm({
     return () => URL.revokeObjectURL(url);
   }, [coverFile]);
 
-  function pickCover(file: File | undefined) {
-    if (!file) return;
-    if (!isAllowedAvatarType(file.type)) { setCoverError("Choose a JPG, PNG or WebP image"); toast.error("Choose a JPG, PNG or WebP image"); return; }
-    if (file.size > MAX_COVER_BYTES) { setCoverError("Cover photo must be 5 MB or less"); toast.error("Cover photo must be 5 MB or less"); return; }
-    setCoverError(null);
-    setCoverFile(file);
-  }
-
-  async function saveCover() {
-    if (!coverFile && !profile.cover_photo_path) return;
-    setCoverSaving(true);
-    setCoverError(null);
-    let uploadedPath: string | null = null;
-    try {
-      if (coverFile) {
-        const { blob, contentType } = await reencodeAvatar(coverFile, 1600);
-        if (blob.size > MAX_COVER_BYTES) throw new Error("Processed cover exceeds 5 MB. Try a smaller image");
-        const path = `${profile.id}/${crypto.randomUUID()}.${extensionForType(contentType)}`;
-        const { error } = await supabase.storage.from("covers").upload(path, blob, { upsert: false, contentType });
-        if (error) throw error;
-        uploadedPath = path;
-      }
-      const { error } = await supabase.from("profiles").update({
-        cover_photo_path: uploadedPath ?? profile.cover_photo_path,
-        cover_photo_x: coverX,
-        cover_photo_y: coverY,
-      }).eq("id", profile.id);
-      if (error) throw error;
-      if (uploadedPath) {
-        const cleaned = await cleanupCoverFolder(profile.id, uploadedPath);
-        if (!cleaned) toast.error("Cover saved, but the previous file could not be cleaned up");
-      }
-      if (uploadedPath) {
-        try { setSavedCoverUrl(await getCoverUrl(uploadedPath)); }
-        catch { setSavedCoverUrl(null); }
-      }
-      setCoverFile(null);
-      toast.success("Cover photo saved");
-      onSaved();
-    } catch (err) {
-      if (uploadedPath) await supabase.storage.from("covers").remove([uploadedPath]);
-      const message = err instanceof Error ? err.message : "Could not save cover photo";
-      setCoverError(message);
-      toast.error(message);
-    } finally { setCoverSaving(false); }
-  }
-
-  async function removeCoverPhoto() {
-    if (!profile.cover_photo_path) { setCoverFile(null); return; }
-    setCoverSaving(true);
-    setCoverError(null);
-    try {
-      const { error: updateError } = await supabase.from("profiles").update({ cover_photo_path: null, cover_photo_x: 50, cover_photo_y: 50 }).eq("id", profile.id);
-      if (updateError) throw updateError;
-      const cleaned = await removeCoverWithRetry(profile.cover_photo_path);
-      if (!cleaned) {
-        // Storage deletion failed after retries: restore the reference so the
-        // database never points at a deleted cover, then report the failure.
-        const { error: restoreError } = await supabase.from("profiles").update({ cover_photo_path: profile.cover_photo_path, cover_photo_x: profile.cover_photo_x, cover_photo_y: profile.cover_photo_y }).eq("id", profile.id);
-        if (restoreError) throw new Error("Cover removal failed and its reference could not be restored. Please refresh your profile");
-        throw new Error("Cover removal failed. Please try again");
-      }
-      setCoverFile(null);
-      setSavedCoverUrl(null);
-      setCoverX(50);
-      setCoverY(50);
-      toast.success("Cover photo removed");
-      onSaved();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Could not remove cover photo";
-      setCoverError(message);
-      toast.error(message);
-    } finally { setCoverSaving(false); }
-  }
-
-  const shownAvatar = previewUrl ?? (removeAvatar ? null : avatarUrl);
-  const hasAvatar = Boolean(shownAvatar);
-
   function pickFile(file: File | undefined) {
     if (!file) return;
-    // Raster images only — SVG can carry scripts and the bucket is publicly readable.
-    if (!isAllowedAvatarType(file.type)) {
-      toast.error("Choose a JPG, PNG or WebP image");
-      return;
-    }
-    if (file.size > MAX_AVATAR_BYTES) {
-      toast.error("That picture is larger than 3 MB");
-      return;
-    }
-    setRemoveAvatar(false);
+    if (!isAllowedAvatarType(file.type)) { setAvatarError("Choose a JPG, PNG or WebP image"); return; }
+    if (file.size > MAX_AVATAR_BYTES) { setAvatarError("That picture is larger than 3 MB"); return; }
+    setAvatarError(null);
     setPickedFile(file);
+    setRemoveAvatar(false);
   }
 
+  function pickCover(file: File | undefined) {
+    if (!file) return;
+    if (!isAllowedAvatarType(file.type)) { setCoverError("Choose a JPG, PNG or WebP image"); return; }
+    if (file.size > MAX_COVER_BYTES) { setCoverError("Cover photo must be 5 MB or less"); return; }
+    setCoverError(null);
+    setCoverFile(file);
+    setRemoveCover(false);
+    setCoverX(50);
+    setCoverY(50);
+  }
+
+  function cancel() {
+    setUsername(profile.username);
+    setDisplayName(profile.display_name ?? "");
+    setBio(profile.bio ?? "");
+    setPickedFile(null);
+    setRemoveAvatar(false);
+    setCoverFile(null);
+    setRemoveCover(false);
+    setCoverX(profile.cover_photo_x ?? 50);
+    setCoverY(profile.cover_photo_y ?? 50);
+    setError(null);
+    setAvatarError(null);
+    setCoverError(null);
+  }
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
+    if (!dirty || busy) return;
     setError(null);
-
-    const parsedUsername = usernameSchema.safeParse(username);
-    if (!parsedUsername.success) {
-      setError(firstError(parsedUsername.error));
-      return;
-    }
-    const nextUsername = parsedUsername.data;
-
-    if (displayName.trim().length > 60) {
-      setError("Full name must be 60 characters or fewer");
-      return;
-    }
-    if (bio.trim().length > BIO_MAX) {
-       setError(t(`Bio must be ${BIO_MAX} characters or fewer`));
-      return;
-    }
-
-
-
-
+    const parsed = usernameSchema.safeParse(username);
+    if (!parsed.success) { setError(firstError(parsed.error)); return; }
+    if (displayName.trim().length > 60) { setError("Full name must be 60 characters or fewer"); return; }
+    if (bio.trim().length > BIO_MAX) { setError(t(`Bio must be ${BIO_MAX} characters or fewer`)); return; }
     setSaving(true);
-    let uploadedPath: string | null = null;
+    let uploadedAvatar: string | null = null;
+    let uploadedCover: string | null = null;
+    let committed = false;
     try {
-      // The current username stays valid; anything else must be free.
-      if (nextUsername !== profile.username && !(await isUsernameAvailable(nextUsername))) {
+      if (parsed.data !== profile.username && !(await isUsernameAvailable(parsed.data))) {
         setError("That username is already taken");
         return;
       }
-
-      // 1. Upload the new picture first — the old one keeps working until we succeed.
       if (pickedFile) {
-        // Re-encode through a canvas so only clean raster bytes are stored.
         const { blob, contentType } = await reencodeAvatar(pickedFile);
         const path = `${profile.id}/${crypto.randomUUID()}.${extensionForType(contentType)}`;
-        const { error: uploadError } = await supabase.storage
-          .from("avatars")
-          .upload(path, blob, { upsert: false, contentType });
-        if (uploadError) throw uploadError;
-        uploadedPath = path;
+        const { error } = await supabase.storage.from("avatars").upload(path, blob, { upsert: false, contentType });
+        if (error) throw error;
+        uploadedAvatar = path;
       }
-
-
-      const nextAvatarPath = uploadedPath ?? (removeAvatar ? null : profile.avatar_path);
-
-      // 2. Save the profile.
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({
-          username: nextUsername,
-          display_name: displayName.trim() || null,
-          bio: bio.trim() || null,
-          avatar_path: nextAvatarPath,
-        })
-        .eq("id", profile.id);
+      if (coverFile) {
+        const { blob, contentType } = await reencodeAvatar(coverFile, 1600);
+        if (blob.size > MAX_COVER_BYTES) throw new Error("Cover photo must be 5 MB or less");
+        const path = `${profile.id}/${crypto.randomUUID()}.${extensionForType(contentType)}`;
+        const { error } = await supabase.storage.from("covers").upload(path, blob, { upsert: false, contentType });
+        if (error) throw error;
+        uploadedCover = path;
+      }
+      const avatarPath = uploadedAvatar ?? (removeAvatar ? null : profile.avatar_path);
+      const coverPath = uploadedCover ?? (removeCover ? null : profile.cover_photo_path ?? null);
+      const { error: updateError } = await supabase.from("profiles").update({
+        username: parsed.data,
+        display_name: displayName.trim() || null,
+        bio: bio.trim() || null,
+        avatar_path: avatarPath,
+        cover_photo_path: coverPath,
+        cover_photo_x: coverPath ? coverX : 50,
+        cover_photo_y: coverPath ? coverY : 50,
+      }).eq("id", profile.id);
       if (updateError) throw updateError;
-
-      // 3. Only now is it safe to delete the previous picture. Failures never
-      // undo the save; the folder sweep also clears orphans left by earlier
-      // failed cleanups, so a later avatar save self-heals.
+      committed = true;
+      setRefreshing(true);
       if (pickedFile || removeAvatar) {
-        const cleaned = await cleanupAvatarFolder(profile.id, nextAvatarPath);
-        if (!cleaned) toast.error("Picture saved, but the previous file could not be cleaned up");
+        if (!(await cleanupAvatarFolder(profile.id, avatarPath))) toast.error(t("Picture saved, but the previous file could not be cleaned up"));
       }
-
+      if (uploadedCover || removeCover) {
+        if (!(await cleanupCoverFolder(profile.id, coverPath))) toast.error(t("Cover saved, but the previous file could not be cleaned up"));
+      }
+      await onSaved();
+      setUsername(parsed.data);
+      setDisplayName(displayName.trim());
+      setBio(bio.trim());
       setPickedFile(null);
       setRemoveAvatar(false);
-      toast.success("Your changes have been saved");
-      onSaved();
+      setCoverFile(null);
+      setRemoveCover(false);
+      if (!coverPath) { setCoverX(50); setCoverY(50); }
+      toast.success(t("Your changes have been saved"));
     } catch (saveError) {
-      // Clean up an orphaned upload so storage doesn't collect dead files.
-      if (uploadedPath) await supabase.storage.from("avatars").remove([uploadedPath]);
-      const message =
-        saveError instanceof Error ? saveError.message : "Couldn't save your changes";
+      // Roll back only unreferenced new uploads; never remove a committed photo.
+      if (!committed) {
+        if (uploadedAvatar) await supabase.storage.from("avatars").remove([uploadedAvatar]);
+        if (uploadedCover) await supabase.storage.from("covers").remove([uploadedCover]);
+      }
+      const message = saveError instanceof Error ? saveError.message : "Couldn't save your changes";
       setError(message);
-      toast.error(message);
-    } finally {
-      setSaving(false);
-    }
+      toast.error(t(message));
+    } finally { setSaving(false); setRefreshing(false); }
   }
 
   return (
-    <form onSubmit={save} className="space-y-8" noValidate>
-      <section className="panel p-6">
-        <h2 className="font-display text-lg font-semibold">Edit My Informations</h2>
-
-        <div className="mt-6 flex flex-col gap-5 sm:flex-row sm:items-center">
-          <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
-            {shownAvatar ? (
-              <img src={shownAvatar} alt="Your profile picture" className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center font-display text-xl text-muted-foreground">
-                {(displayName || username || "?").trim().charAt(0).toUpperCase()}
+    <>
+      <form onSubmit={save} className="space-y-6" noValidate>
+        <section aria-labelledby="edit-information-title">
+          <h2 id="edit-information-title" className="font-display text-lg font-semibold tracking-normal">Edit My Information</h2>
+          <fieldset disabled={busy} className="mt-5 min-w-0 space-y-6">
+            <div className="mx-auto max-w-xl">
+              <div className="relative overflow-hidden rounded-t-lg">
+                <CoverBanner url={shownCover} x={coverX} y={coverY} onPositionChange={hasCover ? (x, y) => { setCoverX(x); setCoverY(y); } : undefined} />
+                <div className="absolute end-3 top-3 flex gap-2">
+                  <Button type="button" variant="secondary" size="icon" className="size-9" title={t(hasCover ? "Change Cover Photo" : "Upload Cover Photo")} aria-label={t(hasCover ? "Change Cover Photo" : "Upload Cover Photo")} onClick={() => coverInput.current?.click()}><ImagePlus className="size-4" /></Button>
+                  {hasCover && <Button type="button" variant="secondary" size="icon" className="size-9" title={t("Remove Cover Photo")} aria-label={t("Remove Cover Photo")} onClick={() => { setCoverFile(null); setRemoveCover(true); setCoverX(50); setCoverY(50); }}><Trash2 className="size-4" /></Button>}
+                </div>
               </div>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <input
-              ref={fileInput}
-              type="file"
-              accept={AVATAR_ACCEPT}
-              className="hidden"
-              onChange={(event) => pickFile(event.target.files?.[0])}
-            />
-            <Button type="button" variant="outline" size="sm" onClick={() => fileInput.current?.click()}>
-              {hasAvatar ? "Change picture" : "Add picture"}
-            </Button>
-            {hasAvatar ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setPickedFile(null);
-                  setRemoveAvatar(true);
-                }}
-              >
-                Remove picture
-              </Button>
-            ) : null}
-          </div>
+              <div className="relative -mt-10 flex flex-col items-center sm:-mt-14">
+                <div className="relative">
+                  <div data-profile-avatar className="size-28 overflow-hidden rounded-full border border-border bg-muted shadow-[var(--shadow-glow)]">
+                    {shownAvatar ? <img src={shownAvatar} alt="Your profile picture" className="size-full object-cover" /> : <div className="flex size-full items-center justify-center font-display text-2xl text-muted-foreground">{(displayName || username || "?").trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join("")}</div>}
+                  </div>
+                  <Button type="button" variant="secondary" size="icon" className="absolute bottom-0 end-0 size-8 rounded-full border border-border" title={t(shownAvatar ? "Change picture" : "Add picture")} aria-label={t(shownAvatar ? "Change picture" : "Add picture")} onClick={() => fileInput.current?.click()}><Camera className="size-4" /></Button>
+                </div>
+                <p className="mt-5 max-w-full break-words text-center font-display text-xl font-semibold tracking-normal">{displayName || username}</p>
+                <p className="mt-1 max-w-full break-all text-center text-sm text-primary">@{username}</p>
+                {bio && <p className="mt-3 max-w-sm break-words text-center text-sm text-muted-foreground">{bio}</p>}
+                {shownAvatar && <Button type="button" variant="ghost" size="sm" className="mt-2 text-muted-foreground" onClick={() => { setPickedFile(null); setRemoveAvatar(true); }}><Trash2 className="me-2 size-3.5" />Remove picture</Button>}
+              </div>
+              <input ref={fileInput} type="file" accept={AVATAR_ACCEPT} aria-label="Profile picture file" className="hidden" onChange={(e) => { pickFile(e.target.files?.[0]); e.target.value = ""; }} />
+              <input ref={coverInput} type="file" accept={AVATAR_ACCEPT} aria-label="Cover photo file" className="hidden" onChange={(e) => { pickCover(e.target.files?.[0]); e.target.value = ""; }} />
+              <p className="mt-4 text-center text-xs text-muted-foreground">JPG, PNG or WebP · picture up to 3 MB · cover up to 5 MB</p>
+              {avatarError && <p role="alert" className="mt-3 text-sm text-destructive">{t(avatarError)}</p>}
+              {coverError && <p role="alert" className="mt-3 text-sm text-destructive">{t(coverError)}</p>}
+              {hasCover && <div className="mt-5 grid gap-5 border-t border-border pt-5 sm:grid-cols-2">
+                <div className="space-y-3"><div className="flex justify-between gap-2 text-sm"><Label htmlFor="cover-x">Horizontal position</Label><span className="tabular-nums text-muted-foreground">{Math.round(coverX)}%</span></div><Slider id="cover-x" aria-label={t("Horizontal position")} min={0} max={100} step={1} value={[coverX]} onValueChange={([value]) => { if (value !== undefined) setCoverX(value); }} /></div>
+                <div className="space-y-3"><div className="flex justify-between gap-2 text-sm"><Label htmlFor="cover-y">Vertical position</Label><span className="tabular-nums text-muted-foreground">{Math.round(coverY)}%</span></div><Slider id="cover-y" aria-label={t("Vertical position")} min={0} max={100} step={1} value={[coverY]} onValueChange={([value]) => { if (value !== undefined) setCoverY(value); }} /></div>
+              </div>}
+            </div>
+            <div className="grid gap-5 border-t border-border pt-6 sm:grid-cols-2">
+              <div className="space-y-2"><Label htmlFor="username">Username</Label><Input id="username" value={username} onChange={(e) => setUsername(e.target.value.toLowerCase())} placeholder="yourname" autoComplete="username" /><p className="break-all text-xs text-muted-foreground">Your page lives at /{username || "…"}</p></div>
+              <div className="space-y-2"><Label htmlFor="display-name">Full name</Label><Input id="display-name" value={displayName} onChange={(e) => setDisplayName(stripEmoji(e.target.value))} placeholder="Your name" maxLength={60} autoComplete="name" /><p className="text-xs text-muted-foreground">Emojis aren't allowed in your name</p></div>
+              <div className="space-y-2 sm:col-span-2"><Label htmlFor="bio">Bio</Label><Textarea id="bio" rows={3} maxLength={BIO_MAX} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Say something about yourself" /><p className="text-end text-xs tabular-nums text-muted-foreground">{bio.length}/{BIO_MAX}</p></div>
+            </div>
+          </fieldset>
+        </section>
+        <div className="sticky bottom-0 z-20 flex flex-col gap-3 border-t border-border bg-background/95 py-4 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+          <div aria-live="polite" className="min-w-0 text-sm"><p className={dirty ? "text-primary" : "text-muted-foreground"}>{dirty ? "Unsaved changes" : "Up to date"}</p>{error && <p role="alert" className="mt-1 text-destructive">{t(error)}</p>}</div>
+          <div className="flex gap-2"><Button type="button" variant="ghost" disabled={!dirty || busy} onClick={cancel} className="flex-1 sm:flex-none"><X className="me-2 size-4" />Cancel</Button><Button type="submit" disabled={!dirty || busy} className="flex-1 sm:flex-none"><Save className="me-2 size-4" />{busy ? "Saving…" : "Save Changes"}</Button></div>
         </div>
-
-        <div className="mt-7 grid gap-5 sm:max-w-lg">
-          <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
-            <Input
-              id="username"
-              value={username}
-              onChange={(event) => setUsername(event.target.value.toLowerCase())}
-              placeholder="yourname"
-            />
-            <p className="text-xs text-muted-foreground">Your page lives at /{username || "…"}</p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="display-name">Full name</Label>
-            <Input
-              id="display-name"
-              value={displayName}
-              onChange={(event) => setDisplayName(stripEmoji(event.target.value))}
-              placeholder="Your name"
-              maxLength={60}
-            />
-            <p className="text-xs text-muted-foreground">Emojis aren't allowed in your name</p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="bio">Bio</Label>
-            <Textarea
-              id="bio"
-              rows={3}
-              maxLength={BIO_MAX}
-              value={bio}
-              onChange={(event) => setBio(event.target.value)}
-              placeholder="Say something about yourself"
-            />
-            <p className="text-xs text-muted-foreground">
-              {bio.length}/{BIO_MAX} — clear the field to remove your bio
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="panel p-6">
-        <h2 className="font-display text-lg font-semibold">Cover Photo</h2>
-        <div className="mt-5 max-w-xl overflow-hidden rounded-lg border border-border">
-          {coverPreview || savedCoverUrl || profile.cover_photo_path ? (
-            <CoverBanner url={coverPreview ?? savedCoverUrl} x={coverX} y={coverY} className="w-full" />
-          ) : <div className="flex aspect-[851/315] items-center justify-center bg-secondary text-sm text-muted-foreground">No cover photo</div>}
-        </div>
-        {(coverPreview || savedCoverUrl || profile.cover_photo_path) && <div className="mt-5 grid max-w-xl gap-4 sm:grid-cols-2">
-          <div><Label htmlFor="cover-x">Horizontal position</Label><input id="cover-x" type="range" min="0" max="100" value={coverX} onChange={(e) => setCoverX(Number(e.target.value))} className="mt-2 w-full accent-primary" /></div>
-          <div><Label htmlFor="cover-y">Vertical position</Label><input id="cover-y" type="range" min="0" max="100" value={coverY} onChange={(e) => setCoverY(Number(e.target.value))} className="mt-2 w-full accent-primary" /></div>
-        </div>}
-        <input ref={coverInput} type="file" accept={AVATAR_ACCEPT} className="hidden" onChange={(e) => { pickCover(e.target.files?.[0]); e.target.value = ""; }} />
-        <div className="mt-5 flex flex-wrap gap-2">
-          <Button type="button" variant="outline" disabled={coverSaving} onClick={() => coverInput.current?.click()}>{profile.cover_photo_path || coverFile ? "Change Cover Photo" : "Upload Cover Photo"}</Button>
-          {(coverFile || profile.cover_photo_path) && <Button type="button" disabled={coverSaving} onClick={() => void saveCover()}>{coverSaving ? "Saving cover…" : "Save Cover Photo"}</Button>}
-          {coverFile && profile.cover_photo_path && <Button type="button" variant="ghost" disabled={coverSaving} onClick={() => setCoverFile(null)}>Discard selection</Button>}
-          {(coverFile || profile.cover_photo_path) && <Button type="button" variant="ghost" disabled={coverSaving} onClick={() => void removeCoverPhoto()}>Remove Cover Photo</Button>}
-        </div>
-        <p className="mt-3 text-xs text-muted-foreground">JPG, PNG or WebP · up to 5 MB</p>
-        {coverError && <p role="alert" className="mt-3 text-sm text-destructive">{coverError}</p>}
-      </section>
-
-
-      <div className="panel flex flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          {error ? (
-            <p className="text-sm text-destructive">{error}</p>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Changes go live on your public page immediately
-            </p>
-          )}
-        </div>
-        <Button type="submit" disabled={saving} className="sm:w-auto">
-          {saving ? "Saving…" : "Save Changes"}
-        </Button>
-      </div>
-    </form>
+      </form>
+      <AlertDialog open={blocker.status === "blocked"} onOpenChange={(open) => { if (!open) blocker.reset?.(); }}>
+        <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle><AlertDialogDescription>Your changes have not been saved</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel onClick={() => blocker.reset?.()}>Keep editing</AlertDialogCancel><AlertDialogAction onClick={() => blocker.proceed?.()}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
