@@ -83,7 +83,7 @@ const ACCOUNT = [
   { icon: Link2, title: "My Links", body: "Add, reorder, and switch custom links and social icons on or off" },
   { icon: Palette, title: "Customize profile", body: "Change fonts, colors, card style and your page background" },
   { icon: QrCodeIcon, title: "Customize QR Code", body: "Personalize your QR code while keeping it readable and usable" },
-  { icon: ShieldCheck, title: "My Informations & Security", body: "Manage your profile information, social links, profile picture and password" },
+  { icon: ShieldCheck, title: "My Information & Security", body: "Manage your profile information, social links, profile picture and password" },
   { icon: UserCog, title: "Account & Deletion", body: "Review your account details or permanently delete your account" },
 ];
 

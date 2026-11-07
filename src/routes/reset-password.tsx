@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 import { AuthShell } from "@/components/AuthShell";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/PasswordInput";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/app-supabase";
 import { useAuth } from "@/lib/auth";
@@ -13,9 +13,9 @@ import { firstError, passwordSchema } from "@/lib/socials";
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
-      { title: "Choose a new password" },
+      { title: "Choose a new password — Tinki" },
       { name: "description", content: "Set a new password for your Tinki account" },
-      { property: "og:title", content: "Choose a new password" },
+      { property: "og:title", content: "Choose a new password — Tinki" },
       { property: "og:description", content: "Set a new password for your Tinki account" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -83,9 +83,8 @@ function ResetPasswordPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="password">New password</Label>
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             autoComplete="new-password"
@@ -93,9 +92,8 @@ function ResetPasswordPage() {
         </div>
         <div className="space-y-2">
           <Label htmlFor="confirm">Confirm new password</Label>
-          <Input
+          <PasswordInput
             id="confirm"
-            type="password"
             value={confirm}
             onChange={(event) => setConfirm(event.target.value)}
             autoComplete="new-password"
