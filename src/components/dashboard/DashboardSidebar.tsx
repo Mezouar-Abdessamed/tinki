@@ -23,7 +23,7 @@ export const DASHBOARD_NAV = [
   { to: "/dashboard/links", label: "My Links", icon: Link2 },
   { to: "/dashboard/customize-qr-code", label: "Customize QR Code", icon: QrCode },
   { to: "/dashboard/customize", label: "Customize profile", icon: Palette },
-  { to: "/dashboard/informations", label: "My Informations & Security", icon: ShieldCheck },
+  { to: "/dashboard/informations", label: "My Information & Security", icon: ShieldCheck },
   { to: "/dashboard/account", label: "Account & Deletion", icon: UserCog },
   { to: "/dashboard/settings", label: "Settings", icon: Settings },
 ] as const;

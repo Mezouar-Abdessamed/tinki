@@ -1,7 +1,6 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { ChevronRight, Palette, QrCode, ShieldCheck, UserCog } from "lucide-react";
 
-import { ChangePasswordForm } from "@/components/dashboard/ChangePasswordForm";
 import { QrButtonVisibility } from "@/components/dashboard/QrButtonVisibility";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
@@ -24,7 +23,7 @@ export const Route = createFileRoute("/dashboard/settings")({
 });
 
 const SECTIONS = [
-  { to: "/dashboard/informations", label: "My Informations & Security", desc: "Picture, username, bio and social links", icon: ShieldCheck },
+  { to: "/dashboard/informations", label: "My Information & Security", desc: "Profile photos, name, bio and password", icon: ShieldCheck },
   { to: "/dashboard/customize", label: "Customize profile", desc: "Colors, fonts and backgrounds of your public page", icon: Palette },
   { to: "/dashboard/customize-qr-code", label: "Customize QR Code", desc: "Colors and shapes of your QR code", icon: QrCode },
   { to: "/dashboard/account", label: "Account & Deletion", desc: "Manage or permanently delete your account", icon: UserCog },
@@ -70,8 +69,6 @@ function SettingsPage() {
           ))}
         </div>
       </section>
-
-      <ChangePasswordForm />
 
       <QrButtonVisibility
         profileId={profile.id}

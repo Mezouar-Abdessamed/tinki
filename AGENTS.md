@@ -35,6 +35,8 @@
 - Render uploaded covers inside `ProfileCard` with the shared `CoverBanner` treatment, keeping the existing avatar element unchanged; this maintains parity between public and dashboard previews.
 - Store only cover paths and focal percentages on profiles, with per-user files in the dedicated private covers bucket; this preserves access control and avoids persisted URLs.
 - Resolve avatar and cover paths through short-lived signed links from their private buckets; public profile visitors need working photos without making buckets public.
+- Stage profile details, avatar and cover edits together and commit their references in one profile update before deleting old files; this keeps Save and Cancel consistent and protects active photos on failures.
+- Keep account password controls in the information page's security tab, using the existing email recovery route for users without a current password; never infer password existence from the Google identity.
 
 ## Page backgrounds
 
