@@ -1,5 +1,9 @@
 # Roadmap
 
+- [ ] Reorganize My Information & Security into Profile and Account & Security tabs with shared password settings
+- [ ] Put cover editing behind a centered avatar inside Edit My Information, with photo previews and clear save/cancel controls
+- [ ] Verify information editing and security views on desktop and mobile
+
 - [x] Remove unnecessary final dots from site-authored titles and text across all languages, preserving meaningful punctuation (public pages and five languages verified).
 
 - [x] Restore sign-in and sign-up on the published site (live build was missing its public account-service settings; needs a republish).
