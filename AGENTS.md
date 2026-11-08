@@ -26,6 +26,10 @@
 
 - Render landing-page phone and desktop examples through `DemoPublicProfile` so both stay aligned with the public profile experience.
 
+## QR rendering
+
+- Draw outer QR rounding in the shared SVG renderer and preserve alpha when rasterizing PNGs; this keeps previews and downloads aligned without clipping QR modules or the overlapping avatar.
+
 ## Localization
 
 - Keep supported language dictionaries in `src/lib/i18n-*.ts` and route every language control through the shared `LanguageProvider` so selections stay synchronized.
