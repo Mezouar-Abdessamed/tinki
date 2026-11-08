@@ -302,7 +302,7 @@ export function EditInformationsForm({
         </section>
         <div className="sticky bottom-0 z-20 flex flex-col gap-3 border-t border-border bg-background/95 py-4 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
           <div aria-live="polite" className="min-w-0 text-sm"><p className={dirty ? "text-primary" : "text-muted-foreground"}>{dirty ? "Unsaved changes" : "Up to date"}</p>{error && <p role="alert" className="mt-1 text-destructive">{t(error)}</p>}</div>
-          <div className="flex gap-2"><Button type="button" variant="ghost" disabled={!dirty || busy} onClick={cancel} className="flex-1 sm:flex-none"><X className="me-2 size-4" />Cancel</Button><Button type="submit" disabled={!dirty || busy} className="flex-1 sm:flex-none"><Save className="me-2 size-4" />{busy ? "Saving…" : "Save Changes"}</Button></div>
+          <div className="flex min-w-0 gap-2"><Button type="button" variant="ghost" disabled={!dirty || busy} onClick={cancel} className="h-auto min-h-9 min-w-0 flex-1 whitespace-normal py-2 sm:flex-none"><X className="me-2 size-4 shrink-0" />Cancel</Button><Button type="submit" disabled={!dirty || busy} className="h-auto min-h-9 min-w-0 flex-1 whitespace-normal py-2 sm:flex-none"><Save className="me-2 size-4 shrink-0" />{busy ? "Saving…" : "Save Changes"}</Button></div>
         </div>
       </form>
       <AlertDialog open={blocker.status === "blocked"} onOpenChange={(open) => { if (!open) blocker.reset?.(); }}>
