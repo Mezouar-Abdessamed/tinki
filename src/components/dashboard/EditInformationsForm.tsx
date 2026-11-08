@@ -264,7 +264,7 @@ export function EditInformationsForm({
           <fieldset disabled={busy} className="mt-5 min-w-0 space-y-6">
             <div className="mx-auto max-w-xl">
               <div className="relative rounded-t-lg">
-                <CoverBanner url={shownCover} x={coverX} y={coverY} onPositionChange={hasCover ? (x, y) => { setCoverX(x); setCoverY(y); } : undefined} />
+                <CoverBanner url={shownCover} x={coverX} y={coverY} className="rounded-t-lg" onPositionChange={hasCover ? (x, y) => { setCoverX(x); setCoverY(y); } : undefined} />
                 <div className="absolute end-3 top-3 flex gap-2">
                   <Button type="button" variant="secondary" size="icon" className="size-9" title={t(hasCover ? "Change Cover Photo" : "Upload Cover Photo")} aria-label={t(hasCover ? "Change Cover Photo" : "Upload Cover Photo")} onClick={() => coverInput.current?.click()}><ImagePlus className="size-4" /></Button>
                   {hasCover && <Button type="button" variant="secondary" size="icon" className="size-9" title={t("Remove Cover Photo")} aria-label={t("Remove Cover Photo")} onClick={() => { setCoverFile(null); setRemoveCover(true); setCoverX(50); setCoverY(50); }}><Trash2 className="size-4" /></Button>}
