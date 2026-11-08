@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 
 /** Shared crop and loading treatment for the public card and the edit preview. */
-export function CoverBanner({ url, x = 50, y = 50, className = "", onPositionChange }: { url: string | null; x?: number; y?: number; className?: string; onPositionChange?: (x: number, y: number) => void }) {
+export function CoverBanner({ url, x = 50, y = 50, className = "", onPositionChange }: { url: string | null; x?: number; y?: number; className?: string; onPositionChange?: ((x: number, y: number) => void) | undefined }) {
   const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
   const drag = useRef<{ pointerId: number; startX: number; startY: number; x: number; y: number; overflowX: number; overflowY: number } | null>(null);
   const clamp = (value: number) => Math.max(0, Math.min(100, value));
