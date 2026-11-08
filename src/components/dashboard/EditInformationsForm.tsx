@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useBlocker } from "@tanstack/react-router";
-import { Camera, ImagePlus, Save, Trash2, X } from "lucide-react";
+import { BadgeCheck, Camera, ImagePlus, Save, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { CoverBanner } from "@/components/CoverBanner";
 
@@ -263,12 +263,13 @@ export function EditInformationsForm({
           <h2 id="edit-information-title" className="font-display text-lg font-semibold tracking-normal">Edit My Information</h2>
           <fieldset disabled={busy} className="mt-5 min-w-0 space-y-6">
             <div className="mx-auto max-w-xl">
-              <div className="relative overflow-hidden rounded-t-lg">
-                <CoverBanner url={shownCover} x={coverX} y={coverY} onPositionChange={hasCover ? (x, y) => { setCoverX(x); setCoverY(y); } : undefined} />
+              <div className="relative rounded-t-lg">
+                <CoverBanner url={shownCover} x={coverX} y={coverY} className="rounded-t-lg" onPositionChange={hasCover ? (x, y) => { setCoverX(x); setCoverY(y); } : undefined} />
                 <div className="absolute end-3 top-3 flex gap-2">
                   <Button type="button" variant="secondary" size="icon" className="size-9" title={t(hasCover ? "Change Cover Photo" : "Upload Cover Photo")} aria-label={t(hasCover ? "Change Cover Photo" : "Upload Cover Photo")} onClick={() => coverInput.current?.click()}><ImagePlus className="size-4" /></Button>
                   {hasCover && <Button type="button" variant="secondary" size="icon" className="size-9" title={t("Remove Cover Photo")} aria-label={t("Remove Cover Photo")} onClick={() => { setCoverFile(null); setRemoveCover(true); setCoverX(50); setCoverY(50); }}><Trash2 className="size-4" /></Button>}
                 </div>
+                {username === "abdessamed" && <BadgeCheck aria-label={t("Verified account")} className="absolute right-3 top-full z-10 mt-3 size-7 text-verified verified-spin" />}
               </div>
               <div className="relative -mt-10 flex flex-col items-center sm:-mt-14">
                 <div className="relative">
@@ -301,7 +302,7 @@ export function EditInformationsForm({
         </section>
         <div className="sticky bottom-0 z-20 flex flex-col gap-3 border-t border-border bg-background/95 py-4 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
           <div aria-live="polite" className="min-w-0 text-sm"><p className={dirty ? "text-primary" : "text-muted-foreground"}>{dirty ? "Unsaved changes" : "Up to date"}</p>{error && <p role="alert" className="mt-1 text-destructive">{t(error)}</p>}</div>
-          <div className="flex gap-2"><Button type="button" variant="ghost" disabled={!dirty || busy} onClick={cancel} className="flex-1 sm:flex-none"><X className="me-2 size-4" />Cancel</Button><Button type="submit" disabled={!dirty || busy} className="flex-1 sm:flex-none"><Save className="me-2 size-4" />{busy ? "Saving…" : "Save Changes"}</Button></div>
+          <div className="flex min-w-0 gap-2"><Button type="button" variant="ghost" disabled={!dirty || busy} onClick={cancel} className="h-auto min-h-9 min-w-0 flex-1 whitespace-normal py-2 sm:flex-none"><X className="me-2 size-4 shrink-0" />Cancel</Button><Button type="submit" disabled={!dirty || busy} className="h-auto min-h-9 min-w-0 flex-1 whitespace-normal py-2 sm:flex-none"><Save className="me-2 size-4 shrink-0" />{busy ? "Saving…" : "Save Changes"}</Button></div>
         </div>
       </form>
       <AlertDialog open={blocker.status === "blocked"} onOpenChange={(open) => { if (!open) blocker.reset?.(); }}>
