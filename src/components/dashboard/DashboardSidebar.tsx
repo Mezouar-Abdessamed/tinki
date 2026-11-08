@@ -11,21 +11,21 @@ import {
   UserCircle,
   UserCog,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useLanguage } from "@/lib/i18n";
 
 export const DASHBOARD_NAV = [
-  { to: "/dashboard/profile", label: "My Profile", icon: UserCircle },
   { to: "/dashboard", label: "Dashboard", icon: BarChart3 },
+  { to: "/dashboard/profile", label: "My Profile", icon: UserCircle },
   { to: "/dashboard/links", label: "My Links", icon: Link2 },
-  { to: "/dashboard/customize-qr-code", label: "Customize QR Code", icon: QrCode },
   { to: "/dashboard/customize", label: "Customize profile", icon: Palette },
+  { to: "/dashboard/customize-qr-code", label: "Customize QR Code", icon: QrCode },
   { to: "/dashboard/informations", label: "My Information & Security", icon: ShieldCheck },
-  { to: "/dashboard/account", label: "Account & Deletion", icon: UserCog },
   { to: "/dashboard/settings", label: "Settings", icon: Settings },
+  { to: "/dashboard/account", label: "Account & Deletion", icon: UserCog },
 ] as const;
 
 
@@ -36,11 +36,12 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <nav className="flex flex-col gap-1">
-      {items.map((item) => {
+      {items.map((item, index) => {
         const active = pathname === item.to;
         return (
+          <Fragment key={item.to}>
+          {(index === 3 || index === 5) && <hr className="mx-3 my-2 border-border" />}
           <Link
-            key={item.to}
             to={item.to}
             onClick={onNavigate}
             aria-current={active ? "page" : undefined}
@@ -53,6 +54,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
             <item.icon className={`h-4 w-4 shrink-0 ${active ? "text-primary" : ""}`} />
             <span className="truncate">{item.label}</span>
           </Link>
+          </Fragment>
         );
       })}
     </nav>
