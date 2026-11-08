@@ -101,6 +101,9 @@ export function renderQrSvg(
   const data = qr.modules.data;
   const margin = settings.margin;
   const total = count + margin * 2;
+  // Round only the background; never clip the finder patterns or QR modules.
+  // Keeping the radius within the quiet margin leaves the grid untouched.
+  const backgroundRadius = Math.min(total * 0.06, Math.max(0, margin));
   const avatarSize = avatar ? Math.min(7.6, count * 0.24) : 0;
   const avatarRadius = avatarSize / 2;
   const avatarCenterX = total / 2;
@@ -161,7 +164,7 @@ export function renderQrSvg(
 
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${outputHeight}" viewBox="0 ${-topExtension} ${total} ${total + topExtension}" shape-rendering="geometricPrecision">`,
-    `<rect width="${total}" height="${total}" fill="${settings.backgroundColor}"/>`,
+    `<rect width="${total}" height="${total}" rx="${backgroundRadius}" ry="${backgroundRadius}" fill="${settings.backgroundColor}"/>`,
     `<g fill="${settings.foregroundColor}">${modules.join("")}</g>`,
     eyes.join(""),
     centerLogoMarkup,
@@ -220,8 +223,8 @@ export async function renderQrPng(
   canvas.height = outputHeight;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("QR render failed");
-  ctx.fillStyle = settings.backgroundColor;
-  ctx.fillRect(0, 0, width, outputHeight);
+  // The SVG supplies its own background. Leave the canvas transparent outside
+  // its rounded corners, including the space alongside an overlapping avatar.
   ctx.drawImage(image, 0, 0, width, outputHeight);
   return canvas.toDataURL("image/png");
 }

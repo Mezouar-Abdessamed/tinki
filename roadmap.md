@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Round the generated QR background in previews and PNG downloads; verified desktop/mobile popup, transparent export corners, preserved photo/logo, and successful decoding of the actual download
+
 - [x] Add a clear sign-up entry point below public profiles; verified anonymous visitor navigation to the sign-up form at desktop, 949, 390 and 320 widths, including Arabic display
 
 - [x] Reorganize My Information & Security into Profile and Account & Security tabs with shared password settings and existing email recovery access
