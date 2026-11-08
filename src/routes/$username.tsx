@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { QrCode as QrCodeIcon } from "lucide-react";
+import { ArrowUpRight, QrCode as QrCodeIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { PageBackgroundVideo } from "@/components/PageBackgroundVideo";
@@ -196,6 +196,17 @@ function PublicProfilePage() {
         />
 
         <div className="mt-6 flex flex-col items-center gap-5">
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="h-auto min-h-11 max-w-full whitespace-normal bg-background/90 px-4 py-2.5 text-foreground backdrop-blur-sm"
+          >
+            <Link to="/register">
+              <span>Create your Tinki page</span>
+              <ArrowUpRight aria-hidden="true" className="rtl:-scale-x-100" />
+            </Link>
+          </Button>
           <Link to="/" className="text-xs text-muted-foreground transition-colors hover:text-primary">
             Powered by Tinki
           </Link>

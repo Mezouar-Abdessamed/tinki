@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Add a clear sign-up entry point below public profiles; verified anonymous visitor navigation to the sign-up form at desktop, 949, 390 and 320 widths, including Arabic display
+
 - [x] Reorganize My Information & Security into Profile and Account & Security tabs with shared password settings and existing email recovery access
 - [x] Put cover editing behind a centered avatar inside Edit My Information, with staged photo previews, repositioning and shared Save/Cancel controls
 - [x] Verify information editing and security views on desktop and mobile (real save/readback, preview cancellation, unsaved warning, password visibility, recovery navigation; email delivery and actual password replacement not exercised)
