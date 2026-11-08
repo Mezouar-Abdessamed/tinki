@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useBlocker } from "@tanstack/react-router";
-import { Camera, ImagePlus, Save, Trash2, X } from "lucide-react";
+import { BadgeCheck, Camera, ImagePlus, Save, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { CoverBanner } from "@/components/CoverBanner";
 
@@ -263,12 +263,13 @@ export function EditInformationsForm({
           <h2 id="edit-information-title" className="font-display text-lg font-semibold tracking-normal">Edit My Information</h2>
           <fieldset disabled={busy} className="mt-5 min-w-0 space-y-6">
             <div className="mx-auto max-w-xl">
-              <div className="relative overflow-hidden rounded-t-lg">
+              <div className="relative rounded-t-lg">
                 <CoverBanner url={shownCover} x={coverX} y={coverY} onPositionChange={hasCover ? (x, y) => { setCoverX(x); setCoverY(y); } : undefined} />
                 <div className="absolute end-3 top-3 flex gap-2">
                   <Button type="button" variant="secondary" size="icon" className="size-9" title={t(hasCover ? "Change Cover Photo" : "Upload Cover Photo")} aria-label={t(hasCover ? "Change Cover Photo" : "Upload Cover Photo")} onClick={() => coverInput.current?.click()}><ImagePlus className="size-4" /></Button>
                   {hasCover && <Button type="button" variant="secondary" size="icon" className="size-9" title={t("Remove Cover Photo")} aria-label={t("Remove Cover Photo")} onClick={() => { setCoverFile(null); setRemoveCover(true); setCoverX(50); setCoverY(50); }}><Trash2 className="size-4" /></Button>}
                 </div>
+                {username === "abdessamed" && <BadgeCheck aria-label={t("Verified account")} className="absolute right-3 top-full z-10 mt-3 size-7 text-verified verified-spin" />}
               </div>
               <div className="relative -mt-10 flex flex-col items-center sm:-mt-14">
                 <div className="relative">
