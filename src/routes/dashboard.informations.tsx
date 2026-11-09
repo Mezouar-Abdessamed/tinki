@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ShieldCheck, UserRound } from "lucide-react";
 
 import { EditInformationsForm } from "@/components/dashboard/EditInformationsForm";
@@ -9,6 +9,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useMyProfile } from "@/lib/use-profile";
 
 export const Route = createFileRoute("/dashboard/informations")({
+  validateSearch: (search: Record<string, unknown>): { tab?: "profile" | "security" } =>
+    search["tab"] === "security" || search["tab"] === "profile" ? { tab: search["tab"] } : {},
   head: () => ({
     meta: [
       { title: "My Information & Security — Tinki" },
@@ -29,10 +31,12 @@ export const Route = createFileRoute("/dashboard/informations")({
 });
 
 function InformationsPage() {
+  const { tab: requestedTab } = Route.useSearch();
   const { profile, avatarUrl, refetch } = useMyProfile();
-  const [tab, setTab] = useState("profile");
+  const [tab, setTab] = useState(requestedTab ?? "profile");
   const [dirty, setDirty] = useState(false);
-  const [pendingTab, setPendingTab] = useState<string | null>(null);
+  const [pendingTab, setPendingTab] = useState<"profile" | "security" | null>(null);
+  useEffect(() => { setTab(requestedTab ?? "profile"); }, [requestedTab]);
   if (!profile) return null;
 
   return (
@@ -41,7 +45,7 @@ function InformationsPage() {
         <h1 className="font-display text-2xl font-semibold tracking-normal sm:text-3xl">My Information &amp; Security</h1>
       </header>
 
-      <Tabs value={tab} onValueChange={(next) => { if (dirty && tab === "profile") setPendingTab(next); else setTab(next); }}>
+      <Tabs value={tab} onValueChange={(next) => { if (next !== "profile" && next !== "security") return; if (dirty && tab === "profile") setPendingTab(next); else setTab(next); }}>
         <TabsList className="mb-5 grid h-auto w-full grid-cols-[1fr_1.6fr] sm:w-fit sm:grid-cols-2">
           <TabsTrigger value="profile" className="gap-2 whitespace-normal py-2"><UserRound className="size-4 shrink-0" />Profile</TabsTrigger>
           <TabsTrigger value="security" className="gap-2 whitespace-normal py-2"><ShieldCheck className="size-4 shrink-0" />Account &amp; Security</TabsTrigger>

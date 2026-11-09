@@ -1,6 +1,11 @@
 // English -> Arabic dictionary. Keys are the exact English text shown on screen.
 // Keep brand names untranslated across language dictionaries.
 export const AR: Record<string, string> = {
+  "Account overview": "نظرة عامة على الحساب",
+  "Public page": "الصفحة العامة",
+  "Saved": "تم الحفظ",
+  "Visible on your public page": "ظاهر على صفحتك العامة",
+  "Hidden on your public page": "مخفي على صفحتك العامة",
   "Settings": "الإعدادات",
   "Everything about your account in one place": "كل ما يخص حسابك في مكان واحد",
   "Account": "الحساب",

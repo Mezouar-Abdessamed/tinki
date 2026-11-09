@@ -1,5 +1,9 @@
 # Roadmap
 
+- [x] Simplify Settings into account, language, public page, security and separate deletion sections
+- [x] Add working copy/open page controls and a direct Account & Security shortcut
+- [x] Verify signed-in copy/open controls, QR save/readback with original visibility restored, direct security navigation, unsaved guard, all five languages and desktop/949/390/320 layouts; focused tests and build pass
+
 - [x] Round the generated QR background in previews and PNG downloads; verified desktop/mobile popup, transparent export corners, preserved photo/logo, and successful decoding of the actual download
 
 - [x] Add a clear sign-up entry point below public profiles; verified anonymous visitor navigation to the sign-up form at desktop, 949, 390 and 320 widths, including Arabic display

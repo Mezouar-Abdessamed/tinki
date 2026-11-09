@@ -1,5 +1,10 @@
 // English -> Spanish dictionary. Keys are the exact English text shown on screen.
 export const ES: Record<string, string> = {
+  "Account overview": "Resumen de la cuenta",
+  "Public page": "Página pública",
+  "Saved": "Guardado",
+  "Visible on your public page": "Visible en tu página pública",
+  "Hidden on your public page": "Oculto en tu página pública",
   "English": "Inglés",
   "Arabic": "Árabe",
   "Language": "Idioma",
