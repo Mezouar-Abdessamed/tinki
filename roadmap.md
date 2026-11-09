@@ -1,5 +1,9 @@
 # Roadmap
 
+- [ ] Replace six-digit signup emails with confirmation links (blocked: custom auth email templates require a user-owned sender domain and a paid plan; none is configured)
+- [ ] After email setup, add confirmation-link waiting page and automatic desktop continuation when the link is confirmed on a phone
+- [ ] Verify signup email delivery and cross-device confirmation end to end (blocked: no sender domain; no delivery events in the visible history, so the missing-email cause is unverified)
+
 - [x] Simplify Settings into account, language, public page, security and separate deletion sections
 - [x] Add working copy/open page controls and a direct Account & Security shortcut
 - [x] Verify signed-in copy/open controls, QR save/readback with original visibility restored, direct security navigation, unsaved guard, all five languages and desktop/949/390/320 layouts; focused tests and build pass
