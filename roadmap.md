@@ -1,8 +1,8 @@
 # Roadmap
 
-- [ ] Replace six-digit signup emails with confirmation links (blocked: custom auth email templates require a user-owned sender domain and a paid plan; none is configured)
-- [ ] After email setup, add confirmation-link waiting page and automatic desktop continuation when the link is confirmed on a phone
-- [ ] Verify signup email delivery and cross-device confirmation end to end (blocked: no sender domain; no delivery events in the visible history, so the missing-email cause is unverified)
+- [ ] Enable immediate form signup without email codes or confirmation links, preserving other auth settings
+- [ ] Remove signup code entry and route new users directly to their dashboard with their profile
+- [ ] Test real signup, dashboard profile readback, reload and password sign-in without email verification
 
 - [x] Simplify Settings into account, language, public page, security and separate deletion sections
 - [x] Add working copy/open page controls and a direct Account & Security shortcut
