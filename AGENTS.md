@@ -34,6 +34,11 @@
 
 - Keep supported language dictionaries in `src/lib/i18n-*.ts` and route every language control through the shared `LanguageProvider` so selections stay synchronized.
 
+## Signup
+
+- Require a returned authenticated session before signup navigates to the dashboard; let the shared `useMyProfile` path create the stored username's profile so registration and dashboard requests cannot race to insert it twice.
+- Keep `/verify-email` as a public redirect to login for old bookmarks rather than an active signup-code form; hosted email auto-confirm settings determine whether account creation returns a session.
+
 ## Profile covers
 
 - Render uploaded covers inside `ProfileCard` with the shared `CoverBanner` treatment, keeping the existing avatar element unchanged; this maintains parity between public and dashboard previews.
