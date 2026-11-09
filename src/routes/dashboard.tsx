@@ -1,9 +1,8 @@
-import { Link, Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 
 import { ClaimUsername } from "@/components/dashboard/ClaimUsername";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
-import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/app-supabase";
 import { useAuth } from "@/lib/auth";
 import { useMyProfile } from "@/lib/use-profile";
@@ -42,31 +41,9 @@ function DashboardLayout() {
     );
   }
 
-  // Google accounts arrive already verified; email sign-ups must confirm first.
+  // Social accounts without a profile claim their username and password here.
   const signedInWithGoogle =
     user?.identities?.some((identity) => identity.provider !== "email") ?? false;
-  const emailConfirmed = Boolean(user?.email_confirmed_at ?? user?.confirmed_at);
-
-  if (!signedInWithGoogle && !emailConfirmed) {
-    return (
-      <div className="flex min-h-screen items-center justify-center px-5">
-        <div className="panel max-w-md p-7 text-center">
-          <h1 className="font-display text-2xl font-semibold">Verify your email first</h1>
-          <p className="mt-3 text-sm text-muted-foreground">
-            We sent a 6-digit code to {user?.email}. Enter it to activate your account
-          </p>
-          <Button className="mt-6" asChild>
-            <Link to="/verify-email" search={{ email: user?.email ?? "" }}>
-              Enter verification code
-            </Link>
-          </Button>
-          <Button variant="ghost" className="mt-2" onClick={logout}>
-            Back to log in
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-screen w-full flex-col lg:flex-row">

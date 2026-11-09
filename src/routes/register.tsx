@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { lovable } from "@/integrations/lovable/index";
 import { supabase } from "@/lib/app-supabase";
 import { useAuth } from "@/lib/auth";
-import { isUsernameAvailable, isUsernameTakenError } from "@/lib/profiles";
+import { isUsernameAvailable } from "@/lib/profiles";
+import { signUpDirectly } from "@/lib/signup";
 import { emailSchema, firstError, passwordSchema, usernameSchema } from "@/lib/socials";
 
 export const Route = createFileRoute("/register")({
@@ -66,12 +67,12 @@ function RegisterPage() {
     if (password !== confirm) nextErrors.confirm = "Passwords don't match";
 
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
+    if (Object.keys(nextErrors).length > 0 || !parsedUsername.success || !parsedEmail.success) return;
 
     setSubmitting(true);
     try {
-      const cleanUsername = parsedUsername.data!;
-      const cleanEmail = parsedEmail.data!;
+      const cleanUsername = parsedUsername.data;
+      const cleanEmail = parsedEmail.data;
 
       const available = await isUsernameAvailable(cleanUsername);
       if (!available) {
@@ -79,49 +80,22 @@ function RegisterPage() {
         return;
       }
 
-      const { data, error } = await supabase.auth.signUp({
+      await signUpDirectly(supabase.auth, {
         email: cleanEmail,
         password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-          // The username is kept with the account until the email is confirmed,
-          // then the page is created on first arrival at the dashboard.
-          data: { username: cleanUsername },
-        },
+        username: cleanUsername,
+        origin: window.location.origin,
       });
-
-      if (error) {
-        if (error.message.toLowerCase().includes("already registered")) {
-          setErrors({ email: "That email already has an account. Try logging in instead" });
-          return;
-        }
-        toast.error(error.message);
-        return;
-      }
-
-      // Supabase returns a user with no identities when the email already exists,
-      // so we show the same confirmation message either way.
-      if (!data.session) {
-        navigate({ to: "/verify-email", search: { email: cleanEmail } });
-        return;
-      }
-
-      // Only happens if confirmation is switched off: create the page right away.
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .insert({ id: data.user!.id, username: cleanUsername });
-      if (profileError) {
-        if (isUsernameTakenError(profileError)) {
-          setErrors({ username: "That username is already taken" });
-          return;
-        }
-        throw profileError;
-      }
-
-      toast.success("Your page is ready!");
+      // The dashboard's shared profile query creates the chosen page once.
+      toast.success("Welcome to Tinki!");
       navigate({ to: "/dashboard" });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Something went wrong");
+      const message = error instanceof Error ? error.message : "Something went wrong";
+      if (message.toLowerCase().includes("already registered")) {
+        setErrors({ email: "That email already has an account. Try logging in instead" });
+      } else {
+        toast.error(message);
+      }
     } finally {
       setSubmitting(false);
     }

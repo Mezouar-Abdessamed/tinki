@@ -34,7 +34,6 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [needsConfirmation, setNeedsConfirmation] = useState(false);
   
 
   useEffect(() => {
@@ -44,7 +43,6 @@ function LoginPage() {
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setSubmitting(true);
-    setNeedsConfirmation(false);
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
@@ -53,9 +51,7 @@ function LoginPage() {
       if (error) {
         const message = error.message.toLowerCase();
         if (message.includes("not confirmed") || message.includes("email_not_confirmed")) {
-          setNeedsConfirmation(true);
-          toast.error("Please verify your email first — enter the code we sent you");
-          navigate({ to: "/verify-email", search: { email: email.trim().toLowerCase() } });
+          toast.error("This earlier signup wasn't completed — please try signing up again");
           return;
         }
         toast.error("Those details don't match an account");
@@ -124,19 +120,6 @@ function LoginPage() {
           {submitting ? "Logging in…" : "Log in"}
         </Button>
       </form>
-
-      {needsConfirmation ? (
-        <div className="mt-4 space-y-3 rounded-md border border-border bg-secondary p-4">
-          <p className="text-sm text-muted-foreground">
-            Your account isn't verified yet. Enter the 6-digit code we emailed you
-          </p>
-          <Button variant="outline" size="sm" className="w-full" asChild>
-            <Link to="/verify-email" search={{ email: email.trim().toLowerCase() }}>
-              Enter verification code
-            </Link>
-          </Button>
-        </div>
-      ) : null}
 
       <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
         <span className="h-px flex-1 bg-border" />
