@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ShieldCheck, UserRound } from "lucide-react";
 
 import { EditInformationsForm } from "@/components/dashboard/EditInformationsForm";
@@ -9,6 +9,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useMyProfile } from "@/lib/use-profile";
 
 export const Route = createFileRoute("/dashboard/informations")({
+  validateSearch: (search: Record<string, unknown>): { tab?: "profile" | "security" } =>
+    search.tab === "security" || search.tab === "profile" ? { tab: search.tab } : {},
   head: () => ({
     meta: [
       { title: "My Information & Security — Tinki" },
@@ -29,10 +31,12 @@ export const Route = createFileRoute("/dashboard/informations")({
 });
 
 function InformationsPage() {
+  const { tab: requestedTab } = Route.useSearch();
   const { profile, avatarUrl, refetch } = useMyProfile();
-  const [tab, setTab] = useState("profile");
+  const [tab, setTab] = useState(requestedTab ?? "profile");
   const [dirty, setDirty] = useState(false);
   const [pendingTab, setPendingTab] = useState<string | null>(null);
+  useEffect(() => { setTab(requestedTab ?? "profile"); }, [requestedTab]);
   if (!profile) return null;
 
   return (

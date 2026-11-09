@@ -1,5 +1,10 @@
 // English -> German dictionary. Keys are the exact English text shown on screen.
 export const DE: Record<string, string> = {
+  "Account overview": "Kontoübersicht",
+  "Public page": "Öffentliche Seite",
+  "Saved": "Gespeichert",
+  "Visible on your public page": "Auf deiner öffentlichen Seite sichtbar",
+  "Hidden on your public page": "Auf deiner öffentlichen Seite ausgeblendet",
   "English": "English",
   "Arabic": "العربية",
   "Language": "Sprache",
