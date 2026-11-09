@@ -1,8 +1,8 @@
 # Roadmap
 
-- [ ] Enable immediate form signup without email codes or confirmation links, preserving other auth settings
-- [ ] Remove signup code entry and route new users directly to their dashboard with their profile
-- [ ] Test real signup, dashboard profile readback, reload and password sign-in without email verification
+- [ ] Enable immediate form signup without email codes or confirmation links (blocked: Auto-confirm email is off in live auth settings; current HIBP value is unavailable, and configure_auth overwrites it, so the owner must enable Auto-confirm email under More → Users → Auth settings → Email without changing password protection)
+- [x] Remove signup code entry and route signups with a real session directly to their dashboard; let the shared profile query create their selected username without a duplicate signup insert
+- [ ] Test real signup, dashboard profile readback, reload and password sign-in without email verification (blocked: Auto-confirm email must be enabled first; do not trigger another unwanted signup code while it is off)
 
 - [x] Simplify Settings into account, language, public page, security and separate deletion sections
 - [x] Add working copy/open page controls and a direct Account & Security shortcut
