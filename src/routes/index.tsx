@@ -24,6 +24,7 @@ import {
   ShareStrip,
   brandQr,
 } from "@/components/landing/Mockups";
+import { GlowCursor } from "@/components/landing/GlowCursor";
 import { Reveal } from "@/components/landing/Reveal";
 import { SmoothScroll } from "@/components/landing/SmoothScroll";
 import { SocialIcon } from "@/components/SocialIcon";
@@ -148,6 +149,7 @@ function Landing() {
   return (
     <div className="relative min-h-screen overflow-x-clip">
       <SmoothScroll />
+      <GlowCursor />
       <div className="bg-halo pointer-events-none absolute inset-x-0 top-0 h-[560px]" aria-hidden="true" />
 
       {/* 1. Navigation */}
