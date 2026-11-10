@@ -173,10 +173,6 @@ function Landing() {
         {/* 2. Hero */}
         <section className="mx-auto flex max-w-6xl flex-col items-center px-5 pt-10 pb-24 text-center lg:pt-16 lg:pb-28">
           <Reveal className="flex w-full flex-col items-center">
-            <p className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/60 px-3 py-1 text-xs text-muted-foreground">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden="true" />
-              {t("Free personal link page")}
-            </p>
             <h1 className="mt-6 max-w-4xl font-display text-[2.6rem] leading-[1.02] font-bold text-balance sm:text-6xl lg:text-[4.25rem]">
               {t("All your links")}
               <br />
