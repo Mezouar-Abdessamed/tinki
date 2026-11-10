@@ -130,7 +130,7 @@ function Landing() {
     </Link>
   ) : (
     <Link to="/login">
-      {t("Log in")} <ArrowRight className="ms-2 inline h-4 w-4 transition-transform duration-200 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
+      {"Create account\u00a0"} <ArrowRight className="ms-2 inline h-4 w-4 transition-transform duration-200 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
     </Link>
   );
 
