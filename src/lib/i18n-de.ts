@@ -1,5 +1,8 @@
 // English -> German dictionary. Keys are the exact English text shown on screen.
 export const DE: Record<string, string> = {
+  "Page preview": "Seitenvorschau",
+  "Background preview": "Hintergrundvorschau",
+  "Expand preview": "Vorschau vergrößern",
   "Account overview": "Kontoübersicht",
   "Public page": "Öffentliche Seite",
   "Saved": "Gespeichert",
