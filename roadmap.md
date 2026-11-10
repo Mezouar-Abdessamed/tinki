@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Improve Customize Profile live preview with more visible background, full-size public card styling, background-only mode and an expanded view; remove the save bar overlay obscuring the card
+- [x] Verify real signed-in theme/photo preview changes, background-only mode, expanded view and desktop/949/390/320 layouts; no profile writes issued, no runtime errors, focused tests and builds pass
+
 - [ ] Enable immediate form signup without email codes or confirmation links (blocked: Auto-confirm email is off in live auth settings; current HIBP value is unavailable, and configure_auth overwrites it, so the owner must enable Auto-confirm email under More → Users → Auth settings → Email without changing password protection)
 - [x] Remove signup code entry and route signups with a real session directly to their dashboard; let the shared profile query create their selected username without a duplicate signup insert
 - [ ] Test real signup, dashboard profile readback, reload and password sign-in without email verification (blocked: Auto-confirm email must be enabled first; do not trigger another unwanted signup code while it is off)

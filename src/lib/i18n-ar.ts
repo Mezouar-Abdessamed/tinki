@@ -1,6 +1,9 @@
 // English -> Arabic dictionary. Keys are the exact English text shown on screen.
 // Keep brand names untranslated across language dictionaries.
 export const AR: Record<string, string> = {
+  "Page preview": "معاينة الصفحة",
+  "Background preview": "معاينة الخلفية",
+  "Expand preview": "تكبير المعاينة",
   "Account overview": "نظرة عامة على الحساب",
   "Public page": "الصفحة العامة",
   "Saved": "تم الحفظ",

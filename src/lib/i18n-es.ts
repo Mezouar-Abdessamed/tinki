@@ -1,5 +1,8 @@
 // English -> Spanish dictionary. Keys are the exact English text shown on screen.
 export const ES: Record<string, string> = {
+  "Page preview": "Vista de la página",
+  "Background preview": "Vista del fondo",
+  "Expand preview": "Ampliar vista previa",
   "Account overview": "Resumen de la cuenta",
   "Public page": "Página pública",
   "Saved": "Guardado",

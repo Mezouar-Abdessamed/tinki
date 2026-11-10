@@ -400,3 +400,22 @@ html.lenis body {
   html { scroll-behavior: auto !important; }
 }
 html { scroll-behavior: smooth; }
+
+/* The full-page editor preview sizes the public card against its own width. */
+.profile-page-preview {
+  container-type: inline-size;
+}
+.profile-page-preview-card h2 {
+  overflow-wrap: anywhere;
+  letter-spacing: 0;
+}
+@container (max-width: 380px) {
+  .profile-page-preview-card > .panel > .flex {
+    padding-inline: 1.5rem;
+  }
+}
+@container (max-width: 280px) {
+  .profile-page-preview-card h2 {
+    font-size: 1.25rem;
+  }
+}

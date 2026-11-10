@@ -1,5 +1,8 @@
 // English -> French dictionary. Keys are the exact English text shown on screen.
 export const FR: Record<string, string> = {
+  "Page preview": "Aperçu de la page",
+  "Background preview": "Aperçu du fond",
+  "Expand preview": "Agrandir l’aperçu",
   "Account overview": "Aperçu du compte",
   "Public page": "Page publique",
   "Saved": "Enregistré",

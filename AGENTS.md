@@ -25,6 +25,7 @@
 - Keep the QR center asset in the shared QR renderer via a Lovable Assets pointer so previews, readability checks, and downloads use the same image.
 
 - Render landing-page phone and desktop examples through `DemoPublicProfile` so both stay aligned with the public profile experience.
+- Customize Profile uses the full-page variant of the shared `ProfilePreview` with the non-compact `ProfileCard`; preview controls only change the view, not draft values or saved appearance, so the background and public card remain inspectable without publishing.
 
 ## QR rendering
 
