@@ -410,10 +410,12 @@ html { scroll-behavior: smooth; }
   letter-spacing: 0;
 }
 @container (max-width: 380px) {
-  .profile-page-preview-card > .panel:not(:has(img[alt="Cover photo"])) {
-    padding-inline: 2rem;
-  }
   .profile-page-preview-card > .panel > .flex {
-    padding-inline: 2rem;
+    padding-inline: 1.5rem;
+  }
+}
+@container (max-width: 280px) {
+  .profile-page-preview-card h2 {
+    font-size: 1.25rem;
   }
 }

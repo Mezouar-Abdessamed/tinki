@@ -54,7 +54,7 @@ export function ProfilePreview({
     >
       {video ? <PageBackgroundVideo src={video} /> : null}
       <div
-        className={cn("relative z-10 mx-auto w-full max-w-md", fullPage && "profile-page-preview-card", backgroundOnly && "invisible")}
+        className={cn("relative z-10 mx-auto w-full max-w-md", fullPage && "profile-page-preview-card", backgroundOnly && "pointer-events-none opacity-0")}
         aria-hidden={backgroundOnly || undefined}
         inert={backgroundOnly || undefined}
       >
