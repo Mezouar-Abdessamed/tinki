@@ -27,7 +27,6 @@ import {
 import { Reveal } from "@/components/landing/Reveal";
 import { SmoothScroll } from "@/components/landing/SmoothScroll";
 import { SocialIcon } from "@/components/SocialIcon";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { useLanguage } from "@/lib/i18n";
