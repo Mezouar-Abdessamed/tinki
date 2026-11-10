@@ -1,15 +1,15 @@
 # Roadmap
 
-- [ ] Temporarily hide email signup and redirect old registration links to login; keep existing login and Google access unchanged
-- [ ] Remove landing buttons other than login/session-aware dashboard access and point public profile account-creation buttons to login
-- [ ] Verify visitor navigation, old registration URLs, authenticated access and desktop/mobile rendering without crashes or signup requests
+- [x] Temporarily hide email signup and redirect old registration links to login; keep existing login and Google access unchanged
+- [x] Remove landing buttons other than login/session-aware dashboard access and point public profile account-creation buttons to login
+- [x] Verify visitor navigation, old registration URLs, authenticated dashboard access and desktop/949/390/320 rendering; no runtime errors or signup requests, nine focused tests and builds pass
 
 - [x] Improve Customize Profile live preview with more visible background, full-size public card styling, background-only mode and an expanded view; remove the save bar overlay obscuring the card
 - [x] Verify real signed-in theme/photo preview changes, background-only mode, expanded view and desktop/949/390/320 layouts; no profile writes issued, no runtime errors, focused tests and builds pass
 
-- [ ] Enable immediate form signup without email codes or confirmation links (blocked: Auto-confirm email is off in live auth settings; current HIBP value is unavailable, and configure_auth overwrites it, so the owner must enable Auto-confirm email under More → Users → Auth settings → Email without changing password protection)
+- [ ] Restore working email signup when requested (paused by user: keep form hidden until the email/signup issue is fixed; live auth settings and delivery still need verification)
 - [x] Remove signup code entry and route signups with a real session directly to their dashboard; let the shared profile query create their selected username without a duplicate signup insert
-- [ ] Test real signup, dashboard profile readback, reload and password sign-in without email verification (blocked: Auto-confirm email must be enabled first; do not trigger another unwanted signup code while it is off)
+- [ ] Test real signup, dashboard profile readback, reload and password sign-in when email signup is repaired and re-enabled (blocked: signup is intentionally paused)
 
 - [x] Simplify Settings into account, language, public page, security and separate deletion sections
 - [x] Add working copy/open page controls and a direct Account & Security shortcut
