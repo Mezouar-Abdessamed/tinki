@@ -1,4 +1,4 @@
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Link, createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -12,9 +12,13 @@ import { supabase } from "@/lib/app-supabase";
 import { useAuth } from "@/lib/auth";
 import { isUsernameAvailable } from "@/lib/profiles";
 import { signUpDirectly } from "@/lib/signup";
+import { EMAIL_SIGNUP_ENABLED, registrationEntryPath } from "@/lib/signup-availability";
 import { emailSchema, firstError, passwordSchema, usernameSchema } from "@/lib/socials";
 
 export const Route = createFileRoute("/register")({
+  beforeLoad: () => {
+    if (!EMAIL_SIGNUP_ENABLED) throw redirect({ to: registrationEntryPath(), replace: true });
+  },
   head: () => ({
     meta: [
       { title: "Create your Tinki page" },
@@ -52,6 +56,7 @@ function RegisterPage() {
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+    if (!EMAIL_SIGNUP_ENABLED) return;
     type FieldKey = "username" | "email" | "password" | "confirm";
     const nextErrors: Partial<Record<FieldKey, string>> = {};
 

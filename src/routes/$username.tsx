@@ -23,6 +23,7 @@ import {
 import { qrSettingsFromProfile } from "@/lib/qr-settings";
 import { fetchCustomLinks } from "@/lib/custom-links";
 import { fetchSocialLinkSettings } from "@/lib/social-link-settings";
+import { registrationEntryPath } from "@/lib/signup-availability";
 
 export const Route = createFileRoute("/$username")({
   head: ({ params }) => {
@@ -132,7 +133,7 @@ function PublicProfilePage() {
             Nobody has claimed /{username} yet. It could be yours
           </p>
           <Button asChild className="mt-6">
-            <Link to="/register">Create your page</Link>
+            <Link to={registrationEntryPath()}>Create your page</Link>
           </Button>
         </div>
       </main>
@@ -202,7 +203,7 @@ function PublicProfilePage() {
             size="sm"
             className="h-auto min-h-11 max-w-full whitespace-normal bg-background/90 px-4 py-2.5 text-foreground backdrop-blur-sm"
           >
-            <Link to="/register">
+            <Link to={registrationEntryPath()}>
               <span>Create your Tinki page</span>
               <ArrowUpRight aria-hidden="true" className="rtl:-scale-x-100" />
             </Link>

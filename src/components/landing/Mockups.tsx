@@ -63,7 +63,7 @@ export function DemoProfile({ compact = false }: { compact?: boolean }) {
 }
 
 /** Mirrors the complete public-profile view inside the landing device frames. */
-export function DemoPublicProfile({ compact = false }: { compact?: boolean }) {
+export function DemoPublicProfile({ compact = false, showQrButton = true }: { compact?: boolean; showQrButton?: boolean }) {
   return (
     <div
       inert
@@ -72,7 +72,7 @@ export function DemoPublicProfile({ compact = false }: { compact?: boolean }) {
       }`}
     >
       <div className={`relative z-10 w-full ${compact ? "max-w-[270px]" : "max-w-sm"}`}>
-        <Button
+        {showQrButton && <Button
           variant="outline"
           size="icon"
           tabIndex={-1}
@@ -82,7 +82,7 @@ export function DemoPublicProfile({ compact = false }: { compact?: boolean }) {
           }`}
         >
           <QrCodeIcon className={compact ? "h-4 w-4" : "h-5 w-5"} />
-        </Button>
+        </Button>}
         <ProfileCard
           profile={demoProfile}
           avatarUrl={anonymousProfile}

@@ -1,6 +1,7 @@
 // English -> Arabic dictionary. Keys are the exact English text shown on screen.
 // Keep brand names untranslated across language dictionaries.
 export const AR: Record<string, string> = {
+  "This account's signup is incomplete. Email signup is temporarily unavailable": "لم يكتمل تسجيل هذا الحساب. التسجيل بالبريد الإلكتروني غير متاح مؤقتًا",
   "Page preview": "معاينة الصفحة",
   "Background preview": "معاينة الخلفية",
   "Expand preview": "تكبير المعاينة",
