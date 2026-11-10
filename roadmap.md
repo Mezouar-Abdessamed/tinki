@@ -1,5 +1,9 @@
 # Roadmap
 
+- [ ] Temporarily hide email signup and redirect old registration links to login; keep existing login and Google access unchanged
+- [ ] Remove landing buttons other than login/session-aware dashboard access and point public profile account-creation buttons to login
+- [ ] Verify visitor navigation, old registration URLs, authenticated access and desktop/mobile rendering without crashes or signup requests
+
 - [x] Improve Customize Profile live preview with more visible background, full-size public card styling, background-only mode and an expanded view; remove the save bar overlay obscuring the card
 - [x] Verify real signed-in theme/photo preview changes, background-only mode, expanded view and desktop/949/390/320 layouts; no profile writes issued, no runtime errors, focused tests and builds pass
 
