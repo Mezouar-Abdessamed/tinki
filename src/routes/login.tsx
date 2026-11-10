@@ -51,7 +51,7 @@ function LoginPage() {
       if (error) {
         const message = error.message.toLowerCase();
         if (message.includes("not confirmed") || message.includes("email_not_confirmed")) {
-          toast.error("This earlier signup wasn't completed — please try signing up again");
+          toast.error("This account's signup is incomplete. Email signup is temporarily unavailable");
           return;
         }
         toast.error("Those details don't match an account");
@@ -80,14 +80,6 @@ function LoginPage() {
     <AuthShell
       title="Welcome back"
       subtitle="Log in to manage your page"
-      footer={
-        <>
-          No page yet?{" "}
-          <Link to="/register" className="text-primary hover:underline">
-            Create one
-          </Link>
-        </>
-      }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">

@@ -2,10 +2,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import {
   ArrowRight,
   BarChart3,
-  ChevronDown,
-  Languages,
   Link2,
-  Menu,
   Palette,
   QrCode as QrCodeIcon,
   Send,
@@ -30,10 +27,7 @@ import {
 import { Reveal } from "@/components/landing/Reveal";
 import { SmoothScroll } from "@/components/landing/SmoothScroll";
 import { SocialIcon } from "@/components/SocialIcon";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/lib/auth";
 import { useLanguage } from "@/lib/i18n";
 import { SOCIAL_PLATFORMS } from "@/lib/socials";
@@ -117,35 +111,11 @@ function SectionHead({ eyebrow, title, body, center = false }: { eyebrow: string
   );
 }
 
-function LangSwitch({ className = "" }: { className?: string }) {
-  const { lang, setLang, t } = useLanguage();
-  const activeLabel = ({ en: "EN", fr: "FR", es: "ES", de: "DE", ar: "ع" } as const)[lang];
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className={`gap-1.5 px-2 ${className}`} aria-label={t("Language")}>
-          <Languages className="h-4 w-4" />
-          <span className="min-w-5 text-xs font-semibold">{activeLabel}</span>
-          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-40">
-        <DropdownMenuRadioGroup value={lang} onValueChange={(value) => setLang(value as typeof lang)}>
-          {([["en", "English"], ["fr", "Français"], ["es", "Español"], ["de", "Deutsch"], ["ar", "العربية"]] as const).map(([code, label]) => (
-            <DropdownMenuRadioItem key={code} value={code}>{label}</DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
 function Landing() {
   const { t } = useLanguage();
   const { session } = useAuth();
   const signedIn = Boolean(session);
   const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -159,25 +129,20 @@ function Landing() {
       {t("Open your dashboard")} <ArrowRight className="ms-2 inline h-4 w-4 transition-transform duration-200 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
     </Link>
   ) : (
-    <Link to="/register">
-      {t("Create your page")} <ArrowRight className="ms-2 inline h-4 w-4 transition-transform duration-200 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
+    <Link to="/login">
+      {t("Log in")} <ArrowRight className="ms-2 inline h-4 w-4 transition-transform duration-200 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
     </Link>
   );
 
-  const authActions = (onClick?: () => void, btnClass = "") =>
+  const authActions = (btnClass = "") =>
     signedIn ? (
       <Button asChild size="sm" className={btnClass}>
-        <Link to="/dashboard" onClick={onClick}>{t("Dashboard")}</Link>
+        <Link to="/dashboard">{t("Dashboard")}</Link>
       </Button>
     ) : (
-      <>
-        <Button asChild variant="ghost" size="sm" className={btnClass}>
-          <Link to="/login" onClick={onClick}>{t("Log in")}</Link>
-        </Button>
-        <Button asChild size="sm" className={btnClass}>
-          <Link to="/register" onClick={onClick}>{t("Get started")}</Link>
-        </Button>
-      </>
+      <Button asChild size="sm" className={btnClass}>
+        <Link to="/login">{t("Log in")}</Link>
+      </Button>
     );
 
   return (
@@ -193,9 +158,6 @@ function Landing() {
       >
         <div className={`relative mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 transition-[padding] duration-300 rtl:flex-row-reverse ${scrolled ? "py-3" : "py-5"}`}>
           <Logo />
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:hidden">
-            <LangSwitch className="btn-nav rounded-full" />
-          </div>
           <nav aria-label={t("Main")} className="hidden items-center gap-7 md:flex">
             {NAV.map((n) => (
               <a key={n.href} href={n.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
@@ -203,28 +165,7 @@ function Landing() {
               </a>
             ))}
           </nav>
-          <div className="hidden items-center gap-2 md:flex"><LangSwitch className="btn-nav rounded-full" />{authActions(undefined, "btn-nav rounded-full")}</div>
-          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="btn-menu md:hidden" aria-label={t("Open menu")}>
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-72 p-6">
-              <SheetTitle className="sr-only">{t("Menu")}</SheetTitle>
-              <div className="flex h-full flex-col items-center gap-8 text-center">
-                <Logo />
-                <nav aria-label={t("Mobile")} className="flex w-full flex-col gap-1 text-center">
-                  {NAV.map((n) => (
-                    <a key={n.href} href={n.href} onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-3 text-base hover:bg-secondary">
-                        {t(n.label)}
-                    </a>
-                  ))}
-                </nav>
-                <div className="mt-auto flex w-full flex-col items-center gap-2 text-center [&>*]:w-full [&>*]:justify-center">{authActions(() => setMenuOpen(false), "btn-sheet")}</div>
-              </div>
-            </SheetContent>
-          </Sheet>
+          <div className="flex shrink-0 items-center gap-2">{authActions("btn-nav rounded-full")}</div>
         </div>
       </header>
 
@@ -246,9 +187,6 @@ function Landing() {
             </p>
             <div className="mt-9 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
               <Button asChild size="lg" className="btn-hero group h-12 rounded-full bg-gradient-primary px-7 text-base font-semibold shadow-[var(--shadow-glow)]">{primaryCta}</Button>
-              <Button asChild size="lg" variant="outline" className="btn-hero h-12 rounded-full px-7 text-base font-semibold">
-                <a href="#how-it-works">{t("See how it works")}</a>
-              </Button>
             </div>
             <div className="mt-10 flex items-center gap-4 text-muted-foreground" aria-label={t("Supported platforms include")}>
               {(["instagram", "tiktok", "facebook", "snapchat", "linkedin", "x", "youtube", "whatsapp"] as const).map((k) => (
@@ -260,7 +198,7 @@ function Landing() {
 
           <Reveal delay={120} className="relative mt-14 w-full max-w-sm sm:mt-16">
             <PhoneFrame>
-              <DemoPublicProfile compact />
+              <DemoPublicProfile compact showQrButton={false} />
             </PhoneFrame>
             <div className="panel absolute -bottom-14 -start-4 hidden items-center gap-3 p-3 text-start sm:flex lg:-start-16">
               <DemoQr size={76} />
@@ -299,7 +237,7 @@ function Landing() {
             />
             <Reveal className="relative mt-14">
               <BrowserFrame url="tinki.lovable.app/sara.designs" className="mx-auto max-w-4xl">
-                <DemoPublicProfile />
+                <DemoPublicProfile showQrButton={false} />
               </BrowserFrame>
               <div className="panel absolute bottom-[-2rem] -start-2 hidden flex-col items-center gap-2 p-4 lg:flex xl:-start-6">
                 <DemoQr size={120} />
@@ -464,14 +402,14 @@ function Landing() {
           <div className="mx-auto max-w-6xl px-5 py-24">
             <SectionHead eyebrow="FAQ" title="Questions, answered" />
             <Reveal className="mt-12">
-              <Accordion type="single" collapsible className="w-full">
+              <dl className="divide-y divide-border">
                 {FAQ.map(([q, a]) => (
-                  <AccordionItem key={q} value={q}>
-                     <AccordionTrigger className="text-start font-display text-base">{t(q)}</AccordionTrigger>
-                     <AccordionContent className="text-muted-foreground">{t(a)}</AccordionContent>
-                  </AccordionItem>
+                  <div key={q} className="py-5">
+                    <dt className="font-display text-base font-semibold">{t(q)}</dt>
+                    <dd className="mt-2 text-sm leading-relaxed text-muted-foreground">{t(a)}</dd>
+                  </div>
                 ))}
-              </Accordion>
+              </dl>
             </Reveal>
           </div>
         </section>
@@ -487,11 +425,6 @@ function Landing() {
               </div>
               <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
                 <Button asChild size="lg" className="btn-final group h-12 rounded-full bg-gradient-primary px-7 text-base font-semibold shadow-[var(--shadow-glow)]">{primaryCta}</Button>
-                {!signedIn && (
-                  <Button asChild size="lg" variant="outline" className="btn-final h-12 rounded-full px-7 text-base font-semibold">
-                    <Link to="/login">{t("Log in")}</Link>
-                  </Button>
-                )}
               </div>
             </div>
           </Reveal>
@@ -521,10 +454,7 @@ function Landing() {
               {signedIn ? (
                 <li><Link to="/dashboard" className="hover:text-foreground">{t("Dashboard")}</Link></li>
               ) : (
-                <>
-                  <li><Link to="/login" className="hover:text-foreground">{t("Log in")}</Link></li>
-                  <li><Link to="/register" className="hover:text-foreground">{t("Sign up")}</Link></li>
-                </>
+                <li><Link to="/login" className="hover:text-foreground">{t("Log in")}</Link></li>
               )}
             </ul>
           </div>

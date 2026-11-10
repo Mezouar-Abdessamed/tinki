@@ -37,6 +37,7 @@
 
 ## Signup
 
+- Gate the registration page and signup entry points through the shared presentation-only signup availability switch; retain the form for restoration and leave hosted authentication and Google login unchanged.
 - Require a returned authenticated session before signup navigates to the dashboard; let the shared `useMyProfile` path create the stored username's profile so registration and dashboard requests cannot race to insert it twice.
 - Keep `/verify-email` as a public redirect to login for old bookmarks rather than an active signup-code form; hosted email auto-confirm settings determine whether account creation returns a session.
 

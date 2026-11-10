@@ -1,5 +1,6 @@
 // English -> Spanish dictionary. Keys are the exact English text shown on screen.
 export const ES: Record<string, string> = {
+  "This account's signup is incomplete. Email signup is temporarily unavailable": "El registro de esta cuenta está incompleto. El registro por correo no está disponible temporalmente",
   "Page preview": "Vista de la página",
   "Background preview": "Vista del fondo",
   "Expand preview": "Ampliar vista previa",
