@@ -7,6 +7,7 @@ import {
   Film,
   Image as ImageIcon,
   Loader2,
+  Maximize2,
   Sparkles,
   Square,
   Upload,
@@ -15,6 +16,7 @@ import { toast } from "sonner";
 
 import { ProfilePreview } from "@/components/dashboard/ProfilePreview";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -217,6 +219,7 @@ function ColorField({ id, label, value, onChange }: { id: string; label: string;
 }
 
 export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profile: Profile; avatarUrl: string | null; onSaved: () => void }) {
+  const [backgroundOnly, setBackgroundOnly] = useState(false);
   const initialType = profile.card_background_type === "default" ? "solid" : profile.card_background_type;
   const [type, setType] = useState<CardBackgroundType>(initialType);
   const [firstColor, setFirstColor] = useState(profile.card_background_color);
@@ -413,20 +416,47 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
   return (
     <div className="space-y-8">
       {/* Live preview — top of the page */}
-      <section className="panel relative overflow-hidden p-6 sm:p-8">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-halo opacity-60" aria-hidden="true" />
-        <div className="relative flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="font-display text-lg font-semibold">Live preview of links</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Exactly what visitors see on your public page</p>
-          </div>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary/70 px-3 py-1 text-xs text-muted-foreground">
+      <section aria-label="Page preview" className="min-w-0 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-display text-lg font-semibold">Live preview</h2>
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
             <Sparkles className="h-3.5 w-3.5 text-primary" />
             {dirty ? "Unsaved changes" : "Up to date"}
           </span>
         </div>
-        <div className="relative mt-6 rounded-2xl border border-border bg-background/60 p-4 sm:p-8">
-          <ProfilePreview profile={previewProfile} avatarUrl={avatarUrl} />
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-wrap gap-1" role="group" aria-label="Page preview">
+            <Button type="button" size="sm" variant={backgroundOnly ? "ghost" : "secondary"} aria-pressed={!backgroundOnly} onClick={() => setBackgroundOnly(false)} className="h-auto min-h-9 whitespace-normal">
+              <Square className="shrink-0" />
+              Public page
+            </Button>
+            <Button type="button" size="sm" variant={backgroundOnly ? "secondary" : "ghost"} aria-pressed={backgroundOnly} onClick={() => setBackgroundOnly(true)} className="h-auto min-h-9 whitespace-normal">
+              <ImageIcon className="shrink-0" />
+              Background
+            </Button>
+          </div>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button type="button" variant="outline" size="icon" aria-label="Expand preview" title="Expand preview">
+                <Maximize2 />
+              </Button>
+            </DialogTrigger>
+            <DialogContent aria-describedby={undefined} className="flex max-h-[94dvh] w-[96vw] max-w-6xl flex-col gap-0 overflow-hidden rounded-lg p-0">
+              <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4 pe-12">
+                <DialogTitle>Page preview</DialogTitle>
+                <Button type="button" size="sm" variant={backgroundOnly ? "secondary" : "ghost"} aria-label="Background preview" aria-pressed={backgroundOnly} onClick={() => setBackgroundOnly(!backgroundOnly)} className="h-auto min-h-9 whitespace-normal">
+                  <ImageIcon className="shrink-0" />
+                  Background
+                </Button>
+              </div>
+              <div className="min-h-0 overflow-y-auto">
+                <ProfilePreview profile={previewProfile} avatarUrl={avatarUrl} fullPage backgroundOnly={backgroundOnly} className="min-h-[78dvh]" />
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+        <div className="overflow-hidden rounded-lg border border-border">
+          <ProfilePreview profile={previewProfile} avatarUrl={avatarUrl} fullPage backgroundOnly={backgroundOnly} />
         </div>
       </section>
 
@@ -710,7 +740,7 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
         </div>
       </section>
 
-      <div className="sticky bottom-4 z-20 flex flex-col gap-3 rounded-xl border border-border bg-background/90 p-3 shadow-lg backdrop-blur sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-3 border-t border-border py-4 sm:flex-row sm:items-center">
         <Button type="button" onClick={save} disabled={saving || !canSave} className="sm:w-44">
           {saving ? <Loader2 className="animate-spin" /> : <Check />}
           {saving ? "Saving…" : "Save colors"}
