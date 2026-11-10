@@ -9,9 +9,9 @@ export function GlowCursor() {
   const [enabled, setEnabled] = useState(false);
 
   useEffect(() => {
-    const finePointer = window.matchMedia("(pointer: fine)").matches;
+    const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (!finePointer || reducedMotion) return;
+    if (coarsePointer || reducedMotion) return;
     setEnabled(true);
 
     let raf = 0;
