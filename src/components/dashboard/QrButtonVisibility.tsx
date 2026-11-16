@@ -3,10 +3,10 @@ import { toast } from "sonner";
 import { Check, Loader2 } from "lucide-react";
 
 import { Switch } from "@/components/ui/switch";
-import { supabase } from "@/lib/app-supabase";
+import { updateMyProfile } from "@/lib/profiles";
 
 export function QrButtonVisibility({
-  profileId,
+  profileId: _profileId,
   initial,
   onSaved,
 }: {
@@ -22,19 +22,17 @@ export function QrButtonVisibility({
     setOn(next);
     setSaved(false);
     setSaving(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({ show_qr_button: next })
-      .eq("id", profileId);
-    setSaving(false);
-    if (error) {
+    try {
+      await updateMyProfile({ show_qr_button: next });
+      toast.success(next ? "QR button is now visible" : "QR button is now hidden");
+      setSaved(true);
+      onSaved();
+    } catch {
       setOn(!next);
       toast.error("Could not save. Please try again");
-      return;
+    } finally {
+      setSaving(false);
     }
-    toast.success(next ? "QR button is now visible" : "QR button is now hidden");
-    setSaved(true);
-    onSaved();
   }
 
   return (

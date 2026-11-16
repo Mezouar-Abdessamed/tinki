@@ -1,6 +1,6 @@
 import type { QRCodeToDataURLOptions, QRCodeToStringOptions } from "qrcode";
 
-import { supabase } from "@/lib/app-supabase";
+import { apiFetch } from "@/lib/api";
 import {
   UnsafeQrSettingsError,
   validateQrSettings,
@@ -148,9 +148,8 @@ export async function saveQrSettings(
   });
   if (validation.blocking) throw new UnsafeQrSettingsError(validation.issues);
 
-  const { error } = await supabase
-    .from("profiles")
-    .update(qrSettingsToProfile(settings))
-    .eq("id", profileId);
-  if (error) throw error;
+  await apiFetch("/api/profiles/me", {
+    method: "PATCH",
+    body: JSON.stringify(qrSettingsToProfile(settings)),
+  });
 }

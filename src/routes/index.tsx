@@ -2,7 +2,11 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import {
   ArrowRight,
   BarChart3,
+  Check,
+  ChevronDown,
+  Languages,
   Link2,
+  Menu,
   Palette,
   QrCode as QrCodeIcon,
   Send,
@@ -29,8 +33,16 @@ import { Reveal } from "@/components/landing/Reveal";
 import { SmoothScroll } from "@/components/landing/SmoothScroll";
 import { SocialIcon } from "@/components/SocialIcon";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/lib/auth";
-import { useLanguage } from "@/lib/i18n";
+import { SUPPORTED_LANGUAGES, useLanguage } from "@/lib/i18n";
+import { registrationEntryPath } from "@/lib/signup-availability";
 import { SOCIAL_PLATFORMS } from "@/lib/socials";
 
 const TITLE = "Tinki — All your links. One simple page";
@@ -84,7 +96,7 @@ const ACCOUNT = [
 
 const FAQ = [
   ["What is this platform?", "Tinki gives you one personal page that collects your social profiles and important links, so you can share a single link instead of many"],
-  ["How does my profile link work?", "When you sign up you choose a username. Your public page lives at that address — for example tinki.lovable.app/yourname"],
+  ["How does my profile link work?", "When you sign up you choose a username. Your public page lives at that address — for example tinki.app/yourname"],
    ["Can I add social media accounts?", `Yes. You can add ${SOCIAL_PLATFORMS.length} platforms including Instagram, Facebook, TikTok, Snapchat, LinkedIn, X, YouTube, WhatsApp and Telegram`],
   ["Can I add custom links?", "Yes. Add websites, portfolios or stores, plus phone and email links, and choose an icon for each"],
   ["Can I customize my page?", "Yes. Upload a profile photo, write a bio, and change fonts, colors, the card style and the page background — a color, gradient, image or video"],
@@ -113,10 +125,13 @@ function SectionHead({ eyebrow, title, body, center = false }: { eyebrow: string
 }
 
 function Landing() {
-  const { t } = useLanguage();
+  const { lang, setLang, t } = useLanguage();
   const { session } = useAuth();
   const signedIn = Boolean(session);
+  const currentLanguage =
+    SUPPORTED_LANGUAGES.find((item) => item.code === lang) ?? SUPPORTED_LANGUAGES[0]!;
   const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -125,26 +140,67 @@ function Landing() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  function navigateFromSidebar(href: string) {
+    setMobileMenuOpen(false);
+    const id = href.replace(/^#/, "");
+    window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    }, 320);
+  }
+
   const primaryCta = signedIn ? (
     <Link to="/dashboard">
       {t("Open your dashboard")} <ArrowRight className="ms-2 inline h-4 w-4 transition-transform duration-200 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
     </Link>
   ) : (
-    <Link to="/login">
-      {"Create account\u00a0"} <ArrowRight className="ms-2 inline h-4 w-4 transition-transform duration-200 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
+    <Link to={registrationEntryPath()}>
+      {t("Create account")}{"\u00a0"} <ArrowRight className="ms-2 inline h-4 w-4 transition-transform duration-200 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
     </Link>
   );
 
   const authActions = (btnClass = "") =>
     signedIn ? (
       <Button asChild size="sm" className={btnClass}>
-        <Link to="/dashboard">{t("Dashboard")}</Link>
+        <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)}>{t("Dashboard")}</Link>
       </Button>
     ) : (
       <Button asChild size="sm" className={btnClass}>
-        <Link to="/login">{t("Log in")}</Link>
+        <Link to="/login" onClick={() => setMobileMenuOpen(false)}>{t("Log in")}</Link>
       </Button>
     );
+
+  const renderLanguageMenu = (align: "center" | "end" = "end") => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          aria-label={t("Language")}
+          className="h-8 gap-1.5 rounded-full border border-border/80 bg-surface/60 px-2.5 text-xs font-medium text-muted-foreground hover:bg-surface hover:text-foreground"
+        >
+          <Languages className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+          <span className="hidden sm:inline" lang={lang}>
+            {currentLanguage.label}
+          </span>
+          <span className="uppercase sm:hidden">{lang}</span>
+          <ChevronDown className="h-3 w-3 opacity-70" aria-hidden="true" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align={align} className="min-w-40">
+        {SUPPORTED_LANGUAGES.map((option) => (
+          <DropdownMenuItem
+            key={option.code}
+            onSelect={() => setLang(option.code)}
+            className="flex cursor-pointer items-center justify-between gap-3"
+          >
+            <span lang={option.code}>{option.label}</span>
+            {lang === option.code && <Check className="h-3.5 w-3.5 text-primary" aria-hidden="true" />}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   return (
     <div className="relative min-h-screen overflow-x-clip">
@@ -158,16 +214,78 @@ function Landing() {
           scrolled ? "border-b border-border bg-background/85 backdrop-blur-md" : "border-b border-transparent"
         }`}
       >
-        <div className={`relative mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 transition-[padding] duration-300 rtl:flex-row-reverse ${scrolled ? "py-3" : "py-5"}`}>
-          <Logo />
-          <nav aria-label={t("Main")} className="hidden items-center gap-7 md:flex">
+        <div
+          dir="ltr"
+          className={`relative mx-auto grid max-w-6xl grid-cols-3 items-center gap-2 px-5 transition-[padding] duration-300 lg:flex lg:justify-between lg:gap-4 ${scrolled ? "py-3" : "py-5"}`}
+        >
+          <div className="justify-self-start">
+            <Logo />
+          </div>
+          <nav
+            dir={lang === "ar" ? "rtl" : "ltr"}
+            aria-label={t("Main")}
+            className="hidden items-center gap-7 lg:flex"
+          >
             {NAV.map((n) => (
               <a key={n.href} href={n.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
                  {t(n.label)}
               </a>
             ))}
           </nav>
-          <div className="flex shrink-0 items-center gap-2">{authActions("btn-nav rounded-full")}</div>
+          <div className="justify-self-center lg:hidden">
+            {renderLanguageMenu("center")}
+          </div>
+          <div className="flex shrink-0 items-center gap-2 justify-self-end">
+            <div className="hidden lg:block">
+              {renderLanguageMenu("end")}
+            </div>
+            <div className="hidden sm:block">
+              {authActions("btn-nav rounded-full")}
+            </div>
+            <div className="lg:hidden">
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={t("Open menu")}
+                    className="h-9 w-9 rounded-full border border-border/80 bg-surface/60 text-muted-foreground hover:bg-surface hover:text-foreground"
+                  >
+                    <Menu className="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent
+                  side="right"
+                  dir={lang === "ar" ? "rtl" : "ltr"}
+                  className="flex w-72 flex-col justify-between p-6"
+                >
+                  <SheetTitle className="sr-only">{t("Main")}</SheetTitle>
+                  <div className="flex justify-center" onClick={() => setMobileMenuOpen(false)}>
+                    <Logo />
+                  </div>
+                  <nav aria-label={t("Main")} className="flex flex-1 flex-col items-center justify-center gap-2">
+                    {NAV.map((n) => (
+                      <a
+                        key={n.href}
+                        href={n.href}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          navigateFromSidebar(n.href);
+                        }}
+                        className="flex min-h-11 w-full items-center justify-center rounded-lg px-4 py-2.5 text-center text-base font-medium text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
+                      >
+                        {t(n.label)}
+                      </a>
+                    ))}
+                  </nav>
+                  <div className="border-t border-border pt-4">
+                    {authActions("btn-nav w-full rounded-full justify-center")}
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -234,7 +352,7 @@ function Landing() {
               body="The same page adapts to every screen — opened from a link on desktop, a bio on mobile, or a QR code on a poster"
             />
             <Reveal className="relative mt-14">
-              <BrowserFrame url="tinki.lovable.app/sara.designs" className="mx-auto max-w-4xl">
+              <BrowserFrame url="tinki.app/sara.designs" className="mx-auto max-w-4xl">
                 <DemoPublicProfile showQrButton={false} />
               </BrowserFrame>
               <div className="panel absolute bottom-[-2rem] -start-2 hidden flex-col items-center gap-2 p-4 lg:flex xl:-start-6">

@@ -10,7 +10,7 @@ import type { CustomLink } from "@/lib/custom-links";
 import type { QrSettings } from "@/lib/qr-settings";
 import type { SocialKey } from "@/lib/socials";
 
-export const DEMO_URL = "https://tinki.lovable.app/sara.designs";
+export const DEMO_URL = "https://tinki.app/sara.designs";
 
 export const demoProfile: ProfileCardData = {
   username: "sara.designs",
@@ -133,7 +133,7 @@ export function ShareStrip() {
   return (
     <div className="flex items-center gap-2 rounded-xl border border-border bg-surface p-2 ps-3 text-sm">
       <Link2 className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-      <span className="min-w-0 flex-1 truncate text-muted-foreground">tinki.lovable.app/sara.designs</span>
+      <span className="min-w-0 flex-1 truncate text-muted-foreground">tinki.app/sara.designs</span>
       <span className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground">
         <Share2 className="h-3.5 w-3.5" aria-hidden="true" /> Share
       </span>

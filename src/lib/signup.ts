@@ -1,23 +1,52 @@
-import type { Session, SupabaseClient } from "@supabase/supabase-js";
+import { authApi, type AuthSession } from "@/lib/api";
+import {
+  sendSignupVerificationEmail,
+  type SignupVerificationResult,
+} from "@/lib/firebase-auth";
 
-type SignupValues = { email: string; password: string; username: string; origin: string };
+export type SignupValues = {
+  email: string;
+  password: string;
+  username: string;
+  origin?: string;
+};
+
+export type SignUpFn = (input: {
+  email: string;
+  password: string;
+  username: string;
+}) => Promise<AuthSession>;
 
 /** Create an account and require a real authenticated session before continuing. */
 export async function signUpDirectly(
-  auth: Pick<SupabaseClient["auth"], "signUp">,
   values: SignupValues,
-): Promise<Session> {
-  const { data, error } = await auth.signUp({
+  signUp: SignUpFn = (input) => authApi.signUp(input),
+): Promise<AuthSession> {
+  const session = await signUp({
     email: values.email,
     password: values.password,
-    options: {
-      emailRedirectTo: values.origin,
-      data: { username: values.username },
-    },
+    username: values.username,
   });
-  if (error) throw error;
-  if (!data.session) {
+  if (!session || !session.access_token) {
     throw new Error("We couldn't finish signing you in — please try logging in");
   }
-  return data.session;
+  return session;
+}
+
+export type SignUpWithVerificationFn = (input: {
+  email: string;
+  password: string;
+  username: string;
+}) => Promise<SignupVerificationResult>;
+
+/** Reserve the signup and send a confirmation email before activating the profile. */
+export async function signUpWithEmailConfirmation(
+  values: SignupValues,
+  sendVerification: SignUpWithVerificationFn = sendSignupVerificationEmail,
+): Promise<SignupVerificationResult> {
+  return sendVerification({
+    email: values.email,
+    password: values.password,
+    username: values.username,
+  });
 }

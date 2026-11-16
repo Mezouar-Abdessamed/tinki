@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/lib/app-supabase";
 import { deleteMyAccount } from "@/lib/account.functions";
 import { useAuth } from "@/lib/auth";
 import { useLanguage } from "@/lib/i18n";
@@ -34,18 +33,12 @@ export function DeleteAccountSection({ username }: { username: string }) {
   async function removeAccount() {
     setDeleting(true);
     try {
-      if (hasPassword) {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: user?.email ?? "",
-          password,
-        });
-        if (signInError) {
-          toast.error("Your current password is incorrect");
-          return;
-        }
-      }
-      await deleteMyAccount({ data: { username: confirmName.trim().toLowerCase() } });
-      await supabase.auth.signOut();
+      await deleteMyAccount({
+        data: {
+          username: confirmName.trim().toLowerCase(),
+          ...(hasPassword ? { password } : {}),
+        },
+      });
       toast.success("Your account has been deleted");
       navigate({ to: "/" });
     } catch (error) {

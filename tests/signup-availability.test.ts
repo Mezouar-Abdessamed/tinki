@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { EMAIL_SIGNUP_ENABLED, registrationEntryPath } from "../src/lib/signup-availability";
 
-describe("temporary email signup pause", () => {
-  it("keeps the email signup form disabled until it is repaired", () => {
+describe("email signup availability", () => {
+  it("keeps direct email signup gated off while hidden", () => {
     expect(EMAIL_SIGNUP_ENABLED).toBe(false);
   });
 
-  it("takes account-creation entry points to login during the pause", () => {
+  it("routes account-creation entry points to /login", () => {
     expect(registrationEntryPath()).toBe("/login");
   });
 });

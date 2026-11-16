@@ -1,37 +1,43 @@
-import type { Session, User } from "@supabase/supabase-js";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
-import { supabase } from "@/lib/app-supabase";
+import { authApi, subscribeAuth, type AuthSession, type AuthUser } from "@/lib/api";
 
 type AuthState = {
-  session: Session | null;
-  user: User | null;
+  session: AuthSession | null;
+  user: AuthUser | null;
   loading: boolean;
 };
 
 const AuthContext = createContext<AuthState>({ session: null, user: null, loading: true });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(Boolean(import.meta.env['VITE_SUPABASE_URL'] && import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY']));
+  const [session, setSession] = useState<AuthSession | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // The public pages should remain visible before an account service is connected.
-    if (!import.meta.env['VITE_SUPABASE_URL'] || !import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY']) {
-      setLoading(false);
-      return;
-    }
-    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    let active = true;
+    const unsubscribe = subscribeAuth((nextSession) => {
+      if (!active) return;
       setSession(nextSession);
       setLoading(false);
     });
 
-    supabase.auth.getSession()
-      .then(({ data: { session: current } }) => setSession(current))
-      .catch(() => setSession(null))
-      .finally(() => setLoading(false));
+    authApi
+      .getSession()
+      .then((current) => {
+        if (active) setSession(current);
+      })
+      .catch(() => {
+        if (active) setSession(null);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
 
-    return () => data.subscription.unsubscribe();
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, []);
 
   const value = useMemo<AuthState>(

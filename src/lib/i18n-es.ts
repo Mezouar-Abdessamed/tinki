@@ -441,7 +441,7 @@ export const ES: Record<string, string> = {
   "What is this platform?": "¿Qué es esta plataforma?",
   "Can I delete my account?": "¿Puedo borrar mi cuenta?",
   "Can I customize my page?": "¿Puedo personalizar mi página?",
-  "When you sign up you choose a username. Your public page lives at that address — for example tinki.lovable.app/yourname": "Cuando se inscriba, elija un nombre de usuario. Su página pública vive en esa dirección, por ejemplo tinki.lovable.app/yourname",
+  "When you sign up you choose a username. Your public page lives at that address — for example tinki.app/yourname": "Cuando se inscriba, elija un nombre de usuario. Su página pública vive en esa dirección, por ejemplo tinki.app/yourname",
   "Every page has its own QR code. You can change its colors and shapes, add your profile picture in the center, and download it": "Cada página tiene su propio código QR. Puede cambiar sus colores y formas, añadir su imagen de perfil en el centro, y descargarlo",
   "Customize QR Code": "Personalizar el código QR",
   "How does my profile link work?": "¿Cómo funciona mi enlace de perfil?",

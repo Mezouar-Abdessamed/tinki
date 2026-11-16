@@ -3,15 +3,18 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { AuthShell } from "@/components/AuthShell";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { PasswordInput } from "@/components/PasswordInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { lovable } from "@/integrations/lovable/index";
-import { supabase } from "@/lib/app-supabase";
 import { useAuth } from "@/lib/auth";
-import { isUsernameAvailable } from "@/lib/profiles";
-import { signUpDirectly } from "@/lib/signup";
+import {
+  completeGoogleRedirectIfPending,
+  signInWithGooglePopup,
+  warmUpFirebaseAuth,
+} from "@/lib/firebase-auth";
+import { signUpWithEmailConfirmation } from "@/lib/signup";
 import { EMAIL_SIGNUP_ENABLED, registrationEntryPath } from "@/lib/signup-availability";
 import { emailSchema, firstError, passwordSchema, usernameSchema } from "@/lib/socials";
 
@@ -49,10 +52,32 @@ function RegisterPage() {
     Partial<Record<"username" | "email" | "password" | "confirm", string>>
   >({});
   const [submitting, setSubmitting] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && session) navigate({ to: "/dashboard" });
   }, [authLoading, session, navigate]);
+
+  useEffect(() => {
+    let active = true;
+    void warmUpFirebaseAuth();
+    completeGoogleRedirectIfPending()
+      .then((redirectSession) => {
+        if (!active || !redirectSession) return;
+        toast.success("Signed in with Google");
+        navigate({ to: "/dashboard" });
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        toast.error(
+          error instanceof Error ? error.message : "Google sign-in didn't work. Please try again",
+        );
+      });
+    return () => {
+      active = false;
+    };
+  }, [navigate]);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -72,33 +97,40 @@ function RegisterPage() {
     if (password !== confirm) nextErrors.confirm = "Passwords don't match";
 
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0 || !parsedUsername.success || !parsedEmail.success) return;
+    setSubmitError(null);
+    if (Object.keys(nextErrors).length > 0 || !parsedUsername.success || !parsedEmail.success)
+      return;
 
     setSubmitting(true);
     try {
       const cleanUsername = parsedUsername.data;
       const cleanEmail = parsedEmail.data;
 
-      const available = await isUsernameAvailable(cleanUsername);
-      if (!available) {
-        setErrors({ username: "That username is already taken" });
-        return;
-      }
-
-      await signUpDirectly(supabase.auth, {
+      const result = await signUpWithEmailConfirmation({
         email: cleanEmail,
         password,
         username: cleanUsername,
         origin: window.location.origin,
       });
-      // The dashboard's shared profile query creates the chosen page once.
-      toast.success("Welcome to Tinki!");
-      navigate({ to: "/dashboard" });
+      if (result.status === "verified") {
+        toast.success("Welcome to Tinki!");
+        navigate({ to: "/dashboard/profile" });
+        return;
+      }
+      toast.success("Confirmation email sent! Check your inbox");
+      navigate({
+        to: "/verify-email",
+        search: { email: cleanEmail, username: cleanUsername },
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Something went wrong";
-      if (message.toLowerCase().includes("already registered")) {
+      const lower = message.toLowerCase();
+      if (lower.includes("already registered") || lower.includes("already has an account")) {
         setErrors({ email: "That email already has an account. Try logging in instead" });
+      } else if (lower.includes("already taken")) {
+        setErrors({ username: "That username is already taken" });
       } else {
+        setSubmitError(message);
         toast.error(message);
       }
     } finally {
@@ -107,17 +139,19 @@ function RegisterPage() {
   }
 
   async function handleGoogle() {
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/auth/callback`,
-    });
-    if (result.error) {
-      toast.error("Google sign-in didn't work. Please try again");
-      return;
+    setGoogleLoading(true);
+    try {
+      await signInWithGooglePopup();
+      toast.success("Signed in with Google");
+      navigate({ to: "/dashboard" });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Google sign-in didn't work. Please try again";
+      if (message.toLowerCase().includes("cancelled")) return;
+      toast.error(message);
+    } finally {
+      setGoogleLoading(false);
     }
-    if (result.redirected) return;
-    navigate({ to: "/dashboard" });
   }
-
 
   return (
     <AuthShell
@@ -183,8 +217,17 @@ function RegisterPage() {
           {errors.confirm ? <p className="text-xs text-destructive">{errors.confirm}</p> : null}
         </div>
 
-        <Button type="submit" className="w-full" disabled={submitting}>
-          {submitting ? "Creating your page…" : "Create my page"}
+        {submitError ? (
+          <div
+            role="alert"
+            className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-xs text-destructive"
+          >
+            {submitError}
+          </div>
+        ) : null}
+
+        <Button type="submit" className="w-full" disabled={submitting || googleLoading}>
+          {submitting ? "Sending confirmation email…" : "Create my page"}
         </Button>
       </form>
 
@@ -194,9 +237,11 @@ function RegisterPage() {
         <span className="h-px flex-1 bg-border" />
       </div>
 
-      <Button variant="outline" className="w-full" onClick={handleGoogle}>
-        Continue with Google
-      </Button>
+      <GoogleSignInButton
+        loading={googleLoading}
+        disabled={submitting}
+        onClick={() => void handleGoogle()}
+      />
     </AuthShell>
   );
 }

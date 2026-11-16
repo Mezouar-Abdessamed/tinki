@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import type { CSSProperties } from "react";
 
-import { supabase } from "@/lib/app-supabase";
+import { apiFetch } from "@/lib/api";
 import type { AppTableRow } from "@/lib/app-database";
 
 export type CustomLink = AppTableRow<"custom_links">;
@@ -100,15 +100,48 @@ export function validateCustomUrl(raw: string) {
 }
 
 export async function fetchCustomLinks(profileId: string, enabledOnly = false) {
-  let query = supabase
-    .from("custom_links")
-    .select("*")
-    .eq("profile_id", profileId)
-    .order("position", { ascending: true })
-    .order("created_at", { ascending: true });
+  const { links } = await apiFetch<{ links: CustomLink[] }>(
+    `/api/profiles/${encodeURIComponent(profileId)}/custom-links${enabledOnly ? "?enabledOnly=true" : ""}`,
+  );
+  return links ?? [];
+}
 
-  if (enabledOnly) query = query.eq("enabled", true);
-  const { data, error } = await query;
-  if (error) throw error;
-  return data ?? [];
+export async function createCustomLink(input: {
+  name: string;
+  url: string;
+  icon: string;
+  link_type: CustomLinkType;
+}) {
+  const { link } = await apiFetch<{ link: CustomLink }>("/api/custom-links", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return link;
+}
+
+export async function updateCustomLink(
+  id: string,
+  patch: Partial<Pick<CustomLink, "name" | "url" | "icon" | "link_type" | "enabled">>,
+) {
+  const { link } = await apiFetch<{ link: CustomLink }>(
+    `/api/custom-links/${encodeURIComponent(id)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    },
+  );
+  return link;
+}
+
+export async function deleteCustomLink(id: string) {
+  await apiFetch(`/api/custom-links/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+}
+
+export async function reorderCustomLinks(targetProfileId: string, orderedIds: string[]) {
+  await apiFetch("/api/custom-links/reorder", {
+    method: "POST",
+    body: JSON.stringify({ target_profile_id: targetProfileId, ordered_ids: orderedIds }),
+  });
 }

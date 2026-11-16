@@ -6,13 +6,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/PasswordInput";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/lib/app-supabase";
-import { useAuth } from "@/lib/auth";
+import { authApi } from "@/lib/api";
 import { firstError, passwordSchema } from "@/lib/socials";
 
 export function ChangePasswordForm() {
-  const { user } = useAuth();
-
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -37,28 +34,19 @@ export function ChangePasswordForm() {
     setError(null);
     setSaving(true);
     try {
-      // Re-authenticate to prove the current password is correct.
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user?.email ?? "",
-        password: currentPassword,
-      });
-      if (signInError) {
-        setError("Your current password is incorrect");
-        return;
-      }
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword,
-        current_password: currentPassword,
-      } as Parameters<typeof supabase.auth.updateUser>[0]);
-      if (updateError) throw updateError;
+      await authApi.updatePassword({ password: newPassword, currentPassword });
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
       toast.success("Your password has been changed");
     } catch (updateError) {
-      toast.error(
-        updateError instanceof Error ? updateError.message : "Couldn't change the password",
-      );
+      const message =
+        updateError instanceof Error ? updateError.message : "Couldn't change the password";
+      if (message.toLowerCase().includes("current password")) {
+        setError(message);
+      } else {
+        toast.error(message);
+      }
     } finally {
       setSaving(false);
     }

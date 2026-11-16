@@ -1,4 +1,5 @@
-import { supabase } from "@/lib/app-supabase";
+import { apiFetch } from "@/lib/api";
+import type { AppTableRow } from "@/lib/app-database";
 import { SOCIAL_PLATFORMS, type SocialKey } from "@/lib/socials";
 
 export type SocialLinkSetting = {
@@ -10,14 +11,11 @@ export type SocialLinkSetting = {
 };
 
 export async function fetchSocialLinkSettings(profileId: string) {
-  const { data, error } = await supabase
-    .from("social_link_settings")
-    .select("id, profile_id, platform, enabled, position")
-    .eq("profile_id", profileId)
-    .order("position", { ascending: true });
-  if (error) throw error;
+  const { settings } = await apiFetch<{ settings: AppTableRow<"social_link_settings">[] }>(
+    `/api/profiles/${encodeURIComponent(profileId)}/social-settings`,
+  );
 
-  const saved = new Map((data ?? []).map((item) => [item.platform, item]));
+  const saved = new Map(settings.map((item) => [item.platform, item]));
   return SOCIAL_PLATFORMS.map((platform, position) => {
     const setting = saved.get(platform.key);
     return {
@@ -37,8 +35,8 @@ export async function saveSocialLinkSettings(settings: SocialLinkSetting[]) {
     enabled: setting.enabled,
     position,
   }));
-  const { error } = await supabase
-    .from("social_link_settings")
-    .upsert(payload, { onConflict: "profile_id,platform" });
-  if (error) throw error;
+  await apiFetch("/api/social-settings", {
+    method: "PUT",
+    body: JSON.stringify({ settings: payload }),
+  });
 }

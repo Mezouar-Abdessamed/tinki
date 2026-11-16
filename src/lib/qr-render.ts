@@ -1,9 +1,9 @@
 import QRCode from "qrcode";
-import qrCenterAsset from "@/assets/tinki-qr-center.png.asset.json";
 
 import type { QrEyeShape, QrModuleShape, QrSettings } from "@/lib/qr-settings";
+import { getQrCenterBadgeMetrics, isCenterLogoClearedModule } from "@/lib/qr-validation";
 
-const QR_CENTER_LOGO_URL = qrCenterAsset.url;
+export const QR_CENTER_LOGO_URL = "/assets/aistudio/tinki_ca348073.svg";
 
 export type QrAvatar = {
   url?: string | null | undefined;
@@ -55,11 +55,7 @@ function eyeShapePath(shape: QrEyeShape, x: number, y: number, size: number): st
 }
 
 function isFinderModule(row: number, col: number, count: number): boolean {
-  return (
-    (row < 7 && col < 7) ||
-    (row < 7 && col >= count - 7) ||
-    (row >= count - 7 && col < 7)
-  );
+  return (row < 7 && col < 7) || (row < 7 && col >= count - 7) || (row >= count - 7 && col < 7);
 }
 
 function escapeXml(value: string): string {
@@ -108,21 +104,20 @@ export function renderQrSvg(
   const avatarRadius = avatarSize / 2;
   const avatarCenterX = total / 2;
   const topExtension = avatarRadius;
-  const logoSize = Math.min(6.6, count * 0.22);
-  const logoQuietSize = logoSize + 1.25;
-  // Rounded plate: a clearly rounded square rather than a sharp-edged patch.
-  const logoRadius = logoQuietSize * 0.3;
-  const logoX = (total - logoSize) / 2;
-  const logoY = (total - logoSize) / 2;
-  // Geometry-derived id: two codes with the same plate geometry share an
-  // identical definition, so a repeated id on one page is harmless.
-  const logoClipId = `qr-logo-clip-${total}-${Math.round(logoRadius * 100)}`;
+  const badgeCenter = total / 2;
+  const badgeMetrics = getQrCenterBadgeMetrics(count);
+  const logoSize = badgeMetrics.logoSize;
+  const logoX = badgeCenter - logoSize / 2;
+  const logoY = badgeCenter - logoSize / 2;
+  const logoColor = settings.foregroundColor;
+  const logoFilterId = `qr-logo-tint-${logoColor.replace(/[^0-9a-f]/gi, "").toLowerCase() || "fg"}`;
 
   const modules: string[] = [];
   for (let row = 0; row < count; row += 1) {
     for (let col = 0; col < count; col += 1) {
       if (!data[row * count + col]) continue;
       if (isFinderModule(row, col, count)) continue;
+      if (centerLogoUrl && isCenterLogoClearedModule(row, col, count)) continue;
       modules.push(modulePath(settings.moduleShape, col + margin, row + margin));
     }
   }
@@ -154,9 +149,10 @@ export function renderQrSvg(
 
   const centerLogoMarkup = centerLogoUrl
     ? [
-        `<defs><clipPath id="${logoClipId}"><rect x="${(total - logoQuietSize) / 2}" y="${(total - logoQuietSize) / 2}" width="${logoQuietSize}" height="${logoQuietSize}" rx="${logoRadius}" ry="${logoRadius}"/></clipPath></defs>`,
-        `<rect x="${(total - logoQuietSize) / 2}" y="${(total - logoQuietSize) / 2}" width="${logoQuietSize}" height="${logoQuietSize}" rx="${logoRadius}" ry="${logoRadius}" fill="${settings.backgroundColor}"/>`,
-        `<image href="${escapeXml(centerLogoUrl)}" x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" preserveAspectRatio="xMidYMid meet" clip-path="url(#${logoClipId})"/>`,
+        `<defs><filter id="${logoFilterId}" color-interpolation-filters="sRGB"><feFlood flood-color="${escapeXml(logoColor)}" result="tint"/><feComposite in="tint" in2="SourceAlpha" operator="in"/></filter></defs>`,
+        `<circle cx="${badgeCenter}" cy="${badgeCenter}" r="${badgeMetrics.badgeRadius}" fill="${settings.backgroundColor}"/>`,
+        `<circle cx="${badgeCenter}" cy="${badgeCenter}" r="${badgeMetrics.badgeRadius}" fill="${settings.foregroundColor}" fill-opacity="0.05" stroke="${settings.foregroundColor}" stroke-opacity="0.18" stroke-width="${badgeMetrics.strokeWidth}"/>`,
+        `<image href="${escapeXml(centerLogoUrl)}" x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" preserveAspectRatio="xMidYMid meet" filter="url(#${logoFilterId})"/>`,
       ].join("")
     : "";
 
@@ -181,7 +177,9 @@ async function imageUrlToDataUrl(url: string): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () =>
-      typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("Avatar read failed"));
+      typeof reader.result === "string"
+        ? resolve(reader.result)
+        : reject(new Error("Avatar read failed"));
     reader.onerror = () => reject(new Error("Avatar read failed"));
     reader.readAsDataURL(blob);
   });

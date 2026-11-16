@@ -1,9 +1,6 @@
 import type { CSSProperties } from "react";
 
-import bg1 from "@/assets/rbg1.jpeg.asset.json";
-import bg2 from "@/assets/rbg2.jpeg.asset.json";
-import bg3 from "@/assets/rbg3.png.asset.json";
-import { supabase } from "@/lib/app-supabase";
+import { apiFetch, storageApi } from "@/lib/api";
 import type { SocialField } from "@/lib/socials";
 
 export type Profile = {
@@ -53,7 +50,11 @@ export type FontFamilyKey = "display" | "sans" | "serif" | "mono" | "condensed";
 export type FontStyleKey = "normal" | "italic";
 
 export const FONT_FAMILIES: Array<{ value: FontFamilyKey; label: string; stack: string }> = [
-  { value: "display", label: "Space Grotesk", stack: '"Space Grotesk", ui-sans-serif, system-ui, sans-serif' },
+  {
+    value: "display",
+    label: "Space Grotesk",
+    stack: '"Space Grotesk", ui-sans-serif, system-ui, sans-serif',
+  },
   { value: "sans", label: "DM Sans", stack: '"DM Sans", ui-sans-serif, system-ui, sans-serif' },
   { value: "serif", label: "Playfair Display", stack: '"Playfair Display", Georgia, serif' },
   { value: "mono", label: "JetBrains Mono", stack: '"JetBrains Mono", ui-monospace, monospace' },
@@ -93,7 +94,10 @@ export function textTypographyStyle(typography: TextTypography): {
   const font = FONT_FAMILIES.find((item) => item.value === typography.family);
   const weight = FONT_WEIGHTS.find((item) => item.value === typography.weight);
   const style = typography.style === "italic" ? "italic" : "normal";
-  const color = typeof typography.color === "string" && typography.color.trim() !== "" ? typography.color.trim() : null;
+  const color =
+    typeof typography.color === "string" && typography.color.trim() !== ""
+      ? typography.color.trim()
+      : null;
   return {
     ...(font ? { fontFamily: font.stack } : {}),
     ...(weight ? { fontWeight: weight.value } : {}),
@@ -129,9 +133,9 @@ export type PageAppearance = {
 };
 
 export const PAGE_BACKGROUND_PRESETS: Array<{ label: string; url: string }> = [
-  { label: "Floral", url: bg1.url },
-  { label: "Geometric", url: bg2.url },
-  { label: "Clouds", url: bg3.url },
+  { label: "Floral", url: "/presets/floral.svg" },
+  { label: "Geometric", url: "/presets/geometric.svg" },
+  { label: "Clouds", url: "/presets/clouds.svg" },
 ];
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
@@ -177,7 +181,12 @@ export function profilePageBackgroundStyle(appearance: PageAppearance): CSSPrope
   const color = profilePageBackground(appearance);
   const image = appearance.page_background_image_url;
   const usesVideo = appearance.page_background_media_type === "video";
-  if (!usesVideo && appearance.page_background_use_image && typeof image === "string" && image.trim() !== "") {
+  if (
+    !usesVideo &&
+    appearance.page_background_use_image &&
+    typeof image === "string" &&
+    image.trim() !== ""
+  ) {
     const repeat = appearance.page_background_image_mode === "repeat";
     return {
       backgroundColor: color,
@@ -203,30 +212,15 @@ export function socialIconStyles(appearance: CardAppearance): {
   };
 }
 
-
-// The photo buckets are private, but their object read policies permit public
-// profile photos. Sign each path so visitors can display it without a login.
-const PROFILE_PHOTO_TTL_SECONDS = 60 * 60 * 24 * 7;
-
-async function getProfilePhotoUrl(bucket: "avatars" | "covers", path: string | null | undefined): Promise<string | null> {
-  if (!path) return null;
-  try {
-    const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, PROFILE_PHOTO_TTL_SECONDS);
-    return error ? null : (data?.signedUrl ?? null);
-  } catch {
-    return null;
-  }
-}
-
 export async function getAvatarUrl(path: string | null | undefined): Promise<string | null> {
-  return getProfilePhotoUrl("avatars", path);
+  if (!path) return null;
+  return storageApi.mediaUrl("avatars", path);
 }
 
 export async function getCoverUrl(path: string | null | undefined): Promise<string | null> {
-  return getProfilePhotoUrl("covers", path);
+  if (!path) return null;
+  return storageApi.mediaUrl("covers", path);
 }
-
-const BACKGROUND_TTL_SECONDS = 60 * 60 * 24 * 7;
 
 // Backgrounds we uploaded ourselves live in the "backgrounds" bucket as
 // "<user id>/<file>", the same shape the appearance editor's cleanup relies on.
@@ -241,66 +235,49 @@ export function isBackgroundStoragePath(value: string): boolean {
 
 /**
  * Turns a stored background value into something the page can display: preset and
- * external links (and links saved before object paths were introduced) pass through
- * untouched, our own uploads get a short-lived signed URL, anything unusable is null.
+ * external links pass through untouched, our own uploads resolve to /media/backgrounds/...
  */
 export async function getBackgroundUrl(value: string | null | undefined): Promise<string | null> {
   const trimmed = typeof value === "string" ? value.trim() : "";
   if (trimmed === "") return null;
   if (trimmed.startsWith("/") || /^(https?:|blob:|data:)/i.test(trimmed)) return trimmed;
   if (!isBackgroundStoragePath(trimmed)) return null;
-  try {
-    const { data, error } = await supabase.storage
-      .from("backgrounds")
-      .createSignedUrl(trimmed, BACKGROUND_TTL_SECONDS);
-    if (error || !data?.signedUrl) return null;
-    return data.signedUrl;
-  } catch {
-    return null;
-  }
+  return storageApi.mediaUrl("backgrounds", trimmed);
 }
 
 export async function fetchProfileByUsername(username: string): Promise<Profile | null> {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("username", username.toLowerCase())
-    .maybeSingle();
-
-  if (error) throw error;
-  return (data as Profile | null) ?? null;
+  const { profile } = await apiFetch<{ profile: Profile | null }>(
+    `/api/profiles/by-username/${encodeURIComponent(username.toLowerCase())}`,
+  );
+  return profile ?? null;
 }
 
-export async function fetchMyProfile(userId: string): Promise<Profile | null> {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", userId)
-    .maybeSingle();
+export async function fetchMyProfile(_userId: string): Promise<Profile | null> {
+  const { profile } = await apiFetch<{ profile: Profile | null }>("/api/profiles/me");
+  return profile ?? null;
+}
 
-  if (error) throw error;
-  return (data as Profile | null) ?? null;
+export async function updateMyProfile(patch: Partial<Profile>): Promise<Profile> {
+  const { profile } = await apiFetch<{ profile: Profile }>("/api/profiles/me", {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+  return profile;
 }
 
 export async function isUsernameAvailable(username: string): Promise<boolean> {
-  const { data, error } = await supabase.rpc("is_username_available", {
-    check_username: username.toLowerCase(),
-  });
-  if (error) throw error;
-  return Boolean(data);
+  const { available } = await apiFetch<{ available: boolean }>(
+    `/api/usernames/available?username=${encodeURIComponent(username.toLowerCase())}`,
+  );
+  return Boolean(available);
 }
 
-/**
- * True when an insert/update failed because the username was claimed between
- * the availability check and the write (Postgres unique violation, code 23505,
- * on the username constraint rather than the id primary key).
- */
 export function isUsernameTakenError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
   const e = error as { code?: string; message?: string; details?: string; hint?: string };
   const text = [e.message, e.details, e.hint].filter(Boolean).join(" ").toLowerCase();
   const uniqueViolation = e.code === "23505" || /duplicate key|unique constraint/.test(text);
-  return uniqueViolation && text.includes("username");
+  return uniqueViolation && (text.includes("username") || text.includes("taken"));
 }
 
 export function profileUrl(username: string) {
@@ -308,13 +285,8 @@ export function profileUrl(username: string) {
   return `${origin}/${username}`;
 }
 
-/**
- * People who sign up with email pick their username before confirming, so it is
- * kept with their account until they can create the page themselves.
- * Google users have no stored username, so they pick one in the dashboard.
- */
 export async function createProfileFromStoredUsername(
-  userId: string,
+  _userId: string,
   storedUsername: unknown,
 ): Promise<Profile | null> {
   if (typeof storedUsername !== "string") return null;
@@ -322,12 +294,13 @@ export async function createProfileFromStoredUsername(
   if (!/^[a-z0-9_-]{1,20}$/.test(username)) return null;
   if (!(await isUsernameAvailable(username))) return null;
 
-  const { data, error } = await supabase
-    .from("profiles")
-    .insert({ id: userId, username })
-    .select("*")
-    .maybeSingle();
-
-  if (error) return null;
-  return (data as Profile | null) ?? null;
+  try {
+    const { profile } = await apiFetch<{ profile: Profile }>("/api/profiles", {
+      method: "POST",
+      body: JSON.stringify({ username }),
+    });
+    return profile ?? null;
+  } catch {
+    return null;
+  }
 }

@@ -3,8 +3,9 @@ import { useEffect } from "react";
 
 import { ClaimUsername } from "@/components/dashboard/ClaimUsername";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
-import { supabase } from "@/lib/app-supabase";
+import { authApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { signOutFirebaseGoogle } from "@/lib/firebase-auth";
 import { useMyProfile } from "@/lib/use-profile";
 
 export const Route = createFileRoute("/dashboard")({
@@ -29,7 +30,7 @@ function DashboardLayout() {
   }, [loading, session, navigate]);
 
   async function logout() {
-    await supabase.auth.signOut();
+    await Promise.all([authApi.signOut(), signOutFirebaseGoogle()]);
     navigate({ to: "/" });
   }
 

@@ -5,8 +5,7 @@ import { SocialIcon } from "@/components/SocialIcon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/lib/app-supabase";
-import type { Profile } from "@/lib/profiles";
+import { updateMyProfile, type Profile } from "@/lib/profiles";
 import { normalizeSocialUrl, SOCIAL_PLATFORMS, validateSocialUrl, type SocialField } from "@/lib/socials";
 
 type SocialValues = Record<SocialField, string>;
@@ -51,12 +50,7 @@ export function EditSocialLinksForm({
         {} as Record<SocialField, string | null>,
       );
 
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update(payload)
-        .eq("id", profile.id);
-
-      if (updateError) throw updateError;
+      await updateMyProfile(payload);
 
       toast.success("Your links have been saved");
       onSaved();

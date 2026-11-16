@@ -75,6 +75,42 @@ export function relativeLuminance(hex: string): number {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
+export type QrCenterBadgeMetrics = {
+  clearRadius: number;
+  badgeRadius: number;
+  strokeWidth: number;
+  logoSize: number;
+};
+
+export function getQrCenterBadgeMetrics(count: number): QrCenterBadgeMetrics {
+  if (count <= 21) {
+    return {
+      clearRadius: 2.05,
+      badgeRadius: 1.94,
+      strokeWidth: 0.14,
+      logoSize: 3.35,
+    };
+  }
+  return {
+    clearRadius: 2.85,
+    badgeRadius: 2.7,
+    strokeWidth: 0.16,
+    logoSize: 4.75,
+  };
+}
+
+export function isCenterLogoClearedModule(row: number, col: number, count: number): boolean {
+  const centerIndex = (count - 1) / 2;
+  const dx = Math.abs(col - centerIndex);
+  const dy = Math.abs(row - centerIndex);
+  const closestDist = Math.hypot(Math.max(0, dx - 0.5), Math.max(0, dy - 0.5));
+  return closestDist < getQrCenterBadgeMetrics(count).clearRadius;
+}
+
+export function getQrCenterClearSpan(count: number): number {
+  return count <= 21 ? 5 : 7;
+}
+
 /** WCAG contrast ratio, 1 (identical) to 21 (black on white). */
 export function contrastRatio(foreground: string, background: string): number {
   const a = relativeLuminance(foreground);
@@ -159,9 +195,13 @@ export function validateQrSettings(
   const total = count + settings.margin * 2;
 
   if (hasCenterLogo) {
-    const logoSize = Math.min(6.6, count * 0.22);
-    const logoQuietSize = logoSize + 1.25;
-    const coverage = (logoQuietSize * logoQuietSize) / (count * count);
+    let clearedCount = 0;
+    for (let row = 0; row < count; row += 1) {
+      for (let col = 0; col < count; col += 1) {
+        if (isCenterLogoClearedModule(row, col, count)) clearedCount += 1;
+      }
+    }
+    const coverage = clearedCount / (count * count);
     if (coverage > MAX_LOGO_COVERAGE) {
       issues.push({
         id: "logo-coverage",

@@ -9,7 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useAuth } from "@/lib/auth";
 import { profileUrl } from "@/lib/profiles";
 import { useMyProfile } from "@/lib/use-profile";
-import { useLanguage } from "@/lib/i18n";
+import { SUPPORTED_LANGUAGES, useLanguage } from "@/lib/i18n";
 
 export const Route = createFileRoute("/dashboard/settings")({
   head: () => ({
@@ -96,7 +96,7 @@ function SettingsPage() {
       <section aria-labelledby="settings-language" className="grid gap-5 border-b border-border py-8 sm:grid-cols-[160px_minmax(0,1fr)] lg:gap-10">
         <h2 id="settings-language" className="flex items-center gap-2 self-start font-display text-base font-semibold tracking-normal"><Languages className="size-4 text-primary" />Language</h2>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-          {([["en", "English"], ["fr", "Français"], ["es", "Español"], ["de", "Deutsch"], ["ar", "العربية"]] as const).map(([code, label]) => (
+          {SUPPORTED_LANGUAGES.map(({ code, label }) => (
             <Button
               key={code}
               type="button"

@@ -5,12 +5,12 @@ import { PasswordInput } from "@/components/PasswordInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/lib/app-supabase";
+import { apiFetch, authApi } from "@/lib/api";
 import { isUsernameAvailable, isUsernameTakenError } from "@/lib/profiles";
 import { firstError, passwordSchema, usernameSchema } from "@/lib/socials";
 
 export function ClaimUsername({
-  userId,
+  userId: _userId,
   requirePassword,
   onDone,
 }: {
@@ -55,23 +55,20 @@ export function ClaimUsername({
       }
 
       if (requirePassword) {
-        const { error: passwordUpdateError } = await supabase.auth.updateUser({ password });
-        if (passwordUpdateError) throw passwordUpdateError;
+        await authApi.updatePassword({ password });
       }
 
-      const { error: insertError } = await supabase
-        .from("profiles")
-        .insert({ id: userId, username: parsed.data });
-      if (insertError) {
-        if (isUsernameTakenError(insertError)) {
-          setError("That username is already taken");
-          return;
-        }
-        throw insertError;
-      }
+      await apiFetch("/api/profiles", {
+        method: "POST",
+        body: JSON.stringify({ username: parsed.data }),
+      });
       toast.success("Your page is ready!");
       onDone();
     } catch (insertError) {
+      if (isUsernameTakenError(insertError)) {
+        setError("That username is already taken");
+        return;
+      }
       toast.error(insertError instanceof Error ? insertError.message : "Something went wrong");
     } finally {
       setSaving(false);

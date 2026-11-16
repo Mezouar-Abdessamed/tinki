@@ -5,7 +5,15 @@ import { FR } from "./i18n-fr";
 import { DE } from "./i18n-de";
 
 export type Lang = "en" | "ar" | "es" | "fr" | "de";
-const KEY = "linkme-lang";
+export const LANG_STORAGE_KEY = "linkme-lang";
+export const SUPPORTED_LANGUAGES: ReadonlyArray<{ code: Lang; label: string }> = [
+  { code: "en", label: "English" },
+  { code: "fr", label: "Français" },
+  { code: "es", label: "Español" },
+  { code: "de", label: "Deutsch" },
+  { code: "ar", label: "العربية" },
+];
+const KEY = LANG_STORAGE_KEY;
 const ATTRS = ["placeholder", "aria-label", "title", "alt"] as const;
 
 type Ctx = { lang: Lang; setLang: (l: Lang) => void; t: (s: string) => string };
@@ -141,8 +149,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>("en");
 
   useEffect(() => {
-    const saved = localStorage.getItem(KEY);
-    if (saved === "ar" || saved === "es" || saved === "fr" || saved === "de") setLangState(saved);
+    const syncFromStorage = () => {
+      const saved = localStorage.getItem(KEY);
+      if (saved === "en" || saved === "ar" || saved === "es" || saved === "fr" || saved === "de") {
+        setLangState(saved);
+      }
+    };
+    syncFromStorage();
+    window.addEventListener("storage", syncFromStorage);
+    return () => window.removeEventListener("storage", syncFromStorage);
   }, []);
 
   useEffect(() => {

@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth";
 export function AccountSecurity() {
   const { user } = useAuth();
   const providers = [...new Set(user?.identities?.map((identity) => identity.provider) ?? [])];
-  const providerNames: Record<string, string> = { google: "Google", email: "Email and password", lovable: "Lovable" };
+  const providerNames: Record<string, string> = { google: "Google", email: "Email and password" };
   return (
     <div className="space-y-6">
       <section aria-labelledby="account-security-title">

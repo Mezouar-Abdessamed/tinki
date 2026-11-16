@@ -11,14 +11,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { hasProfileEdits } from "@/lib/profile-edit-state";
-import { supabase } from "@/lib/app-supabase";
+import { storageApi } from "@/lib/api";
 import {
   AVATAR_ACCEPT,
   extensionForType,
   isAllowedAvatarType,
   reencodeAvatar,
 } from "@/lib/avatar-image";
-import { getCoverUrl, isUsernameAvailable, type Profile } from "@/lib/profiles";
+import { getCoverUrl, isUsernameAvailable, updateMyProfile, type Profile } from "@/lib/profiles";
 import { useLanguage } from "@/lib/i18n";
 import { firstError, usernameSchema } from "@/lib/socials";
 
@@ -47,14 +47,17 @@ async function cleanupCoverFolder(userId: string, keepPath: string | null): Prom
     if (attempt > 0) {
       await new Promise((resolve) => setTimeout(resolve, COVER_CLEANUP_RETRY_DELAY_MS * attempt));
     }
-    const { data: objects, error: listError } = await supabase.storage.from("covers").list(userId);
-    if (listError) continue;
-    const stale = (objects ?? [])
-      .map((object) => `${userId}/${object.name}`)
-      .filter((path) => path !== keepPath);
-    if (stale.length === 0) return true;
-    const { error: removeError } = await supabase.storage.from("covers").remove(stale);
-    if (!removeError) return true;
+    try {
+      const objects = await storageApi.list("covers");
+      const stale = objects
+        .map((object) => `${userId}/${object.name}`)
+        .filter((path) => path !== keepPath);
+      if (stale.length === 0) return true;
+      await storageApi.remove("covers", stale);
+      return true;
+    } catch {
+      continue;
+    }
   }
   return false;
 }
@@ -69,15 +72,17 @@ async function cleanupAvatarFolder(userId: string, keepPath: string | null): Pro
     if (attempt > 0) {
       await new Promise((resolve) => setTimeout(resolve, COVER_CLEANUP_RETRY_DELAY_MS * attempt));
     }
-    const { data: objects, error: listError } = await supabase.storage.from("avatars").list(userId);
-    if (listError) continue;
-    const stale = (objects ?? [])
-      .filter((object) => object.id !== null) // skip nested "folders"
-      .map((object) => `${userId}/${object.name}`)
-      .filter((path) => path !== keepPath && path.startsWith(`${userId}/`));
-    if (stale.length === 0) return true;
-    const { error: removeError } = await supabase.storage.from("avatars").remove(stale);
-    if (!removeError) return true;
+    try {
+      const objects = await storageApi.list("avatars");
+      const stale = objects
+        .map((object) => `${userId}/${object.name}`)
+        .filter((path) => path !== keepPath && path.startsWith(`${userId}/`));
+      if (stale.length === 0) return true;
+      await storageApi.remove("avatars", stale);
+      return true;
+    } catch {
+      continue;
+    }
   }
   return false;
 }
@@ -202,21 +207,19 @@ export function EditInformationsForm({
       if (pickedFile) {
         const { blob, contentType } = await reencodeAvatar(pickedFile);
         const path = `${profile.id}/${crypto.randomUUID()}.${extensionForType(contentType)}`;
-        const { error } = await supabase.storage.from("avatars").upload(path, blob, { upsert: false, contentType });
-        if (error) throw error;
+        await storageApi.upload("avatars", path, blob, contentType);
         uploadedAvatar = path;
       }
       if (coverFile) {
         const { blob, contentType } = await reencodeAvatar(coverFile, 1600);
         if (blob.size > MAX_COVER_BYTES) throw new Error("Cover photo must be 5 MB or less");
         const path = `${profile.id}/${crypto.randomUUID()}.${extensionForType(contentType)}`;
-        const { error } = await supabase.storage.from("covers").upload(path, blob, { upsert: false, contentType });
-        if (error) throw error;
+        await storageApi.upload("covers", path, blob, contentType);
         uploadedCover = path;
       }
       const avatarPath = uploadedAvatar ?? (removeAvatar ? null : profile.avatar_path);
       const coverPath = uploadedCover ?? (removeCover ? null : profile.cover_photo_path ?? null);
-      const { error: updateError } = await supabase.from("profiles").update({
+      await updateMyProfile({
         username: parsed.data,
         display_name: displayName.trim() || null,
         bio: bio.trim() || null,
@@ -224,8 +227,7 @@ export function EditInformationsForm({
         cover_photo_path: coverPath,
         cover_photo_x: coverPath ? coverX : 50,
         cover_photo_y: coverPath ? coverY : 50,
-      }).eq("id", profile.id);
-      if (updateError) throw updateError;
+      });
       committed = true;
       setRefreshing(true);
       if (pickedFile || removeAvatar) {
@@ -247,8 +249,8 @@ export function EditInformationsForm({
     } catch (saveError) {
       // Roll back only unreferenced new uploads; never remove a committed photo.
       if (!committed) {
-        if (uploadedAvatar) await supabase.storage.from("avatars").remove([uploadedAvatar]);
-        if (uploadedCover) await supabase.storage.from("covers").remove([uploadedCover]);
+        if (uploadedAvatar) await storageApi.remove("avatars", [uploadedAvatar]).catch(() => undefined);
+        if (uploadedCover) await storageApi.remove("covers", [uploadedCover]).catch(() => undefined);
       }
       const message = saveError instanceof Error ? saveError.message : "Couldn't save your changes";
       setError(message);

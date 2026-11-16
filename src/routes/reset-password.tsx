@@ -3,14 +3,18 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { AuthShell } from "@/components/AuthShell";
-import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/PasswordInput";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/lib/app-supabase";
+import { authApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { firstError, passwordSchema } from "@/lib/socials";
 
 export const Route = createFileRoute("/reset-password")({
+  validateSearch: (search: Record<string, unknown>): { token?: string } =>
+    typeof search["token"] === "string" && search["token"].length > 0
+      ? { token: search["token"] }
+      : {},
   head: () => ({
     meta: [
       { title: "Choose a new password — Tinki" },
@@ -26,6 +30,7 @@ export const Route = createFileRoute("/reset-password")({
 
 function ResetPasswordPage() {
   const navigate = useNavigate();
+  const { token } = Route.useSearch();
   const { session, loading } = useAuth();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -46,9 +51,12 @@ function ResetPasswordPage() {
     setError(null);
     setSubmitting(true);
     try {
-      const { error: updateError } = await supabase.auth.updateUser({ password });
-      if (updateError) throw updateError;
-      await supabase.auth.signOut();
+      if (token) {
+        await authApi.confirmPasswordReset({ token, password });
+      } else {
+        await authApi.updatePassword({ password });
+      }
+      await authApi.signOut();
       toast.success("Password updated. Please log in again");
       navigate({ to: "/login" });
     } catch (updateError) {
@@ -60,7 +68,7 @@ function ResetPasswordPage() {
     }
   }
 
-  if (!loading && !session) {
+  if (!token && !loading && !session) {
     return (
       <AuthShell
         title="Reset link expired"
@@ -72,7 +80,7 @@ function ResetPasswordPage() {
         }
       >
         <p className="text-sm text-muted-foreground">
-          Request a fresh reset link and open it from the newest email
+          Request a fresh reset link and open it to set your new password
         </p>
       </AuthShell>
     );

@@ -21,7 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/lib/app-supabase";
+import { storageApi } from "@/lib/api";
 import {
   FONT_FAMILIES,
   FONT_STYLES,
@@ -30,6 +30,7 @@ import {
   isBackgroundStoragePath,
   PAGE_BACKGROUND_PRESETS,
   textTypographyStyle,
+  updateMyProfile,
   DEFAULT_NAME_COLOR,
   DEFAULT_BIO_COLOR,
   type CardBackgroundType,
@@ -75,30 +76,17 @@ function contrastRatio(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-// Returns the object path inside the "backgrounds" bucket only when the value is either a clean
-// "<user id>/<file>" storage path or a legacy signed link from this project's storage, and the
-// file lives in the given user's own folder.
+// Returns the object path inside the "backgrounds" bucket when the value is a clean
+// "<user id>/<file>" storage path in the given user's own folder.
 function ownBackgroundPath(url: string | null | undefined, userId: string): string | null {
   if (!url) return null;
   if (isBackgroundStoragePath(url)) return url.split("/")[0] === userId ? url : null;
-  try {
-    const parsed = new URL(url);
-    const base = new URL(import.meta.env["VITE_SUPABASE_URL"] as string);
-    if (parsed.origin !== base.origin) return null;
-    const prefix = "/storage/v1/object/sign/backgrounds/";
-    if (!parsed.pathname.startsWith(prefix)) return null;
-    const path = decodeURIComponent(parsed.pathname.slice(prefix.length));
-    const parts = path.split("/");
-    if (parts.length !== 2 || parts[0] !== userId || !parts[1] || parts[1] === "." || parts[1] === "..") return null;
-    return path;
-  } catch {
-    return null;
-  }
+  return null;
 }
 
 function removeBackgroundFiles(paths: string[]) {
   if (paths.length === 0) return;
-  void supabase.storage.from("backgrounds").remove(paths).catch(() => undefined);
+  void storageApi.remove("backgrounds", paths).catch(() => undefined);
 }
 
 const IMAGE_MODES: Array<{ value: PageImageMode; label: string }> = [
@@ -297,10 +285,7 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
     try {
       const extension = file.name.split(".").pop()?.toLowerCase() || "mp4";
       const path = `${profile.id}/${crypto.randomUUID()}.${extension}`;
-      const { error: uploadError } = await supabase.storage
-        .from("backgrounds")
-        .upload(path, file, { upsert: false, contentType: file.type });
-      if (uploadError) throw uploadError;
+      await storageApi.upload("backgrounds", path, file, file.type);
       stagedPathsRef.current.add(path);
       setLocalPreview(path, file);
       setVideoUrl(path);
@@ -328,10 +313,7 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
     try {
       const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
       const path = `${profile.id}/${crypto.randomUUID()}.${extension}`;
-      const { error: uploadError } = await supabase.storage
-        .from("backgrounds")
-        .upload(path, file, { upsert: false, contentType: file.type });
-      if (uploadError) throw uploadError;
+      await storageApi.upload("backgrounds", path, file, file.type);
       stagedPathsRef.current.add(path);
       setLocalPreview(path, file);
       setImageUrl(path);
@@ -395,12 +377,31 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
     const videoUpload = ownBackgroundPath(nextVideo, profile.id);
     const savedImage = imageUpload && !(imageEnabled && mediaType === "image") ? null : nextImage;
     const savedVideo = videoUpload && !(imageEnabled && mediaType === "video") ? null : nextVideo;
-    const { error } = await supabase.from("profiles").update({ card_background_type: type, card_background_color: firstColor, card_gradient_color: secondColor, card_gradient_angle: angle, social_icon_color: socialIconColor, social_icon_bg_color: socialIconBgColor, page_background_type: pageType, page_background_color: pageFirstColor, page_gradient_color: pageSecondColor, page_gradient_angle: pageAngle, page_background_use_image: imageEnabled, page_background_image_url: savedImage, page_background_image_mode: imageMode, page_background_media_type: mediaType, page_background_video_url: savedVideo, ...typography }).eq("id", profile.id);
-    setSaving(false);
-    if (error) {
-      toast.error(error.message);
+    try {
+      await updateMyProfile({
+        card_background_type: type,
+        card_background_color: firstColor,
+        card_gradient_color: secondColor,
+        card_gradient_angle: angle,
+        social_icon_color: socialIconColor,
+        social_icon_bg_color: socialIconBgColor,
+        page_background_type: pageType,
+        page_background_color: pageFirstColor,
+        page_gradient_color: pageSecondColor,
+        page_gradient_angle: pageAngle,
+        page_background_use_image: imageEnabled,
+        page_background_image_url: savedImage,
+        page_background_image_mode: imageMode,
+        page_background_media_type: mediaType,
+        page_background_video_url: savedVideo,
+        ...typography,
+      });
+    } catch (error) {
+      setSaving(false);
+      toast.error(error instanceof Error ? error.message : "Couldn't save profile style");
       return;
     }
+    setSaving(false);
     // Only after the profile update succeeded: remove previously saved and staged uploads that are no longer referenced.
     const kept = new Set([ownBackgroundPath(savedImage, profile.id), ownBackgroundPath(savedVideo, profile.id)].filter(Boolean) as string[]);
     const candidates = new Set([...savedPathsRef.current, ...stagedPathsRef.current]);

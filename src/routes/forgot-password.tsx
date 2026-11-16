@@ -5,7 +5,7 @@ import { AuthShell } from "@/components/AuthShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/lib/app-supabase";
+import { authApi } from "@/lib/api";
 
 export const Route = createFileRoute("/forgot-password")({
   head: () => ({
@@ -24,17 +24,18 @@ export const Route = createFileRoute("/forgot-password")({
 function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [resetToken, setResetToken] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setSubmitting(true);
     try {
-      await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
+      const res = await authApi.requestPasswordReset(email.trim().toLowerCase());
+      if (res.resetToken) setResetToken(res.resetToken);
+    } catch {
+      /* always show the same generic confirmation */
     } finally {
-      // Always show the same message so nobody can discover which emails exist.
       setSent(true);
       setSubmitting(false);
     }
@@ -51,10 +52,19 @@ function ForgotPasswordPage() {
       }
     >
       {sent ? (
-        <p className="rounded-md border border-border bg-secondary p-4 text-sm text-muted-foreground">
-          If an account exists for that email, a password reset link is on its way. The link works
-          once and expires after an hour
-        </p>
+        <div className="space-y-4">
+          <p className="rounded-md border border-border bg-secondary p-4 text-sm text-muted-foreground">
+            If an account exists for that email, a password reset link is ready. The link works once
+            and expires after an hour
+          </p>
+          {resetToken ? (
+            <Button asChild className="w-full">
+              <Link to="/reset-password" search={{ token: resetToken }}>
+                Continue to reset password
+              </Link>
+            </Button>
+          ) : null}
+        </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

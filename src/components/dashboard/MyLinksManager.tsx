@@ -41,20 +41,23 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { supabase } from "@/lib/app-supabase";
 import type { AppTableUpdate } from "@/lib/app-database";
 import {
   CUSTOM_LINK_ICONS,
   CUSTOM_LINK_TYPES,
   CustomLinkIcon,
+  createCustomLink,
+  deleteCustomLink,
   displayCustomDestination,
   fetchCustomLinks,
   normalizeCustomDestination,
+  reorderCustomLinks,
+  updateCustomLink,
   validateCustomDestination,
   type CustomLink,
   type CustomLinkType,
 } from "@/lib/custom-links";
-import type { Profile } from "@/lib/profiles";
+import { updateMyProfile, type Profile } from "@/lib/profiles";
 import {
   fetchSocialLinkSettings,
   saveSocialLinkSettings,
@@ -228,16 +231,13 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
     if (oldIndex < 0 || newIndex < 0) return;
     const next = arrayMove(customLinks, oldIndex, newIndex);
     setCustomLinks(next);
-    const { error: reorderError } = await supabase.rpc("reorder_custom_links", {
-      target_profile_id: profile.id,
-      ordered_ids: next.map((link) => link.id),
-    });
-    if (reorderError) {
+    try {
+      await reorderCustomLinks(profile.id, next.map((link) => link.id));
+      await customQuery.refetch();
+    } catch {
       setCustomLinks(customQuery.data ?? []);
       toast.error("Couldn't reorder your custom links");
-      return;
     }
-    await customQuery.refetch();
   }
 
   function openSocial(platform: SocialPlatform) {
@@ -256,17 +256,23 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
     const normalized = normalizeSocialUrl(socialValue);
     const profileUpdate: AppTableUpdate<"profiles"> = {};
     profileUpdate[socialEditing.field] = normalized || null;
-    const { error: updateError } = await supabase.from("profiles").update(profileUpdate).eq("id", profile.id);
-    if (!updateError && normalized) {
-      const next = socialSettings.map((setting) => setting.platform === socialEditing.key ? { ...setting, enabled: true } : setting);
-      await saveSocialLinkSettings(next);
-      setSocialSettings(next);
+    try {
+      await updateMyProfile(profileUpdate);
+      if (normalized) {
+        const next = socialSettings.map((setting) =>
+          setting.platform === socialEditing.key ? { ...setting, enabled: true } : setting,
+        );
+        await saveSocialLinkSettings(next);
+        setSocialSettings(next);
+      }
+      setSocialEditing(null);
+      onProfileSaved();
+      toast.success(`${socialEditing.label} updated`);
+    } catch (updateError) {
+      setError(updateError instanceof Error ? updateError.message : "Couldn't update social link");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
-    if (updateError) return setError(updateError.message);
-    setSocialEditing(null);
-    onProfileSaved();
-    toast.success(`${socialEditing.label} updated`);
   }
 
   function removeSocial(platform: SocialPlatform) {
@@ -299,26 +305,30 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
       icon: customDraft.icon,
       link_type: customDraft.linkType,
     };
-    const result = customEditing
-      ? await supabase.from("custom_links").update(payload).eq("id", customEditing.id)
-      : await supabase.rpc("create_custom_link", {
-          link_name: payload.name,
-          link_url: payload.url,
-          link_icon: payload.icon,
-          link_type: payload.link_type,
-        });
-    setSaving(false);
-    if (result.error) return setError(result.error.message);
-    setCustomEditing(null);
-    setCustomDraft(EMPTY_CUSTOM);
-    await customQuery.refetch();
-    toast.success(customEditing ? "Custom link updated" : "Custom link added");
+    try {
+      if (customEditing) {
+        await updateCustomLink(customEditing.id, payload);
+      } else {
+        await createCustomLink(payload);
+      }
+      setCustomEditing(null);
+      setCustomDraft(EMPTY_CUSTOM);
+      await customQuery.refetch();
+      toast.success(customEditing ? "Custom link updated" : "Custom link added");
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Couldn't save custom link");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function toggleCustom(link: CustomLink, enabled: boolean) {
     setCustomLinks((items) => items.map((item) => item.id === link.id ? { ...item, enabled } : item));
-    const { error: updateError } = await supabase.from("custom_links").update({ enabled }).eq("id", link.id);
-    if (updateError) toast.error("Couldn't update that link");
+    try {
+      await updateCustomLink(link.id, { enabled });
+    } catch {
+      toast.error("Couldn't update that link");
+    }
     await customQuery.refetch();
   }
 
@@ -334,24 +344,26 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
     if (target.kind === "social") {
       const profileUpdate: AppTableUpdate<"profiles"> = {};
       profileUpdate[target.platform.field] = null;
-      const { error: deleteError } = await supabase.from("profiles").update(profileUpdate).eq("id", profile.id);
-      setDeleting(false);
-      if (deleteError) {
+      try {
+        await updateMyProfile(profileUpdate);
+        onProfileSaved();
+        toast.success(`${target.platform.label} link deleted`);
+      } catch {
         toast.error("Couldn't delete that link");
-        return;
+      } finally {
+        setDeleting(false);
       }
-      onProfileSaved();
-      toast.success(`${target.platform.label} link deleted`);
       return;
     }
-    const { error: deleteError } = await supabase.from("custom_links").delete().eq("id", target.link.id);
-    setDeleting(false);
-    if (deleteError) {
+    try {
+      await deleteCustomLink(target.link.id);
+      await customQuery.refetch();
+      toast.success("Custom link deleted");
+    } catch {
       toast.error("Couldn't delete that link");
-      return;
+    } finally {
+      setDeleting(false);
     }
-    await customQuery.refetch();
-    toast.success("Custom link deleted");
   }
 
   return (
