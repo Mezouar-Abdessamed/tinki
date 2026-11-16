@@ -12,20 +12,100 @@ export type AuthSession = {
 };
 
 const TOKEN_KEY = "tinki_access_token";
+const IDB_NAME = "tinki_auth_db";
+const IDB_STORE = "kv";
 
 type AuthListener = (session: AuthSession | null) => void;
 const listeners = new Set<AuthListener>();
 
+let memoryToken: string | null = null;
+
+function openAuthIdb(): Promise<IDBDatabase | null> {
+  if (typeof window === "undefined" || !("indexedDB" in window)) {
+    return Promise.resolve(null);
+  }
+  return new Promise((resolve) => {
+    try {
+      const req = window.indexedDB.open(IDB_NAME, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(IDB_STORE)) {
+          db.createObjectStore(IDB_STORE);
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+async function readTokenFromIdb(): Promise<string | null> {
+  const idb = await openAuthIdb();
+  if (!idb) return null;
+  return new Promise((resolve) => {
+    try {
+      const tx = idb.transaction(IDB_STORE, "readonly");
+      const req = tx.objectStore(IDB_STORE).get(TOKEN_KEY);
+      req.onsuccess = () => resolve(typeof req.result === "string" ? req.result : null);
+      req.onerror = () => resolve(null);
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+async function writeTokenToIdb(token: string | null): Promise<void> {
+  const idb = await openAuthIdb();
+  if (!idb) return;
+  await new Promise<void>((resolve) => {
+    try {
+      const tx = idb.transaction(IDB_STORE, "readwrite");
+      const store = tx.objectStore(IDB_STORE);
+      if (token) store.put(token, TOKEN_KEY);
+      else store.delete(TOKEN_KEY);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+    } catch {
+      resolve();
+    }
+  });
+}
+
 export function getStoredToken(): string | null {
   if (typeof window === "undefined") return null;
+  if (memoryToken) return memoryToken;
   try {
-    return window.localStorage.getItem(TOKEN_KEY);
+    const lsToken = window.localStorage.getItem(TOKEN_KEY);
+    if (lsToken) {
+      memoryToken = lsToken;
+      return lsToken;
+    }
   } catch {
-    return null;
+    /* storage unavailable */
   }
+  return null;
+}
+
+export async function hydrateStoredToken(): Promise<string | null> {
+  const existing = getStoredToken();
+  if (existing) return existing;
+  const fromIdb = await readTokenFromIdb();
+  if (fromIdb) {
+    memoryToken = fromIdb;
+    try {
+      window.localStorage.setItem(TOKEN_KEY, fromIdb);
+    } catch {
+      /* ignore */
+    }
+    return fromIdb;
+  }
+  return null;
 }
 
 export function setStoredToken(token: string | null) {
+  memoryToken = token;
   if (typeof window === "undefined") return;
   try {
     if (token) window.localStorage.setItem(TOKEN_KEY, token);
@@ -33,6 +113,7 @@ export function setStoredToken(token: string | null) {
   } catch {
     /* storage unavailable */
   }
+  void writeTokenToIdb(token);
 }
 
 export function notifyAuthListeners(session: AuthSession | null) {
@@ -62,7 +143,7 @@ export class ApiError extends Error {
 
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
-  const token = getStoredToken();
+  const token = getStoredToken() ?? (await hydrateStoredToken());
   if (token && !headers.has("Authorization")) {
     headers.set("Authorization", `Bearer ${token}`);
   }
@@ -99,9 +180,12 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
 export const authApi = {
   async getSession(): Promise<AuthSession | null> {
     if (typeof window === "undefined") return null;
+    await hydrateStoredToken();
     try {
       const data = await apiFetch<{ session: AuthSession | null }>("/api/auth/session");
-      if (!data.session) setStoredToken(null);
+      if (data.session?.access_token) {
+        setStoredToken(data.session.access_token);
+      }
       return data.session;
     } catch {
       return null;
@@ -204,6 +288,10 @@ export const authApi = {
   },
 
   async deleteAccount(input: { username: string; password?: string }): Promise<void> {
+    const { auth: fbAuth, deleteAccountFirestore } = await import("@/lib/firestore");
+    if (fbAuth.currentUser) {
+      await deleteAccountFirestore().catch(() => undefined);
+    }
     await apiFetch("/api/auth/account", {
       method: "DELETE",
       body: JSON.stringify(input),
@@ -224,30 +312,52 @@ export const storageApi = {
     body: Blob,
     contentType: string,
   ): Promise<string> {
+    const { auth: fbAuth, uploadMediaFirestore } = await import("@/lib/firestore");
+    const ownerId = path.split("/")[0];
+
+    if (fbAuth.currentUser && fbAuth.currentUser.uid === ownerId) {
+      await uploadMediaFirestore(bucket, path, body, contentType);
+    }
+
     const headers = new Headers();
-    const token = getStoredToken();
+    const token = getStoredToken() ?? (await hydrateStoredToken());
     if (token) headers.set("Authorization", `Bearer ${token}`);
     headers.set("Content-Type", contentType || body.type || "application/octet-stream");
 
-    const response = await fetch(
-      `/api/storage/${encodeURIComponent(bucket)}/upload?path=${encodeURIComponent(path)}`,
-      {
-        method: "POST",
-        headers,
-        body,
-        credentials: "include",
-      },
-    );
-    const data = (await response.json()) as { path?: string; error?: string };
-    if (!response.ok || !data.path) {
-      throw new Error(data.error ?? "Upload failed");
+    try {
+      const response = await fetch(
+        `/api/storage/${encodeURIComponent(bucket)}/upload?path=${encodeURIComponent(path)}`,
+        {
+          method: "POST",
+          headers,
+          body,
+          credentials: "include",
+        },
+      );
+      if (!response.ok && !(fbAuth.currentUser && fbAuth.currentUser.uid === ownerId)) {
+        const data = (await response.json()) as { error?: string };
+        throw new Error(data.error ?? "Upload failed");
+      }
+    } catch (err) {
+      if (!(fbAuth.currentUser && fbAuth.currentUser.uid === ownerId)) {
+        throw err instanceof Error ? err : new Error("Upload failed");
+      }
     }
-    return data.path;
+
+    return path;
   },
 
   async list(
     bucket: "avatars" | "covers" | "backgrounds",
   ): Promise<Array<{ id: string; name: string }>> {
+    const { auth: fbAuth, listMediaFirestore } = await import("@/lib/firestore");
+    if (fbAuth.currentUser) {
+      try {
+        return await listMediaFirestore(bucket);
+      } catch {
+        /* fallback to server list */
+      }
+    }
     const data = await apiFetch<{ files: Array<{ id: string; name: string }> }>(
       `/api/storage/${encodeURIComponent(bucket)}/list`,
     );
@@ -256,9 +366,13 @@ export const storageApi = {
 
   async remove(bucket: "avatars" | "covers" | "backgrounds", paths: string[]): Promise<void> {
     if (paths.length === 0) return;
+    const { auth: fbAuth, removeMediaFirestore } = await import("@/lib/firestore");
+    if (fbAuth.currentUser) {
+      await removeMediaFirestore(bucket, paths).catch(() => undefined);
+    }
     await apiFetch(`/api/storage/${encodeURIComponent(bucket)}/remove`, {
       method: "POST",
       body: JSON.stringify({ paths }),
-    });
+    }).catch(() => undefined);
   },
 };

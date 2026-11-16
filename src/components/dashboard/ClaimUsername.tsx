@@ -5,8 +5,8 @@ import { PasswordInput } from "@/components/PasswordInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { apiFetch, authApi } from "@/lib/api";
-import { isUsernameAvailable, isUsernameTakenError } from "@/lib/profiles";
+import { authApi } from "@/lib/api";
+import { createMyProfile, isUsernameAvailable, isUsernameTakenError } from "@/lib/profiles";
 import { firstError, passwordSchema, usernameSchema } from "@/lib/socials";
 
 export function ClaimUsername({
@@ -54,14 +54,25 @@ export function ClaimUsername({
         return;
       }
 
+      await createMyProfile(parsed.data);
+
       if (requirePassword) {
-        await authApi.updatePassword({ password });
+        try {
+          await authApi.updatePassword({ password });
+        } catch (passwordSaveError) {
+          const message =
+            passwordSaveError instanceof Error ? passwordSaveError.message.toLowerCase() : "";
+          await authApi.getSession().catch(() => null);
+          toast.warning(
+            message.includes("current password")
+              ? "Your page is ready! Your account already has an email password."
+              : "Your page is ready! You can set your email password in Account & Security.",
+          );
+          onDone();
+          return;
+        }
       }
 
-      await apiFetch("/api/profiles", {
-        method: "POST",
-        body: JSON.stringify({ username: parsed.data }),
-      });
       toast.success("Your page is ready!");
       onDone();
     } catch (insertError) {

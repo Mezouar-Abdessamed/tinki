@@ -1,32 +1,35 @@
 import { useEffect } from "react";
-import Lenis from "lenis";
 
 /**
- * Inertia smooth scrolling for the landing page. Skipped entirely when the
- * user prefers reduced motion — native scrolling is used instead.
+ * Lightweight native smooth-scrolling for in-page anchor links without an
+ * always-running requestAnimationFrame loop, keeping idle CPU usage at 0%.
  */
 export function SmoothScroll() {
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const onDocumentClick = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+        return;
+      }
+      const target = event.target as Element | null;
+      const anchor = target?.closest('a[href^="#"]') as HTMLAnchorElement | null;
+      if (!anchor) return;
 
-    const lenis = new Lenis({
-      lerp: 0.09,
-      wheelMultiplier: 1,
-      touchMultiplier: 1.4,
-      anchors: { offset: -84 },
-    });
+      const hash = anchor.getAttribute("href");
+      if (!hash || hash === "#") return;
 
-    let raf = 0;
-    const loop = (time: number) => {
-      lenis.raf(time);
-      raf = requestAnimationFrame(loop);
+      const destination = document.getElementById(hash.slice(1));
+      if (!destination) return;
+
+      event.preventDefault();
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      destination.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth" });
+      if (window.location.hash !== hash) {
+        window.history.pushState(null, "", hash);
+      }
     };
-    raf = requestAnimationFrame(loop);
 
-    return () => {
-      cancelAnimationFrame(raf);
-      lenis.destroy();
-    };
+    document.addEventListener("click", onDocumentClick);
+    return () => document.removeEventListener("click", onDocumentClick);
   }, []);
 
   return null;

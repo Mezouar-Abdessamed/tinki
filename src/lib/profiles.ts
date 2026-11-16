@@ -223,9 +223,9 @@ export async function getCoverUrl(path: string | null | undefined): Promise<stri
 }
 
 // Backgrounds we uploaded ourselves live in the "backgrounds" bucket as
-// "<user id>/<file>", the same shape the appearance editor's cleanup relies on.
+// "<user id>/<file>", supporting both Firebase Auth UIDs and UUIDs.
 const BACKGROUND_STORAGE_PATH =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/[A-Za-z0-9][A-Za-z0-9._-]*$/;
+  /^[A-Za-z0-9_-]{8,128}\/[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 /** True only for a safe "<user id>/<file>" path inside the backgrounds bucket. */
 export function isBackgroundStoragePath(value: string): boolean {
@@ -246,18 +246,68 @@ export async function getBackgroundUrl(value: string | null | undefined): Promis
 }
 
 export async function fetchProfileByUsername(username: string): Promise<Profile | null> {
+  if (typeof window !== "undefined") {
+    try {
+      const { fetchProfileByUsernameFirestore } = await import("@/lib/firestore");
+      const fsProfile = await fetchProfileByUsernameFirestore(username);
+      if (fsProfile) return fsProfile;
+    } catch {
+      /* fallback to server API */
+    }
+  }
   const { profile } = await apiFetch<{ profile: Profile | null }>(
     `/api/profiles/by-username/${encodeURIComponent(username.toLowerCase())}`,
   );
   return profile ?? null;
 }
 
-export async function fetchMyProfile(_userId: string): Promise<Profile | null> {
+export async function fetchMyProfile(userId: string): Promise<Profile | null> {
+  if (typeof window !== "undefined" && userId) {
+    try {
+      const { auth: fbAuth, fetchProfileByIdFirestore } = await import("@/lib/firestore");
+      if (fbAuth.currentUser?.uid === userId) {
+        const fsProfile = await fetchProfileByIdFirestore(userId);
+        if (fsProfile) return fsProfile;
+      }
+    } catch {
+      /* fallback to server API */
+    }
+  }
   const { profile } = await apiFetch<{ profile: Profile | null }>("/api/profiles/me");
   return profile ?? null;
 }
 
+export async function createMyProfile(username: string): Promise<Profile> {
+  if (typeof window !== "undefined") {
+    const { auth: fbAuth, createProfileFirestore } = await import("@/lib/firestore");
+    if (fbAuth.currentUser) {
+      const created = await createProfileFirestore(username);
+      await apiFetch("/api/profiles", {
+        method: "POST",
+        body: JSON.stringify({ username }),
+      }).catch(() => undefined);
+      return created;
+    }
+  }
+  const { profile } = await apiFetch<{ profile: Profile }>("/api/profiles", {
+    method: "POST",
+    body: JSON.stringify({ username }),
+  });
+  return profile;
+}
+
 export async function updateMyProfile(patch: Partial<Profile>): Promise<Profile> {
+  if (typeof window !== "undefined") {
+    const { auth: fbAuth, updateMyProfileFirestore } = await import("@/lib/firestore");
+    if (fbAuth.currentUser) {
+      const updated = await updateMyProfileFirestore(patch);
+      await apiFetch("/api/profiles/me", {
+        method: "PATCH",
+        body: JSON.stringify(patch),
+      }).catch(() => undefined);
+      return updated;
+    }
+  }
   const { profile } = await apiFetch<{ profile: Profile }>("/api/profiles/me", {
     method: "PATCH",
     body: JSON.stringify(patch),
@@ -266,8 +316,18 @@ export async function updateMyProfile(patch: Partial<Profile>): Promise<Profile>
 }
 
 export async function isUsernameAvailable(username: string): Promise<boolean> {
+  const clean = username.toLowerCase();
+  if (typeof window !== "undefined") {
+    try {
+      const { checkUsernameAvailableFirestore } = await import("@/lib/firestore");
+      const fsAvailable = await checkUsernameAvailableFirestore(clean);
+      if (!fsAvailable) return false;
+    } catch {
+      /* verify against server API too */
+    }
+  }
   const { available } = await apiFetch<{ available: boolean }>(
-    `/api/usernames/available?username=${encodeURIComponent(username.toLowerCase())}`,
+    `/api/usernames/available?username=${encodeURIComponent(clean)}`,
   );
   return Boolean(available);
 }
@@ -295,11 +355,7 @@ export async function createProfileFromStoredUsername(
   if (!(await isUsernameAvailable(username))) return null;
 
   try {
-    const { profile } = await apiFetch<{ profile: Profile }>("/api/profiles", {
-      method: "POST",
-      body: JSON.stringify({ username }),
-    });
-    return profile ?? null;
+    return await createMyProfile(username);
   } catch {
     return null;
   }

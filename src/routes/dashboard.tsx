@@ -3,6 +3,7 @@ import { useEffect } from "react";
 
 import { ClaimUsername } from "@/components/dashboard/ClaimUsername";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
+import { requiresInitialPasswordSetup } from "@/lib/account-helpers";
 import { authApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { signOutFirebaseGoogle } from "@/lib/firebase-auth";
@@ -42,9 +43,8 @@ function DashboardLayout() {
     );
   }
 
-  // Social accounts without a profile claim their username and password here.
-  const signedInWithGoogle =
-    user?.identities?.some((identity) => identity.provider !== "email") ?? false;
+  // Social accounts without an email password or profile claim their username and password here.
+  const requireInitialPassword = requiresInitialPasswordSetup(user);
 
   return (
     <div className="flex min-h-screen w-full flex-col lg:flex-row">
@@ -56,7 +56,7 @@ function DashboardLayout() {
           ) : !profile ? (
             <ClaimUsername
               userId={userId}
-              requirePassword={signedInWithGoogle}
+              requirePassword={requireInitialPassword}
               onDone={() => void refetch()}
             />
           ) : (

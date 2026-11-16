@@ -1,5 +1,5 @@
 import { FetchProvider, _castAuth } from "@firebase/auth/internal";
-import { getApp, getApps, initializeApp } from "firebase/app";
+import { getApp, getApps } from "firebase/app";
 import {
   GoogleAuthProvider,
   applyActionCode,
@@ -15,18 +15,30 @@ import {
   type User,
 } from "firebase/auth";
 
-import firebaseConfig from "../../firebase-applet-config.json";
-import { authApi, type AuthSession } from "@/lib/api";
+import { apiFetch, authApi, notifyAuthListeners, setStoredToken, type AuthSession } from "@/lib/api";
+import type { CustomLink, CustomLinkType } from "@/lib/custom-links";
 import {
-  buildEmailVerificationContinueUrl,
+  createCustomLinkFirestore,
+  createProfileFirestore,
+  fetchProfileByIdFirestore,
+  getFirebaseClientAuth,
+  saveSocialLinkSettingsFirestore,
+  syncFirebaseAccountDoc,
+  uploadMediaFirestore,
+} from "@/lib/firestore";
+import {
   mapFirebaseAuthError,
+  buildEmailVerificationContinueUrl,
   toFirebaseProxyUrl,
 } from "@/lib/firebase-auth-helpers";
+import type { Profile } from "@/lib/profiles";
+import type { SocialLinkSetting } from "@/lib/social-link-settings";
 
 const DIRECT_FETCH_TIMEOUT_MS = 6_000;
 const PENDING_VERIFICATION_STORAGE_KEY = "tinki_pending_verification";
 let fetchProviderConfigured = false;
 let warmUpPromise: Promise<void> | null = null;
+const migrationInFlight = new Map<string, Promise<void>>();
 
 function createResilientFirebaseFetch(): typeof fetch {
   return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
@@ -88,16 +100,179 @@ function ensureFetchProviderConfigured() {
   FetchProvider.initialize(createResilientFirebaseFetch(), window.Headers, window.Response);
 }
 
-function getFirebaseAuth(): Auth {
+export function getFirebaseAuth(): Auth {
   ensureFetchProviderConfigured();
-  const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-  return getAuth(app);
+  return getFirebaseClientAuth();
 }
 
 function createGoogleProvider(): GoogleAuthProvider {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
   return provider;
+}
+
+async function migrateMediaAssetToFirestore(
+  bucket: "avatars" | "covers" | "backgrounds",
+  rawPath: string | null | undefined,
+  targetUid: string,
+): Promise<string | null> {
+  if (!rawPath) return null;
+  if (rawPath.startsWith("/") || /^(https?:|blob:|data:)/i.test(rawPath)) {
+    return rawPath;
+  }
+  const parts = rawPath.split("/");
+  if (parts.length !== 2 || !parts[1]) return rawPath;
+  const targetPath = `${targetUid}/${parts[1]}`;
+  try {
+    const res = await fetch(`/media/${bucket}/${rawPath}`, { credentials: "include" });
+    if (!res.ok) return targetPath;
+    const blob = await res.blob();
+    if (blob.size > 0) {
+      await uploadMediaFirestore(bucket, targetPath, blob, blob.type || "application/octet-stream");
+    }
+    return targetPath;
+  } catch {
+    return rawPath;
+  }
+}
+
+async function migrateLegacyServerProfileIfMissing(
+  fbUser: User,
+  serverUserId: string,
+): Promise<void> {
+  const existingFs = await fetchProfileByIdFirestore(fbUser.uid).catch(() => null);
+  if (existingFs) {
+    await syncFirebaseAccountDoc(fbUser, existingFs.username).catch(() => undefined);
+    return;
+  }
+
+  await syncFirebaseAccountDoc(fbUser, null).catch(() => undefined);
+
+  try {
+    const { profile: legacyProfile } = await apiFetch<{ profile: Profile | null }>("/api/profiles/me");
+    if (!legacyProfile || !legacyProfile.username) return;
+
+    const migratedAvatar = await migrateMediaAssetToFirestore(
+      "avatars",
+      legacyProfile.avatar_path,
+      fbUser.uid,
+    );
+    const migratedCover = await migrateMediaAssetToFirestore(
+      "covers",
+      legacyProfile.cover_photo_path,
+      fbUser.uid,
+    );
+    const migratedBgImage = await migrateMediaAssetToFirestore(
+      "backgrounds",
+      legacyProfile.page_background_image_url,
+      fbUser.uid,
+    );
+    const migratedBgVideo = await migrateMediaAssetToFirestore(
+      "backgrounds",
+      legacyProfile.page_background_video_url,
+      fbUser.uid,
+    );
+
+    const created = await createProfileFirestore(legacyProfile.username, {
+      ...legacyProfile,
+      id: fbUser.uid,
+      avatar_path: migratedAvatar,
+      cover_photo_path: migratedCover,
+      page_background_image_url: migratedBgImage,
+      page_background_video_url: migratedBgVideo,
+    });
+
+    const sourceId = legacyProfile.id || serverUserId;
+    const [{ links }, { settings }] = await Promise.all([
+      apiFetch<{ links: CustomLink[] }>(`/api/profiles/${encodeURIComponent(sourceId)}/custom-links`).catch(
+        () => ({ links: [] as CustomLink[] }),
+      ),
+      apiFetch<{ settings: SocialLinkSetting[] }>(
+        `/api/profiles/${encodeURIComponent(sourceId)}/social-settings`,
+      ).catch(() => ({ settings: [] as SocialLinkSetting[] })),
+    ]);
+
+    for (const link of links) {
+      await createCustomLinkFirestore({
+        name: link.name,
+        url: link.url,
+        icon: link.icon,
+        link_type: (link.link_type as CustomLinkType) || "link",
+        position: link.position,
+        enabled: link.enabled,
+      }).catch(() => undefined);
+    }
+
+    if (settings.length > 0) {
+      await saveSocialLinkSettingsFirestore(
+        settings.map((s) => ({
+          ...s,
+          profile_id: created.id,
+        })),
+      ).catch(() => undefined);
+    }
+  } catch {
+    /* legacy migration is best-effort */
+  }
+}
+
+export async function syncSessionFromFirebaseUser(fbUser: User): Promise<AuthSession> {
+  const idToken = await fbUser.getIdToken();
+  let session: AuthSession;
+
+  try {
+    session = await authApi.signInWithGoogle(idToken);
+  } catch {
+    const fallbackProviders = [
+      ...new Set(
+        fbUser.providerData
+          .map((p) =>
+            p.providerId === "password"
+              ? "email"
+              : p.providerId === "google.com"
+                ? "google"
+                : p.providerId,
+          )
+          .filter(Boolean),
+      ),
+    ];
+    session = {
+      access_token: idToken,
+      token_type: "bearer",
+      user: {
+        id: fbUser.uid,
+        email: (fbUser.email ?? "").trim().toLowerCase(),
+        user_metadata: {},
+        identities: (fallbackProviders.length > 0 ? fallbackProviders : ["google"]).map(
+          (provider) => ({ provider }),
+        ),
+      },
+    };
+    setStoredToken(idToken);
+    notifyAuthListeners(session);
+  }
+
+  const inflight =
+    migrationInFlight.get(fbUser.uid) ??
+    migrateLegacyServerProfileIfMissing(fbUser, session.user.id).finally(() => {
+      migrationInFlight.delete(fbUser.uid);
+    });
+  migrationInFlight.set(fbUser.uid, inflight);
+  await inflight;
+
+  // Ensure auth user id stays aligned with Firebase UID for Firestore rules consistency
+  if (session.user.id !== fbUser.uid) {
+    session = {
+      ...session,
+      user: {
+        ...session.user,
+        id: fbUser.uid,
+      },
+    };
+    notifyAuthListeners(session);
+  }
+
+  return session;
 }
 
 export function storePendingVerificationState(email: string, username: string) {
@@ -194,8 +369,7 @@ export async function completeGoogleRedirectIfPending(): Promise<AuthSession | n
     const auth = getFirebaseAuth();
     const result = await getRedirectResult(auth);
     if (!result) return null;
-    const idToken = await result.user.getIdToken();
-    return await authApi.signInWithGoogle(idToken);
+    return await syncSessionFromFirebaseUser(result.user);
   } catch (error) {
     const mapped = mapFirebaseAuthError(error);
     if (mapped.isCancelled) return null;
@@ -217,16 +391,14 @@ export async function signInWithGooglePopup(): Promise<AuthSession> {
 
   try {
     const result = await signInWithPopup(auth, provider);
-    const idToken = await result.user.getIdToken();
-    return await authApi.signInWithGoogle(idToken);
+    return await syncSessionFromFirebaseUser(result.user);
   } catch (firstError: unknown) {
     const firstMapped = mapFirebaseAuthError(firstError);
     if (firstMapped.isNetworkError) {
       warmUpPromise = null;
       try {
         const retryResult = await signInWithPopup(auth, provider);
-        const idToken = await retryResult.user.getIdToken();
-        return await authApi.signInWithGoogle(idToken);
+        return await syncSessionFromFirebaseUser(retryResult.user);
       } catch (retryError: unknown) {
         const retryMapped = mapFirebaseAuthError(retryError);
         if (retryMapped.isNetworkError && isTopLevelWindow()) {
@@ -276,6 +448,7 @@ export async function sendSignupVerificationEmail(input: {
         if (firebaseUser.emailVerified) {
           const idToken = await firebaseUser.getIdToken(true);
           const session = await authApi.confirmEmailSignup(idToken, cleanUsername);
+          await syncFirebaseAccountDoc(firebaseUser, cleanUsername).catch(() => undefined);
           clearPendingVerificationState();
           return { status: "verified", session };
         }
@@ -361,10 +534,9 @@ export async function checkAndCompleteEmailVerification(options?: {
 
   const stored = readPendingVerificationState();
   const idToken = await user.getIdToken(true);
-  const session = await authApi.confirmEmailSignup(
-    idToken,
-    options?.username ?? stored.username,
-  );
+  const chosenUsername = options?.username ?? stored.username;
+  const session = await authApi.confirmEmailSignup(idToken, chosenUsername);
+  await syncFirebaseAccountDoc(user, chosenUsername).catch(() => undefined);
   clearPendingVerificationState();
   return { status: "confirmed", session };
 }

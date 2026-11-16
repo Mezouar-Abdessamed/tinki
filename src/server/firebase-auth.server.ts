@@ -1,7 +1,6 @@
 import crypto from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
 
+import firebaseConfig from "../../firebase-applet-config.json";
 import { StoreError } from "./store.server";
 
 const GOOGLE_JWK_URL =
@@ -31,15 +30,8 @@ let cachedJwks: CachedJwks | null = null;
 function readFirebaseApiKey(): string | null {
   const envKey = process.env["FIREBASE_API_KEY"];
   if (envKey && envKey.trim()) return envKey.trim();
-  const configPath = path.resolve(process.cwd(), "firebase-applet-config.json");
-  try {
-    const raw = fs.readFileSync(configPath, "utf8");
-    const parsed = JSON.parse(raw) as { apiKey?: unknown };
-    if (typeof parsed.apiKey === "string" && parsed.apiKey.trim()) {
-      return parsed.apiKey.trim();
-    }
-  } catch {
-    /* ignore */
+  if (typeof firebaseConfig.apiKey === "string" && firebaseConfig.apiKey.trim()) {
+    return firebaseConfig.apiKey.trim();
   }
   return null;
 }
@@ -51,16 +43,9 @@ function readFirebaseProjectId(): string {
     cachedProjectId = envId;
     return envId;
   }
-  const configPath = path.resolve(process.cwd(), "firebase-applet-config.json");
-  try {
-    const raw = fs.readFileSync(configPath, "utf8");
-    const parsed = JSON.parse(raw) as { projectId?: unknown };
-    if (typeof parsed.projectId === "string" && parsed.projectId.trim()) {
-      cachedProjectId = parsed.projectId.trim();
-      return cachedProjectId;
-    }
-  } catch {
-    /* handled below */
+  if (typeof firebaseConfig.projectId === "string" && firebaseConfig.projectId.trim()) {
+    cachedProjectId = firebaseConfig.projectId.trim();
+    return cachedProjectId;
   }
   throw new StoreError("Authentication service is not configured on the server", 500, "firebase_not_configured");
 }

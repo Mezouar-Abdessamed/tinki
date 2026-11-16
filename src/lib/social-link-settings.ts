@@ -11,6 +11,14 @@ export type SocialLinkSetting = {
 };
 
 export async function fetchSocialLinkSettings(profileId: string) {
+  if (typeof window !== "undefined" && profileId) {
+    try {
+      const { fetchSocialLinkSettingsFirestore } = await import("@/lib/firestore");
+      return await fetchSocialLinkSettingsFirestore(profileId);
+    } catch {
+      /* fallback to server API */
+    }
+  }
   const { settings } = await apiFetch<{ settings: AppTableRow<"social_link_settings">[] }>(
     `/api/profiles/${encodeURIComponent(profileId)}/social-settings`,
   );
@@ -29,6 +37,13 @@ export async function fetchSocialLinkSettings(profileId: string) {
 }
 
 export async function saveSocialLinkSettings(settings: SocialLinkSetting[]) {
+  if (typeof window !== "undefined") {
+    const { auth: fbAuth, saveSocialLinkSettingsFirestore } = await import("@/lib/firestore");
+    if (fbAuth.currentUser) {
+      await saveSocialLinkSettingsFirestore(settings);
+      return;
+    }
+  }
   const payload = settings.map((setting, position) => ({
     profile_id: setting.profile_id,
     platform: setting.platform,

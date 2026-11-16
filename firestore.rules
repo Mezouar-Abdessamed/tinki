@@ -1,0 +1,542 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 0: Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Reusable Hardened Primitives ---
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidMediaId(id) {
+      return id is string && id.size() >= 3 && id.size() <= 220 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidUsernameStr(username) {
+      return username is string
+        && username.size() >= 1
+        && username.size() <= 20
+        && username.matches('^[a-z0-9_\\-]+$')
+        && !(username in [
+          'admin', 'login', 'register', 'dashboard', 'api', 'settings',
+          'about', 'contact', 'terms', 'privacy', 'favicon.ico', 'robots.txt',
+          'sitemap.xml', '_next', 'auth', 'forgot-password', 'reset-password',
+          'profile', 'signup', 'signin', 'logout', 'help', 'support',
+          'pricing', 'blog', 'assets', 'static', 'public', 'me', 'u', 'user'
+        ]);
+    }
+
+    function isOptString(val, maxLen) {
+      return val == null || (val is string && val.size() <= maxLen);
+    }
+
+    function isHexColor(val) {
+      return val is string && val.size() == 7 && val.matches('^#[0-9a-fA-F]{6}$');
+    }
+
+    function isOptHexColor(val) {
+      return val == null || isHexColor(val);
+    }
+
+    function isPercent(val) {
+      return val is number && val >= 0 && val <= 100;
+    }
+
+    function isAngle(val) {
+      return val is number && val >= 0 && val <= 360;
+    }
+
+    function isBgType(val) {
+      return val is string && val in ['default', 'solid', 'linear', 'radial'];
+    }
+
+    function isFontFamily(val) {
+      return val is string && val in ['display', 'sans', 'serif', 'mono', 'condensed'];
+    }
+
+    function isFontStyle(val) {
+      return val is string && val in ['normal', 'italic'];
+    }
+
+    // --- Validation Blueprints (No existing()/diff() inside these helpers) ---
+    function isValidAccount(data, userId) {
+      return data.keys().hasAll(['id', 'email', 'providers', 'created_at', 'updated_at'])
+        && data.keys().hasOnly(['id', 'email', 'name', 'username', 'providers', 'created_at', 'updated_at'])
+        && data.id == userId
+        && data.id == request.auth.uid
+        && data.email is string && data.email.size() >= 5 && data.email.size() <= 254
+        && (!('name' in data) || isOptString(data.name, 80))
+        && (!('username' in data) || data.username == null || isValidUsernameStr(data.username))
+        && data.providers is list
+        && data.providers.size() >= 1
+        && data.providers.size() <= 4
+        && data.providers[0] is string
+        && data.providers[0].size() <= 32
+        && data.created_at is timestamp
+        && data.updated_at is timestamp;
+    }
+
+    function hasValidProfileSocials(data) {
+      return isOptString(data.instagram_url, 300)
+        && isOptString(data.facebook_url, 300)
+        && isOptString(data.tiktok_url, 300)
+        && isOptString(data.snapchat_url, 300)
+        && isOptString(data.linkedin_url, 300)
+        && isOptString(data.x_url, 300)
+        && isOptString(data.youtube_url, 300)
+        && isOptString(data.whatsapp_url, 300)
+        && isOptString(data.telegram_url, 300)
+        && isOptString(data.discord_url, 300)
+        && isOptString(data.github_url, 300)
+        && isOptString(data.steam_url, 300)
+        && isOptString(data.epicgames_url, 300)
+        && isOptString(data.threads_url, 300)
+        && isOptString(data.reddit_url, 300)
+        && isOptString(data.twitch_url, 300);
+    }
+
+    function hasValidProfileAppearance(data) {
+      return isBgType(data.card_background_type)
+        && isHexColor(data.card_background_color)
+        && isHexColor(data.card_gradient_color)
+        && isAngle(data.card_gradient_angle)
+        && isOptHexColor(data.social_icon_color)
+        && isOptHexColor(data.social_icon_bg_color)
+        && isBgType(data.page_background_type)
+        && isHexColor(data.page_background_color)
+        && isHexColor(data.page_gradient_color)
+        && isAngle(data.page_gradient_angle)
+        && isOptString(data.page_background_image_url, 500)
+        && data.page_background_image_mode is string
+        && data.page_background_image_mode in ['cover', 'repeat']
+        && data.page_background_use_image is bool
+        && isOptString(data.page_background_video_url, 500)
+        && data.page_background_media_type is string
+        && data.page_background_media_type in ['image', 'video']
+        && isFontFamily(data.name_font_family)
+        && data.name_font_weight is number
+        && data.name_font_weight >= 100 && data.name_font_weight <= 900
+        && isFontStyle(data.name_font_style)
+        && isFontFamily(data.bio_font_family)
+        && data.bio_font_weight is number
+        && data.bio_font_weight >= 100 && data.bio_font_weight <= 900
+        && isFontStyle(data.bio_font_style)
+        && isOptHexColor(data.name_color)
+        && isOptHexColor(data.bio_color)
+        && isHexColor(data.qr_foreground_color)
+        && isHexColor(data.qr_background_color)
+        && data.qr_margin is number
+        && data.qr_margin >= 0 && data.qr_margin <= 10
+        && data.qr_error_correction is string
+        && data.qr_error_correction in ['L', 'M', 'Q', 'H']
+        && data.qr_module_shape is string
+        && data.qr_module_shape in ['square', 'rounded', 'dots', 'classy', 'diamond']
+        && data.qr_eye_shape is string
+        && data.qr_eye_shape in ['square', 'rounded', 'circle', 'leaf'];
+    }
+
+    function isValidProfile(data, profileId) {
+      return data.keys().hasAll([
+          'id', 'username', 'display_name', 'bio', 'avatar_path',
+          'cover_photo_path', 'cover_photo_x', 'cover_photo_y',
+          'show_qr_button', 'verified', 'created_at', 'updated_at',
+          'instagram_url', 'facebook_url', 'tiktok_url', 'snapchat_url',
+          'linkedin_url', 'x_url', 'youtube_url', 'whatsapp_url',
+          'telegram_url', 'discord_url', 'github_url', 'steam_url',
+          'epicgames_url', 'threads_url', 'reddit_url', 'twitch_url',
+          'card_background_type', 'card_background_color', 'card_gradient_color',
+          'card_gradient_angle', 'social_icon_color', 'social_icon_bg_color',
+          'page_background_type', 'page_background_color', 'page_gradient_color',
+          'page_gradient_angle', 'page_background_image_url',
+          'page_background_image_mode', 'page_background_use_image',
+          'page_background_video_url', 'page_background_media_type',
+          'name_font_family', 'name_font_weight', 'name_font_style',
+          'bio_font_family', 'bio_font_weight', 'bio_font_style',
+          'name_color', 'bio_color',
+          'qr_foreground_color', 'qr_background_color', 'qr_margin',
+          'qr_error_correction', 'qr_module_shape', 'qr_eye_shape'
+        ])
+        && data.keys().hasOnly([
+          'id', 'username', 'display_name', 'bio', 'avatar_path',
+          'cover_photo_path', 'cover_photo_x', 'cover_photo_y',
+          'show_qr_button', 'verified', 'created_at', 'updated_at',
+          'instagram_url', 'facebook_url', 'tiktok_url', 'snapchat_url',
+          'linkedin_url', 'x_url', 'youtube_url', 'whatsapp_url',
+          'telegram_url', 'discord_url', 'github_url', 'steam_url',
+          'epicgames_url', 'threads_url', 'reddit_url', 'twitch_url',
+          'card_background_type', 'card_background_color', 'card_gradient_color',
+          'card_gradient_angle', 'social_icon_color', 'social_icon_bg_color',
+          'page_background_type', 'page_background_color', 'page_gradient_color',
+          'page_gradient_angle', 'page_background_image_url',
+          'page_background_image_mode', 'page_background_use_image',
+          'page_background_video_url', 'page_background_media_type',
+          'name_font_family', 'name_font_weight', 'name_font_style',
+          'bio_font_family', 'bio_font_weight', 'bio_font_style',
+          'name_color', 'bio_color',
+          'qr_foreground_color', 'qr_background_color', 'qr_margin',
+          'qr_error_correction', 'qr_module_shape', 'qr_eye_shape'
+        ])
+        && data.id == profileId
+        && data.id == request.auth.uid
+        && isValidUsernameStr(data.username)
+        && isOptString(data.display_name, 80)
+        && isOptString(data.bio, 50)
+        && isOptString(data.avatar_path, 256)
+        && isOptString(data.cover_photo_path, 256)
+        && isPercent(data.cover_photo_x)
+        && isPercent(data.cover_photo_y)
+        && data.show_qr_button is bool
+        && data.verified is bool
+        && data.verified == (data.username == 'abdessamed')
+        && hasValidProfileSocials(data)
+        && hasValidProfileAppearance(data)
+        && data.created_at is timestamp
+        && data.updated_at is timestamp;
+    }
+
+    function isValidUsernameClaim(data, username) {
+      return data.keys().hasAll(['username', 'owner_id', 'created_at'])
+        && data.keys().hasOnly(['username', 'owner_id', 'created_at'])
+        && data.username == username
+        && isValidUsernameStr(data.username)
+        && data.owner_id == request.auth.uid
+        && isValidId(data.owner_id)
+        && data.created_at is timestamp;
+    }
+
+    function isValidCustomLink(data, linkId) {
+      return data.keys().hasAll([
+          'id', 'profile_id', 'name', 'url', 'icon',
+          'enabled', 'position', 'link_type', 'created_at', 'updated_at'
+        ])
+        && data.keys().hasOnly([
+          'id', 'profile_id', 'name', 'url', 'icon',
+          'enabled', 'position', 'link_type', 'created_at', 'updated_at'
+        ])
+        && data.id == linkId
+        && data.profile_id == request.auth.uid
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 80
+        && data.url is string && data.url.size() >= 1 && data.url.size() <= 500
+        && data.icon is string && data.icon.size() >= 1 && data.icon.size() <= 40
+        && data.enabled is bool
+        && data.position is int && data.position >= 0 && data.position <= 1000
+        && data.link_type is string && data.link_type in ['link', 'phone', 'email']
+        && data.created_at is timestamp
+        && data.updated_at is timestamp;
+    }
+
+    function isValidSocialSetting(data, settingId) {
+      return data.keys().hasAll([
+          'id', 'profile_id', 'platform', 'enabled', 'position', 'created_at', 'updated_at'
+        ])
+        && data.keys().hasOnly([
+          'id', 'profile_id', 'platform', 'enabled', 'position', 'created_at', 'updated_at'
+        ])
+        && data.id == settingId
+        && data.profile_id == request.auth.uid
+        && data.platform is string
+        && data.platform in [
+          'instagram', 'facebook', 'tiktok', 'snapchat', 'linkedin', 'x',
+          'youtube', 'whatsapp', 'telegram', 'discord', 'github', 'steam',
+          'epicgames', 'threads', 'reddit', 'twitch'
+        ]
+        && data.enabled is bool
+        && data.position is int && data.position >= 0 && data.position <= 50
+        && data.created_at is timestamp
+        && data.updated_at is timestamp;
+    }
+
+    function isValidProfileEvent(data, eventId) {
+      return data.keys().hasAll(['id', 'profile_id', 'event_type', 'created_at'])
+        && data.keys().hasOnly([
+          'id', 'profile_id', 'event_type', 'platform',
+          'custom_link_id', 'visitor_id', 'country', 'created_at'
+        ])
+        && data.id == eventId
+        && isValidId(data.profile_id)
+        && data.event_type is string
+        && data.event_type in ['profile_view', 'social_click', 'custom_link_click']
+        && (!('platform' in data) || isOptString(data.platform, 30))
+        && (!('custom_link_id' in data) || isOptString(data.custom_link_id, 128))
+        && (!('visitor_id' in data) || isOptString(data.visitor_id, 128))
+        && (!('country' in data) || isOptString(data.country, 8))
+        && (data.event_type != 'social_click' || ('platform' in data && data.platform is string && data.platform.size() >= 1))
+        && (data.event_type != 'custom_link_click' || ('custom_link_id' in data && data.custom_link_id is string && data.custom_link_id.size() >= 1))
+        && data.created_at is timestamp;
+    }
+
+    function isValidMediaObject(data, mediaId) {
+      return data.keys().hasAll([
+          'id', 'owner_id', 'bucket', 'object_path',
+          'name', 'content_type', 'byte_length', 'chunk_count', 'created_at'
+        ])
+        && data.keys().hasOnly([
+          'id', 'owner_id', 'bucket', 'object_path',
+          'name', 'content_type', 'byte_length', 'chunk_count', 'created_at'
+        ])
+        && data.id == mediaId
+        && data.owner_id == request.auth.uid
+        && isValidId(data.owner_id)
+        && data.bucket is string && data.bucket in ['avatars', 'covers', 'backgrounds']
+        && data.object_path is string && data.object_path.size() >= 3 && data.object_path.size() <= 256
+        && data.object_path.split('/').size() == 2
+        && data.object_path.split('/')[0] == request.auth.uid
+        && mediaId.split('__').size() == 3
+        && mediaId.split('__')[0] == data.bucket
+        && mediaId.split('__')[1] == request.auth.uid
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 128
+        && data.content_type is string && data.content_type.size() >= 3 && data.content_type.size() <= 120
+        && data.byte_length is int && data.byte_length >= 1 && data.byte_length <= 6291456
+        && data.chunk_count is int && data.chunk_count >= 1 && data.chunk_count <= 20
+        && data.created_at is timestamp;
+    }
+
+    function isValidMediaChunk(data, chunkId) {
+      return data.keys().hasAll(['index', 'data'])
+        && data.keys().hasOnly(['index', 'data'])
+        && data.index is int && data.index >= 0 && data.index < 20
+        && chunkId == string(data.index)
+        && data.data is string && data.data.size() >= 1 && data.data.size() <= 800000;
+    }
+
+    // --- Collection Rules ---
+
+    // Boot connection check document
+    match /test/connection {
+      allow get: if true;
+      allow list, create, update, delete: if false;
+    }
+
+    // Strictly isolated private PII account collection
+    match /accounts/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if false;
+      allow create: if isVerifiedUser()
+        && isValidId(userId)
+        && isOwner(userId)
+        && isValidAccount(incoming(), userId)
+        && incoming().created_at == request.time
+        && incoming().updated_at == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(userId)
+        && isOwner(userId)
+        && isValidAccount(incoming(), userId)
+        && incoming().id == existing().id
+        && incoming().created_at == existing().created_at
+        && incoming().updated_at == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'email', 'name', 'username', 'providers', 'updated_at'
+        ]);
+      allow delete: if isVerifiedUser() && isValidId(userId) && isOwner(userId);
+    }
+
+    // Unique lowercase username claim registry (referenced atomically by profiles/{uid})
+    match /usernames/{username} {
+      allow get: if isValidUsernameStr(username);
+      allow list: if false;
+      allow create: if isVerifiedUser()
+        && isValidUsernameStr(username)
+        && isValidUsernameClaim(incoming(), username)
+        && incoming().created_at == request.time;
+      allow update: if false;
+      allow delete: if isVerifiedUser()
+        && isValidUsernameStr(username)
+        && existing().owner_id == request.auth.uid;
+    }
+
+    // Public creator profiles (zero PII)
+    match /profiles/{profileId} {
+      allow get: if isValidId(profileId);
+      allow list: if resource.data.username is string;
+      allow create: if isVerifiedUser()
+        && isValidId(profileId)
+        && isOwner(profileId)
+        && isValidProfile(incoming(), profileId)
+        && incoming().created_at == request.time
+        && incoming().updated_at == request.time
+        && existsAfter(/databases/$(database)/documents/usernames/$(incoming().username))
+        && getAfter(/databases/$(database)/documents/usernames/$(incoming().username)).data.owner_id == request.auth.uid;
+      allow update: if isVerifiedUser()
+        && isValidId(profileId)
+        && isOwner(profileId)
+        && isValidProfile(incoming(), profileId)
+        && incoming().id == existing().id
+        && incoming().created_at == existing().created_at
+        && incoming().updated_at == request.time
+        && (
+          // Action 1: Update profile info & avatar/cover (with optional atomic username change)
+          (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'username', 'verified', 'display_name', 'bio',
+              'avatar_path', 'cover_photo_path', 'cover_photo_x', 'cover_photo_y',
+              'updated_at'
+            ])
+            && (
+              incoming().username == existing().username
+              || (
+                existsAfter(/databases/$(database)/documents/usernames/$(incoming().username))
+                && getAfter(/databases/$(database)/documents/usernames/$(incoming().username)).data.owner_id == request.auth.uid
+              )
+            )
+          ) ||
+          // Action 2: Update social platform links
+          (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'instagram_url', 'facebook_url', 'tiktok_url', 'snapchat_url',
+              'linkedin_url', 'x_url', 'youtube_url', 'whatsapp_url',
+              'telegram_url', 'discord_url', 'github_url', 'steam_url',
+              'epicgames_url', 'threads_url', 'reddit_url', 'twitch_url',
+              'updated_at'
+            ])
+          ) ||
+          // Action 3: Update card, page background & typography appearance
+          (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'card_background_type', 'card_background_color', 'card_gradient_color',
+              'card_gradient_angle', 'social_icon_color', 'social_icon_bg_color',
+              'page_background_type', 'page_background_color', 'page_gradient_color',
+              'page_gradient_angle', 'page_background_image_url',
+              'page_background_image_mode', 'page_background_use_image',
+              'page_background_video_url', 'page_background_media_type',
+              'name_font_family', 'name_font_weight', 'name_font_style',
+              'bio_font_family', 'bio_font_weight', 'bio_font_style',
+              'name_color', 'bio_color', 'updated_at'
+            ])
+          ) ||
+          // Action 4: Update QR code styling & visibility
+          (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'show_qr_button', 'qr_foreground_color', 'qr_background_color',
+              'qr_margin', 'qr_error_correction', 'qr_module_shape', 'qr_eye_shape',
+              'updated_at'
+            ])
+          )
+        );
+      allow delete: if isVerifiedUser() && isValidId(profileId) && isOwner(profileId);
+    }
+
+    // Custom link CTA buttons
+    match /custom_links/{linkId} {
+      allow get: if isValidId(linkId);
+      allow list: if resource.data.profile_id is string;
+      allow create: if isVerifiedUser()
+        && isValidId(linkId)
+        && isValidCustomLink(incoming(), linkId)
+        && incoming().created_at == request.time
+        && incoming().updated_at == request.time
+        && exists(/databases/$(database)/documents/profiles/$(request.auth.uid));
+      allow update: if isVerifiedUser()
+        && isValidId(linkId)
+        && isValidCustomLink(incoming(), linkId)
+        && existing().profile_id == request.auth.uid
+        && incoming().id == existing().id
+        && incoming().profile_id == existing().profile_id
+        && incoming().created_at == existing().created_at
+        && incoming().updated_at == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'name', 'url', 'icon', 'enabled', 'link_type', 'updated_at'
+          ]) ||
+          incoming().diff(existing()).affectedKeys().hasOnly(['position', 'updated_at'])
+        );
+      allow delete: if isVerifiedUser() && isValidId(linkId) && existing().profile_id == request.auth.uid;
+    }
+
+    // Social platform toggle and order settings
+    match /social_link_settings/{settingId} {
+      allow get: if isValidId(settingId);
+      allow list: if resource.data.profile_id is string;
+      allow create: if isVerifiedUser()
+        && isValidId(settingId)
+        && isValidSocialSetting(incoming(), settingId)
+        && incoming().created_at == request.time
+        && incoming().updated_at == request.time
+        && exists(/databases/$(database)/documents/profiles/$(request.auth.uid));
+      allow update: if isVerifiedUser()
+        && isValidId(settingId)
+        && isValidSocialSetting(incoming(), settingId)
+        && existing().profile_id == request.auth.uid
+        && incoming().id == existing().id
+        && incoming().profile_id == existing().profile_id
+        && incoming().platform == existing().platform
+        && incoming().created_at == existing().created_at
+        && incoming().updated_at == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'enabled', 'position', 'updated_at'
+        ]);
+      allow delete: if isVerifiedUser() && isValidId(settingId) && existing().profile_id == request.auth.uid;
+    }
+
+    // Analytics events: visitors create (non-owners targeting existing profiles), owners read & delete
+    match /profile_events/{eventId} {
+      allow get: if isSignedIn() && isValidId(eventId) && existing().profile_id == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.profile_id == request.auth.uid;
+      allow create: if isValidId(eventId)
+        && isValidProfileEvent(incoming(), eventId)
+        && incoming().created_at == request.time
+        && (request.auth == null || request.auth.uid != incoming().profile_id)
+        && exists(/databases/$(database)/documents/profiles/$(incoming().profile_id));
+      allow update: if false;
+      allow delete: if isVerifiedUser() && isValidId(eventId) && existing().profile_id == request.auth.uid;
+    }
+
+    // Persistent media metadata & chunks (avatars, covers, backgrounds)
+    match /media_objects/{mediaId} {
+      allow get: if isValidMediaId(mediaId);
+      allow list: if isSignedIn() && resource.data.owner_id == request.auth.uid;
+      allow create: if isVerifiedUser()
+        && isValidMediaId(mediaId)
+        && isValidMediaObject(incoming(), mediaId)
+        && incoming().created_at == request.time;
+      allow update: if false;
+      allow delete: if isVerifiedUser()
+        && isValidMediaId(mediaId)
+        && existing().owner_id == request.auth.uid;
+
+      // Master Gate subcollection for binary chunks
+      match /chunks/{chunkId} {
+        allow get: if isValidMediaId(mediaId) && isValidId(chunkId);
+        allow list: if false;
+        allow create: if isVerifiedUser()
+          && isValidMediaId(mediaId)
+          && isValidId(chunkId)
+          && isValidMediaChunk(incoming(), chunkId)
+          && (
+            (exists(/databases/$(database)/documents/media_objects/$(mediaId))
+              && get(/databases/$(database)/documents/media_objects/$(mediaId)).data.owner_id == request.auth.uid)
+            || (existsAfter(/databases/$(database)/documents/media_objects/$(mediaId))
+              && getAfter(/databases/$(database)/documents/media_objects/$(mediaId)).data.owner_id == request.auth.uid)
+          );
+        allow update: if false;
+        allow delete: if isVerifiedUser()
+          && isValidMediaId(mediaId)
+          && isValidId(chunkId)
+          && exists(/databases/$(database)/documents/media_objects/$(mediaId))
+          && get(/databases/$(database)/documents/media_objects/$(mediaId)).data.owner_id == request.auth.uid;
+      }
+    }
+  }
+}

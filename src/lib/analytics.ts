@@ -75,6 +75,12 @@ type ClickEvent = {
 };
 
 function sendClick(event: ClickEvent) {
+  if (typeof window !== "undefined") {
+    void import("@/lib/firestore")
+      .then(({ recordProfileEventFirestore }) => recordProfileEventFirestore(event))
+      .catch(() => undefined);
+    return;
+  }
   if (typeof fetch === "undefined") return;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -99,15 +105,25 @@ export async function trackProfileView(profileId: string, isOwner: boolean) {
   if (!visitorId || seenRecently(profileId)) return;
   const country = await getCountryCode();
   try {
-    await apiFetch("/api/events", {
-      method: "POST",
-      body: JSON.stringify({
+    if (typeof window !== "undefined") {
+      const { recordProfileEventFirestore } = await import("@/lib/firestore");
+      await recordProfileEventFirestore({
         profile_id: profileId,
         event_type: "profile_view",
         visitor_id: visitorId,
         country,
-      }),
-    });
+      });
+    } else {
+      await apiFetch("/api/events", {
+        method: "POST",
+        body: JSON.stringify({
+          profile_id: profileId,
+          event_type: "profile_view",
+          visitor_id: visitorId,
+          country,
+        }),
+      });
+    }
     markSeen(profileId);
   } catch {
     /* ignore transient tracking errors */
@@ -151,6 +167,12 @@ export type ProfileAnalytics = {
 
 export async function fetchMyAnalytics(profileId: string): Promise<ProfileAnalytics> {
   try {
+    if (typeof window !== "undefined" && profileId) {
+      const { auth: fbAuth, fetchAnalyticsFirestore } = await import("@/lib/firestore");
+      if (fbAuth.currentUser?.uid === profileId) {
+        return await fetchAnalyticsFirestore(profileId);
+      }
+    }
     const result = await apiFetch<Partial<ProfileAnalytics>>(
       `/api/analytics?profileId=${encodeURIComponent(profileId)}`,
     );

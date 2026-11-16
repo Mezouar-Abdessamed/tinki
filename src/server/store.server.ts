@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
+import firebaseConfig from "../../firebase-applet-config.json";
 import type { AppTableRow } from "@/lib/app-database";
 import type { Profile } from "@/lib/profiles";
 import {
@@ -70,7 +71,7 @@ type StoreData = {
 };
 
 const DEFAULT_DATA_DIR = process.env["TINKI_DATA_DIR"] || "/tmp/tinki-data";
-const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
+const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
 const RESET_TTL_MS = 60 * 60 * 1000;
 const PENDING_SIGNUP_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -180,6 +181,7 @@ export class TinkiStore {
   private dbPath: string;
   private secret: string;
   private data: StoreData;
+  private deletedUserIds = new Set<string>();
 
   constructor(dataDir = DEFAULT_DATA_DIR) {
     this.dataDir = dataDir;
@@ -200,6 +202,22 @@ export class TinkiStore {
   private loadOrCreateSecret(): string {
     const envSecret = process.env["AUTH_SECRET"];
     if (envSecret && envSecret.length >= 16) return envSecret;
+
+    if (this.dataDir === DEFAULT_DATA_DIR) {
+      return crypto
+        .createHash("sha256")
+        .update(
+          [
+            "tinki-session-v2",
+            firebaseConfig.projectId,
+            firebaseConfig.firestoreDatabaseId,
+            firebaseConfig.appId,
+            firebaseConfig.apiKey,
+          ].join(":"),
+        )
+        .digest("hex");
+    }
+
     const secretFile = path.join(this.dataDir, ".secret");
     try {
       this.ensureDir(this.dataDir);
@@ -387,7 +405,13 @@ export class TinkiStore {
     const expiresAt = Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS;
     const header = base64UrlEncode(JSON.stringify({ alg: "HS256", typ: "JWT" }));
     const payload = base64UrlEncode(
-      JSON.stringify({ sub: user.id, email: user.email, exp: expiresAt }),
+      JSON.stringify({
+        sub: user.id,
+        email: user.email,
+        ...(user.username ? { username: user.username } : {}),
+        providers: user.providers,
+        exp: expiresAt,
+      }),
     );
     const sig = crypto.createHmac("sha256", this.secret).update(`${header}.${payload}`).digest();
     const signature = base64UrlEncode(sig);
@@ -409,14 +433,27 @@ export class TinkiStore {
     try {
       const decoded = JSON.parse(base64UrlDecode(payload)) as {
         sub?: string;
+        email?: string;
+        username?: string;
+        providers?: string[];
         exp?: number;
       };
       if (!decoded.sub || !decoded.exp || decoded.exp < Math.floor(Date.now() / 1000)) {
         return null;
       }
+      if (this.deletedUserIds.has(decoded.sub)) return null;
       const user = this.data.users.find((u) => u.id === decoded.sub);
-      if (!user) return null;
-      return this.toPublicUser(user);
+      if (user) return this.toPublicUser(user);
+      if (typeof decoded.email === "string" && decoded.email) {
+        const providers = Array.isArray(decoded.providers) ? decoded.providers : ["google"];
+        return {
+          id: decoded.sub,
+          email: decoded.email,
+          user_metadata: decoded.username ? { username: decoded.username } : {},
+          identities: providers.map((provider) => ({ provider })),
+        };
+      }
+      return null;
     } catch {
       return null;
     }
@@ -697,7 +734,7 @@ export class TinkiStore {
     } else {
       const now = new Date().toISOString();
       user = {
-        id: crypto.randomUUID(),
+        id: cleanUid,
         email: cleanEmail,
         passwordHash: "",
         providers: ["google"],
@@ -713,8 +750,34 @@ export class TinkiStore {
     return this.buildSession(user);
   }
 
-  updatePassword(userId: string, newPassword: string, currentPassword?: string): AuthSessionPayload {
-    const user = this.data.users.find((u) => u.id === userId);
+  updatePassword(
+    userId: string,
+    newPassword: string,
+    currentPassword?: string,
+    fallbackUser?: PublicAuthUser,
+  ): AuthSessionPayload {
+    let user = this.data.users.find((u) => u.id === userId);
+    if (!user && fallbackUser && fallbackUser.id === userId && fallbackUser.email) {
+      const providers = [
+        ...new Set(
+          fallbackUser.identities
+            .map((identity) => identity.provider)
+            .filter((provider) => provider && provider !== "email"),
+        ),
+      ];
+      user = {
+        id: userId,
+        email: fallbackUser.email.trim().toLowerCase(),
+        passwordHash: "",
+        providers: providers.length > 0 ? providers : ["google"],
+        ...(providers.includes("google") ? { googleUid: userId } : {}),
+        ...(fallbackUser.user_metadata.username
+          ? { username: fallbackUser.user_metadata.username }
+          : {}),
+        createdAt: new Date().toISOString(),
+      };
+      this.data.users.push(user);
+    }
     if (!user) throw new StoreError("User not found", 404);
 
     if (user.providers.includes("email") && user.passwordHash) {
@@ -1184,6 +1247,7 @@ export class TinkiStore {
       }
     }
 
+    this.deletedUserIds.add(userId);
     this.data.profileEvents = this.data.profileEvents.filter((e) => e.profile_id !== userId);
     this.data.customLinks = this.data.customLinks.filter((l) => l.profile_id !== userId);
     this.data.socialLinkSettings = this.data.socialLinkSettings.filter(

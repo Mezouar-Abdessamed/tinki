@@ -100,6 +100,15 @@ export function validateCustomUrl(raw: string) {
 }
 
 export async function fetchCustomLinks(profileId: string, enabledOnly = false) {
+  if (typeof window !== "undefined" && profileId) {
+    try {
+      const { fetchCustomLinksFirestore } = await import("@/lib/firestore");
+      const fsLinks = await fetchCustomLinksFirestore(profileId, enabledOnly);
+      if (fsLinks.length > 0) return fsLinks;
+    } catch {
+      /* fallback to server API */
+    }
+  }
   const { links } = await apiFetch<{ links: CustomLink[] }>(
     `/api/profiles/${encodeURIComponent(profileId)}/custom-links${enabledOnly ? "?enabledOnly=true" : ""}`,
   );
@@ -112,6 +121,12 @@ export async function createCustomLink(input: {
   icon: string;
   link_type: CustomLinkType;
 }) {
+  if (typeof window !== "undefined") {
+    const { auth: fbAuth, createCustomLinkFirestore } = await import("@/lib/firestore");
+    if (fbAuth.currentUser) {
+      return createCustomLinkFirestore(input);
+    }
+  }
   const { link } = await apiFetch<{ link: CustomLink }>("/api/custom-links", {
     method: "POST",
     body: JSON.stringify(input),
@@ -123,6 +138,12 @@ export async function updateCustomLink(
   id: string,
   patch: Partial<Pick<CustomLink, "name" | "url" | "icon" | "link_type" | "enabled">>,
 ) {
+  if (typeof window !== "undefined") {
+    const { auth: fbAuth, updateCustomLinkFirestore } = await import("@/lib/firestore");
+    if (fbAuth.currentUser) {
+      return updateCustomLinkFirestore(id, patch);
+    }
+  }
   const { link } = await apiFetch<{ link: CustomLink }>(
     `/api/custom-links/${encodeURIComponent(id)}`,
     {
@@ -134,12 +155,26 @@ export async function updateCustomLink(
 }
 
 export async function deleteCustomLink(id: string) {
+  if (typeof window !== "undefined") {
+    const { auth: fbAuth, deleteCustomLinkFirestore } = await import("@/lib/firestore");
+    if (fbAuth.currentUser) {
+      await deleteCustomLinkFirestore(id);
+      return;
+    }
+  }
   await apiFetch(`/api/custom-links/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
 }
 
 export async function reorderCustomLinks(targetProfileId: string, orderedIds: string[]) {
+  if (typeof window !== "undefined") {
+    const { auth: fbAuth, reorderCustomLinksFirestore } = await import("@/lib/firestore");
+    if (fbAuth.currentUser) {
+      await reorderCustomLinksFirestore(targetProfileId, orderedIds);
+      return;
+    }
+  }
   await apiFetch("/api/custom-links/reorder", {
     method: "POST",
     body: JSON.stringify({ target_profile_id: targetProfileId, ordered_ids: orderedIds }),

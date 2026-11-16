@@ -3,9 +3,18 @@ import {
   verifyFirebaseIdToken,
 } from "./firebase-auth.server";
 import { handleFirebaseProxyRequest } from "./firebase-proxy.server";
+import {
+  getProfileByIdRest,
+  getProfileByUsernameRest,
+  getUsernameClaimRest,
+  listCustomLinksRest,
+  listSocialLinkSettingsRest,
+  readMediaFromFirestoreRest,
+} from "./firestore-rest.server";
 import { getStore, StoreError, type PublicAuthUser } from "./store.server";
 
 const SESSION_COOKIE = "tinki_session";
+const SESSION_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 const MAX_MEDIA_BYTES = 6 * 1024 * 1024;
 
 function json(data: unknown, status = 200, headers?: Record<string, string>): Response {
@@ -48,15 +57,31 @@ function extractToken(request: Request): string | null {
   return cookies[SESSION_COOKIE] ?? null;
 }
 
+function isHttpsRequest(request: Request, url: URL): boolean {
+  if (url.protocol === "https:") return true;
+  const xfp = (request.headers.get("x-forwarded-proto") ?? "").toLowerCase();
+  if (xfp.split(",").some((p) => p.trim() === "https")) return true;
+  const forwarded = (request.headers.get("forwarded") ?? "").toLowerCase();
+  if (forwarded.includes("proto=https")) return true;
+  const origin = (request.headers.get("origin") ?? "").toLowerCase();
+  if (origin.startsWith("https://")) return true;
+  const referer = (request.headers.get("referer") ?? "").toLowerCase();
+  if (referer.startsWith("https://")) return true;
+  return false;
+}
+
 function sessionCookieHeader(request: Request, token: string, maxAgeSeconds: number): string {
   const url = new URL(request.url);
-  const isHttps = url.protocol === "https:" || request.headers.get("x-forwarded-proto") === "https";
+  const isHttps = isHttpsRequest(request, url);
+  const expiresAt =
+    maxAgeSeconds > 0 ? new Date(Date.now() + maxAgeSeconds * 1000).toUTCString() : "Thu, 01 Jan 1970 00:00:00 GMT";
   const parts = [
     `${SESSION_COOKIE}=${encodeURIComponent(token)}`,
     "Path=/",
     "HttpOnly",
     `Max-Age=${maxAgeSeconds}`,
-    isHttps ? "SameSite=None; Secure" : "SameSite=Lax",
+    `Expires=${expiresAt}`,
+    isHttps ? "SameSite=None; Secure; Partitioned" : "SameSite=Lax",
   ];
   return parts.join("; ");
 }
@@ -95,7 +120,20 @@ export async function handleApiOrMediaRequest(request: Request): Promise<Respons
       return new Response("Not found", { status: 404 });
     }
     const [bucket, userId, filename] = segments;
-    const file = getStore().readMediaFile(bucket, `${userId}/${decodeURIComponent(filename)}`);
+    const objectPath = `${userId}/${decodeURIComponent(filename)}`;
+    const store = getStore();
+    let file = store.readMediaFile(bucket, objectPath);
+    if (!file) {
+      const fromFirestore = await readMediaFromFirestoreRest(bucket, objectPath);
+      if (fromFirestore) {
+        try {
+          store.saveMediaFile(userId, bucket, objectPath, fromFirestore.bytes, fromFirestore.contentType);
+        } catch {
+          /* ignore disk cache error */
+        }
+        file = fromFirestore;
+      }
+    }
     if (!file) return new Response("Not found", { status: 404 });
     return new Response(request.method === "HEAD" ? null : new Uint8Array(file.bytes), {
       status: 200,
@@ -143,7 +181,7 @@ export async function handleApiOrMediaRequest(request: Request): Promise<Respons
         ...(body.username !== undefined ? { username: body.username } : {}),
       });
       return json({ session, user: session.user }, 201, {
-        "set-cookie": sessionCookieHeader(request, session.access_token, 60 * 60 * 24 * 7),
+        "set-cookie": sessionCookieHeader(request, session.access_token, SESSION_COOKIE_MAX_AGE),
       });
     }
 
@@ -173,7 +211,7 @@ export async function handleApiOrMediaRequest(request: Request): Promise<Respons
       const claims = await verifyFirebaseIdToken(body.idToken ?? "");
       const session = store.completeVerifiedEmailSignup(claims, body.username);
       return json({ session, user: session.user }, 200, {
-        "set-cookie": sessionCookieHeader(request, session.access_token, 60 * 60 * 24 * 7),
+        "set-cookie": sessionCookieHeader(request, session.access_token, SESSION_COOKIE_MAX_AGE),
       });
     }
 
@@ -184,7 +222,7 @@ export async function handleApiOrMediaRequest(request: Request): Promise<Respons
       try {
         const session = store.login({ email, password });
         return json({ session, user: session.user }, 200, {
-          "set-cookie": sessionCookieHeader(request, session.access_token, 60 * 60 * 24 * 7),
+          "set-cookie": sessionCookieHeader(request, session.access_token, SESSION_COOKIE_MAX_AGE),
         });
       } catch (err) {
         const pending = store.getPendingSignupCredentialsMatch(email, password);
@@ -195,7 +233,7 @@ export async function handleApiOrMediaRequest(request: Request): Promise<Respons
               const claims = await verifyFirebaseIdToken(fbAuth.idToken);
               const session = store.completeVerifiedEmailSignup(claims);
               return json({ session, user: session.user }, 200, {
-                "set-cookie": sessionCookieHeader(request, session.access_token, 60 * 60 * 24 * 7),
+                "set-cookie": sessionCookieHeader(request, session.access_token, SESSION_COOKIE_MAX_AGE),
               });
             } catch (verifyErr) {
               if (verifyErr instanceof StoreError && verifyErr.code === "unverified_email") {
@@ -223,7 +261,7 @@ export async function handleApiOrMediaRequest(request: Request): Promise<Respons
       const claims = await verifyFirebaseIdToken(body.idToken ?? "");
       const session = store.loginWithGoogle(claims);
       return json({ session, user: session.user }, 200, {
-        "set-cookie": sessionCookieHeader(request, session.access_token, 60 * 60 * 24 * 7),
+        "set-cookie": sessionCookieHeader(request, session.access_token, SESSION_COOKIE_MAX_AGE),
       });
     }
 
@@ -234,9 +272,9 @@ export async function handleApiOrMediaRequest(request: Request): Promise<Respons
     if (pathname === "/api/auth/update-password" && method === "POST") {
       const user = requireUser(request);
       const body = await readJson<{ password?: string; currentPassword?: string }>(request);
-      const session = store.updatePassword(user.id, body.password ?? "", body.currentPassword);
+      const session = store.updatePassword(user.id, body.password ?? "", body.currentPassword, user);
       return json({ ok: true, session, user: session.user }, 200, {
-        "set-cookie": sessionCookieHeader(request, session.access_token, 60 * 60 * 24 * 7),
+        "set-cookie": sessionCookieHeader(request, session.access_token, SESSION_COOKIE_MAX_AGE),
       });
     }
 
@@ -253,7 +291,7 @@ export async function handleApiOrMediaRequest(request: Request): Promise<Respons
       const body = await readJson<{ token?: string; password?: string }>(request);
       const session = store.consumePasswordReset(body.token ?? "", body.password ?? "");
       return json({ session, user: session.user }, 200, {
-        "set-cookie": sessionCookieHeader(request, session.access_token, 60 * 60 * 24 * 7),
+        "set-cookie": sessionCookieHeader(request, session.access_token, SESSION_COOKIE_MAX_AGE),
       });
     }
 
@@ -267,13 +305,19 @@ export async function handleApiOrMediaRequest(request: Request): Promise<Respons
     // --- Username availability ---
     if (pathname === "/api/usernames/available" && method === "GET") {
       const username = url.searchParams.get("username") ?? "";
-      return json({ available: store.isUsernameAvailable(username) });
+      const localAvailable = store.isUsernameAvailable(username);
+      if (!localAvailable) return json({ available: false });
+      const fsClaim = await getUsernameClaimRest(username);
+      return json({ available: !fsClaim });
     }
 
     // --- Profiles ---
     if (pathname === "/api/profiles/me" && method === "GET") {
       const user = requireUser(request);
-      return json({ profile: store.getProfileById(user.id) });
+      const localProfile = store.getProfileById(user.id);
+      if (localProfile) return json({ profile: localProfile });
+      const fsProfile = await getProfileByIdRest(user.id);
+      return json({ profile: fsProfile });
     }
 
     if (pathname === "/api/profiles/me" && method === "PATCH") {
@@ -292,6 +336,8 @@ export async function handleApiOrMediaRequest(request: Request): Promise<Respons
 
     if (pathname.startsWith("/api/profiles/by-username/") && method === "GET") {
       const username = decodeURIComponent(pathname.slice("/api/profiles/by-username/".length));
+      const fsProfile = await getProfileByUsernameRest(username);
+      if (fsProfile) return json({ profile: fsProfile });
       return json({ profile: store.getProfileByUsername(username) });
     }
 
@@ -300,6 +346,8 @@ export async function handleApiOrMediaRequest(request: Request): Promise<Respons
     if (customLinksMatch && method === "GET") {
       const profileId = decodeURIComponent(customLinksMatch[1] ?? "");
       const enabledOnly = url.searchParams.get("enabledOnly") === "true";
+      const fsLinks = await listCustomLinksRest(profileId, enabledOnly);
+      if (fsLinks.length > 0) return json({ links: fsLinks });
       return json({ links: store.listCustomLinks(profileId, enabledOnly) });
     }
 
@@ -350,6 +398,8 @@ export async function handleApiOrMediaRequest(request: Request): Promise<Respons
     const socialSettingsMatch = pathname.match(/^\/api\/profiles\/([^/]+)\/social-settings$/);
     if (socialSettingsMatch && method === "GET") {
       const profileId = decodeURIComponent(socialSettingsMatch[1] ?? "");
+      const fsSettings = await listSocialLinkSettingsRest(profileId);
+      if (fsSettings.length > 0) return json({ settings: fsSettings });
       return json({ settings: store.listSocialLinkSettings(profileId) });
     }
 

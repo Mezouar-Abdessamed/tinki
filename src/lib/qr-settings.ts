@@ -1,6 +1,6 @@
 import type { QRCodeToDataURLOptions, QRCodeToStringOptions } from "qrcode";
 
-import { apiFetch } from "@/lib/api";
+import { updateMyProfile } from "@/lib/profiles";
 import {
   UnsafeQrSettingsError,
   validateQrSettings,
@@ -148,8 +148,5 @@ export async function saveQrSettings(
   });
   if (validation.blocking) throw new UnsafeQrSettingsError(validation.issues);
 
-  await apiFetch("/api/profiles/me", {
-    method: "PATCH",
-    body: JSON.stringify(qrSettingsToProfile(settings)),
-  });
+  await updateMyProfile(qrSettingsToProfile(settings));
 }

@@ -1,0 +1,515 @@
+{
+  "entities": {
+    "Account": {
+      "title": "Account",
+      "description": "Private authenticated user account metadata containing PII, strictly accessible only by the account owner.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID matching the document ID."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 5,
+          "maxLength": 254,
+          "description": "Verified account email address."
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Optional display name from OAuth provider."
+        },
+        "username": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20,
+          "pattern": "^[a-z0-9_-]+$",
+          "description": "Claimed public handle."
+        },
+        "providers": {
+          "type": "array",
+          "description": "Connected authentication provider identifiers."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when account was created."
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when account was last updated."
+        }
+      },
+      "required": ["id", "email", "providers", "created_at", "updated_at"]
+    },
+    "Profile": {
+      "title": "Profile",
+      "description": "Public creator profile card, appearance, social links, and QR settings without any private PII.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "username": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20,
+          "pattern": "^[a-z0-9_-]+$"
+        },
+        "display_name": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "bio": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "avatar_path": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "cover_photo_path": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "cover_photo_x": {
+          "type": "number"
+        },
+        "cover_photo_y": {
+          "type": "number"
+        },
+        "show_qr_button": {
+          "type": "boolean"
+        },
+        "verified": {
+          "type": "boolean"
+        },
+        "instagram_url": { "type": "string", "maxLength": 300 },
+        "facebook_url": { "type": "string", "maxLength": 300 },
+        "tiktok_url": { "type": "string", "maxLength": 300 },
+        "snapchat_url": { "type": "string", "maxLength": 300 },
+        "linkedin_url": { "type": "string", "maxLength": 300 },
+        "x_url": { "type": "string", "maxLength": 300 },
+        "youtube_url": { "type": "string", "maxLength": 300 },
+        "whatsapp_url": { "type": "string", "maxLength": 300 },
+        "telegram_url": { "type": "string", "maxLength": 300 },
+        "discord_url": { "type": "string", "maxLength": 300 },
+        "github_url": { "type": "string", "maxLength": 300 },
+        "steam_url": { "type": "string", "maxLength": 300 },
+        "epicgames_url": { "type": "string", "maxLength": 300 },
+        "threads_url": { "type": "string", "maxLength": 300 },
+        "reddit_url": { "type": "string", "maxLength": 300 },
+        "twitch_url": { "type": "string", "maxLength": 300 },
+        "card_background_type": {
+          "type": "string",
+          "enum": ["default", "solid", "linear", "radial"]
+        },
+        "card_background_color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "card_gradient_color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "card_gradient_angle": {
+          "type": "number"
+        },
+        "social_icon_color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "social_icon_bg_color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "page_background_type": {
+          "type": "string",
+          "enum": ["default", "solid", "linear", "radial"]
+        },
+        "page_background_color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "page_gradient_color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "page_gradient_angle": {
+          "type": "number"
+        },
+        "page_background_image_url": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "page_background_image_mode": {
+          "type": "string",
+          "enum": ["cover", "repeat"]
+        },
+        "page_background_use_image": {
+          "type": "boolean"
+        },
+        "page_background_video_url": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "page_background_media_type": {
+          "type": "string",
+          "enum": ["image", "video"]
+        },
+        "name_font_family": {
+          "type": "string",
+          "enum": ["display", "sans", "serif", "mono", "condensed"]
+        },
+        "name_font_weight": {
+          "type": "number"
+        },
+        "name_font_style": {
+          "type": "string",
+          "enum": ["normal", "italic"]
+        },
+        "bio_font_family": {
+          "type": "string",
+          "enum": ["display", "sans", "serif", "mono", "condensed"]
+        },
+        "bio_font_weight": {
+          "type": "number"
+        },
+        "bio_font_style": {
+          "type": "string",
+          "enum": ["normal", "italic"]
+        },
+        "name_color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "bio_color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "qr_foreground_color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "qr_background_color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "qr_margin": {
+          "type": "number"
+        },
+        "qr_error_correction": {
+          "type": "string",
+          "enum": ["L", "M", "Q", "H"]
+        },
+        "qr_module_shape": {
+          "type": "string",
+          "enum": ["square", "rounded", "dots", "classy", "diamond"]
+        },
+        "qr_eye_shape": {
+          "type": "string",
+          "enum": ["square", "rounded", "circle", "leaf"]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "username",
+        "verified",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    "UsernameClaim": {
+      "title": "UsernameClaim",
+      "description": "Unique lowercase username reservation linking a handle to its owner UID.",
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20,
+          "pattern": "^[a-z0-9_-]+$"
+        },
+        "owner_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["username", "owner_id", "created_at"]
+    },
+    "CustomLink": {
+      "title": "CustomLink",
+      "description": "User-created custom link, phone, or email CTA button displayed on their public profile.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "profile_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "url": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "icon": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "position": {
+          "type": "integer"
+        },
+        "link_type": {
+          "type": "string",
+          "enum": ["link", "phone", "email"]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "profile_id", "name", "url", "icon", "enabled", "position", "link_type", "created_at", "updated_at"]
+    },
+    "SocialLinkSetting": {
+      "title": "SocialLinkSetting",
+      "description": "Per-platform visibility and ordering configuration for a profile's social buttons.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "profile_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "platform": {
+          "type": "string",
+          "enum": [
+            "instagram",
+            "facebook",
+            "tiktok",
+            "snapchat",
+            "linkedin",
+            "x",
+            "youtube",
+            "whatsapp",
+            "telegram",
+            "discord",
+            "github",
+            "steam",
+            "epicgames",
+            "threads",
+            "reddit",
+            "twitch"
+          ]
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "position": {
+          "type": "integer"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "profile_id", "platform", "enabled", "position", "created_at", "updated_at"]
+    },
+    "ProfileEvent": {
+      "title": "ProfileEvent",
+      "description": "Visitor analytics event (view or click), readable only by the profile owner.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "profile_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "event_type": {
+          "type": "string",
+          "enum": ["profile_view", "social_click", "custom_link_click"]
+        },
+        "platform": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "custom_link_id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "visitor_id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "country": {
+          "type": "string",
+          "maxLength": 8
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "profile_id", "event_type", "created_at"]
+    },
+    "MediaObject": {
+      "title": "MediaObject",
+      "description": "Metadata for an uploaded avatar, cover, or background asset stored in chunked Firestore documents.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 220,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "owner_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "bucket": {
+          "type": "string",
+          "enum": ["avatars", "covers", "backgrounds"]
+        },
+        "object_path": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 256
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "content_type": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 120
+        },
+        "byte_length": {
+          "type": "integer"
+        },
+        "chunk_count": {
+          "type": "integer"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "owner_id", "bucket", "object_path", "name", "content_type", "byte_length", "chunk_count", "created_at"]
+    },
+    "MediaChunk": {
+      "title": "MediaChunk",
+      "description": "Base64-encoded binary chunk belonging to a MediaObject.",
+      "type": "object",
+      "properties": {
+        "index": {
+          "type": "integer"
+        },
+        "data": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 800000
+        }
+      },
+      "required": ["index", "data"]
+    }
+  },
+  "firestore": {
+    "/accounts/{userId}": {
+      "schema": "Account",
+      "description": "Owner-only PII document storing verified email, providers, and claimed handle."
+    },
+    "/profiles/{profileId}": {
+      "schema": "Profile",
+      "description": "Public creator profile pages keyed by Firebase Auth UID."
+    },
+    "/usernames/{username}": {
+      "schema": "UsernameClaim",
+      "description": "Unique username reservation registry mapping lowercase handle to owner UID."
+    },
+    "/custom_links/{linkId}": {
+      "schema": "CustomLink",
+      "description": "Custom links belonging to public profiles."
+    },
+    "/social_link_settings/{settingId}": {
+      "schema": "SocialLinkSetting",
+      "description": "Social button visibility and sort order settings per profile."
+    },
+    "/profile_events/{eventId}": {
+      "schema": "ProfileEvent",
+      "description": "Visitor profile view and link click analytics events."
+    },
+    "/media_objects/{mediaId}": {
+      "schema": "MediaObject",
+      "description": "Uploaded media file metadata (avatars, covers, background images/videos)."
+    },
+    "/media_objects/{mediaId}/chunks/{chunkId}": {
+      "schema": "MediaChunk",
+      "description": "Base64 binary chunks under a MediaObject document."
+    }
+  }
+}

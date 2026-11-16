@@ -1,6 +1,12 @@
+import { onAuthStateChanged } from "firebase/auth";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { authApi, subscribeAuth, type AuthSession, type AuthUser } from "@/lib/api";
+import {
+  completeGoogleRedirectIfPending,
+  getFirebaseAuth,
+  syncSessionFromFirebaseUser,
+} from "@/lib/firebase-auth";
 
 type AuthState = {
   session: AuthSession | null;
@@ -16,27 +22,84 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
-    const unsubscribe = subscribeAuth((nextSession) => {
+    const unsubscribeApi = subscribeAuth((nextSession) => {
       if (!active) return;
       setSession(nextSession);
       setLoading(false);
     });
 
-    authApi
-      .getSession()
-      .then((current) => {
-        if (active) setSession(current);
-      })
-      .catch(() => {
-        if (active) setSession(null);
-      })
-      .finally(() => {
+    const fbAuth = getFirebaseAuth();
+    let initialized = false;
+
+    const unsubscribeFb = onAuthStateChanged(fbAuth, (fbUser) => {
+      if (!active) return;
+      if (fbUser) {
+        void syncSessionFromFirebaseUser(fbUser)
+          .then((synced) => {
+            if (!active) return;
+            setSession(synced);
+            setLoading(false);
+          })
+          .catch(() => {
+            if (!active) return;
+            setLoading(false);
+          });
+      } else if (initialized) {
+        void authApi
+          .getSession()
+          .then((serverSession) => {
+            if (!active) return;
+            setSession(serverSession);
+          })
+          .catch(() => {
+            /* keep existing state */
+          })
+          .finally(() => {
+            if (active) setLoading(false);
+          });
+      }
+    });
+
+    (async () => {
+      try {
+        await fbAuth.authStateReady();
+        const redirectSession = await completeGoogleRedirectIfPending().catch(() => null);
+        if (redirectSession) {
+          if (active) {
+            setSession(redirectSession);
+            setLoading(false);
+          }
+          initialized = true;
+          return;
+        }
+
+        const currentFbUser = fbAuth.currentUser;
+        if (currentFbUser) {
+          const synced = await syncSessionFromFirebaseUser(currentFbUser);
+          if (active) {
+            setSession(synced);
+            setLoading(false);
+          }
+          initialized = true;
+          return;
+        }
+
+        const serverSession = await authApi.getSession();
+        if (active) {
+          setSession(serverSession);
+          setLoading(false);
+        }
+        initialized = true;
+      } catch {
+        initialized = true;
         if (active) setLoading(false);
-      });
+      }
+    })();
 
     return () => {
       active = false;
-      unsubscribe();
+      unsubscribeApi();
+      unsubscribeFb();
     };
   }, []);
 
