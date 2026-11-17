@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 
-import anonymousProfile from "@/assets/anonymous-profile.jpg";
+import demoProfileAvatar from "@/assets/demo-profile-avatar.jpg";
 import { ProfileCard, type ProfileCardData } from "@/components/ProfileCard";
 import { QrCode } from "@/components/QrCode";
 import { SocialIcon } from "@/components/SocialIcon";
@@ -76,7 +76,7 @@ export function DemoProfile({ compact = false }: { compact?: boolean }) {
     <div inert className="pointer-events-none select-none">
       <ProfileCard
         profile={demoProfile}
-        avatarUrl={anonymousProfile}
+        avatarUrl={demoProfileAvatar}
         coverUrl="/presets/geometric.svg"
         customLinks={demoLinks}
         compact={compact}
@@ -148,7 +148,7 @@ export function DemoPublicProfile({
         <div className="rounded-xl [&_.panel]:border-white/10">
           <ProfileCard
             profile={styledProfile}
-            avatarUrl={anonymousProfile}
+            avatarUrl={demoProfileAvatar}
             coverUrl={showCover ? "/presets/geometric.svg" : null}
             customLinks={translatedLinks}
             compact={compact}
@@ -218,7 +218,7 @@ export function DemoQr({ size = 150, settings = brandQr }: { size?: number; sett
         size={size}
         showDownload={false}
         settings={settings}
-        avatar={{ url: anonymousProfile, fallback: "Sara Benali" }}
+        avatar={{ url: demoProfileAvatar, fallback: "Sara Benali" }}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { authApi, type AuthSession } from "@/lib/api";
+import { authApi, type AuthSession } from "@/lib/api-client";
 import {
   sendSignupVerificationEmail,
   type SignupVerificationResult,

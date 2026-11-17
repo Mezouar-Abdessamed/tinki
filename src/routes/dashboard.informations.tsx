@@ -2,11 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ShieldCheck, UserRound } from "lucide-react";
 
-import { EditInformationsForm } from "@/components/dashboard/EditInformationsForm";
+import { ProfileDetailsForm } from "@/components/dashboard/ProfileDetailsForm";
 import { AccountSecurity } from "@/components/dashboard/AccountSecurity";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { useMyProfile } from "@/lib/use-profile";
+import { useMyProfile } from "@/hooks/use-my-profile";
 
 export const Route = createFileRoute("/dashboard/informations")({
   validateSearch: (search: Record<string, unknown>): { tab?: "profile" | "security" } =>
@@ -50,7 +50,7 @@ function InformationsPage() {
           <TabsTrigger value="profile" className="gap-2 whitespace-normal py-2"><UserRound className="size-4 shrink-0" />Profile</TabsTrigger>
           <TabsTrigger value="security" className="gap-2 whitespace-normal py-2"><ShieldCheck className="size-4 shrink-0" />Account &amp; Security</TabsTrigger>
         </TabsList>
-        <TabsContent value="profile"><EditInformationsForm profile={profile} avatarUrl={avatarUrl} onSaved={refetch} onDirtyChange={setDirty} /></TabsContent>
+        <TabsContent value="profile"><ProfileDetailsForm profile={profile} avatarUrl={avatarUrl} onSaved={refetch} onDirtyChange={setDirty} /></TabsContent>
         <TabsContent value="security"><AccountSecurity /></TabsContent>
       </Tabs>
       <AlertDialog open={pendingTab !== null} onOpenChange={(open) => { if (!open) setPendingTab(null); }}>

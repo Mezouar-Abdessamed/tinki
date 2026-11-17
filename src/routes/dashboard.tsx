@@ -1,13 +1,13 @@
 import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 
-import { ClaimUsername } from "@/components/dashboard/ClaimUsername";
+import { ClaimUsernameForm } from "@/components/dashboard/ClaimUsernameForm";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { requiresInitialPasswordSetup } from "@/lib/account-helpers";
-import { authApi } from "@/lib/api";
+import { authApi } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth";
 import { signOutFirebaseGoogle } from "@/lib/firebase-auth";
-import { useMyProfile } from "@/lib/use-profile";
+import { useMyProfile } from "@/hooks/use-my-profile";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [
@@ -54,7 +54,7 @@ function DashboardLayout() {
           {isLoading ? (
             <p className="text-sm text-muted-foreground">Loading your page…</p>
           ) : !profile ? (
-            <ClaimUsername
+            <ClaimUsernameForm
               userId={userId}
               requirePassword={requireInitialPassword}
               onDone={() => void refetch()}

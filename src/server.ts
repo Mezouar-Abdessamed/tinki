@@ -1,8 +1,8 @@
-import "./lib/error-capture";
+import "./lib/ssr-error-capture";
 
-import { consumeLastCapturedError } from "./lib/error-capture";
-import { renderErrorPage } from "./lib/error-page";
-import { handleApiOrMediaRequest } from "./server/api.server";
+import { consumeLastCapturedError } from "./lib/ssr-error-capture";
+import { renderErrorPage } from "./lib/ssr-error-page";
+import { handleApiOrMediaRequest } from "./server/api-router.server";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;

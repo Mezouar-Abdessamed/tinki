@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { MyLinksManager } from "@/components/dashboard/MyLinksManager";
-import { useMyProfile } from "@/lib/use-profile";
+import { useMyProfile } from "@/hooks/use-my-profile";
 
 export const Route = createFileRoute("/dashboard/links")({
   head: () => ({

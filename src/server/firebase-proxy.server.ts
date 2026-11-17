@@ -1,5 +1,5 @@
 import firebaseConfig from "../../firebase-applet-config.json";
-import { StoreError } from "./store.server";
+import { StoreError } from "./local-fallback-store.server";
 
 const ALLOWED_UPSTREAM_HOSTS = {
   identitytoolkit: "https://identitytoolkit.googleapis.com",

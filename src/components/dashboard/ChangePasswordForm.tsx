@@ -6,8 +6,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/PasswordInput";
 import { Label } from "@/components/ui/label";
-import { authApi } from "@/lib/api";
-import { firstError, passwordSchema } from "@/lib/socials";
+import { authApi } from "@/lib/api-client";
+import { firstError, passwordSchema } from "@/lib/profile-validation";
 
 export function ChangePasswordForm() {
   const [currentPassword, setCurrentPassword] = useState("");

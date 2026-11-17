@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 
-import { apiFetch, storageApi } from "@/lib/api";
-import type { SocialField } from "@/lib/socials";
+import { apiFetch, storageApi } from "@/lib/api-client";
+import type { SocialField } from "@/lib/profile-validation";
 
 export type Profile = {
   id: string;
@@ -248,7 +248,7 @@ export async function getBackgroundUrl(value: string | null | undefined): Promis
 export async function fetchProfileByUsername(username: string): Promise<Profile | null> {
   if (typeof window !== "undefined") {
     try {
-      const { fetchProfileByUsernameFirestore } = await import("@/lib/firestore");
+      const { fetchProfileByUsernameFirestore } = await import("@/lib/firestore-repository");
       const fsProfile = await fetchProfileByUsernameFirestore(username);
       if (fsProfile) return fsProfile;
     } catch {
@@ -264,7 +264,7 @@ export async function fetchProfileByUsername(username: string): Promise<Profile 
 export async function fetchMyProfile(userId: string): Promise<Profile | null> {
   if (typeof window !== "undefined" && userId) {
     try {
-      const { auth: fbAuth, fetchProfileByIdFirestore } = await import("@/lib/firestore");
+      const { auth: fbAuth, fetchProfileByIdFirestore } = await import("@/lib/firestore-repository");
       if (fbAuth.currentUser?.uid === userId) {
         const fsProfile = await fetchProfileByIdFirestore(userId);
         if (fsProfile) return fsProfile;
@@ -279,7 +279,7 @@ export async function fetchMyProfile(userId: string): Promise<Profile | null> {
 
 export async function createMyProfile(username: string): Promise<Profile> {
   if (typeof window !== "undefined") {
-    const { auth: fbAuth, createProfileFirestore } = await import("@/lib/firestore");
+    const { auth: fbAuth, createProfileFirestore } = await import("@/lib/firestore-repository");
     if (fbAuth.currentUser) {
       const created = await createProfileFirestore(username);
       await apiFetch("/api/profiles", {
@@ -298,7 +298,7 @@ export async function createMyProfile(username: string): Promise<Profile> {
 
 export async function updateMyProfile(patch: Partial<Profile>): Promise<Profile> {
   if (typeof window !== "undefined") {
-    const { auth: fbAuth, updateMyProfileFirestore } = await import("@/lib/firestore");
+    const { auth: fbAuth, updateMyProfileFirestore } = await import("@/lib/firestore-repository");
     if (fbAuth.currentUser) {
       const updated = await updateMyProfileFirestore(patch);
       await apiFetch("/api/profiles/me", {
@@ -319,7 +319,7 @@ export async function isUsernameAvailable(username: string): Promise<boolean> {
   const clean = username.toLowerCase();
   if (typeof window !== "undefined") {
     try {
-      const { checkUsernameAvailableFirestore } = await import("@/lib/firestore");
+      const { checkUsernameAvailableFirestore } = await import("@/lib/firestore-repository");
       const fsAvailable = await checkUsernameAvailableFirestore(clean);
       if (!fsAvailable) return false;
     } catch {

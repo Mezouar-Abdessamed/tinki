@@ -4,7 +4,7 @@ import { CoverBanner } from "@/components/CoverBanner";
 import { SocialIcon } from "@/components/SocialIcon";
 import { CustomLinksList } from "@/components/CustomLinksList";
 import type { CustomLink } from "@/lib/custom-links";
-import { SOCIAL_PLATFORMS, type SocialField, type SocialKey } from "@/lib/socials";
+import { SOCIAL_PLATFORMS, type SocialField, type SocialKey } from "@/lib/profile-validation";
 import type { SocialLinkSetting } from "@/lib/social-link-settings";
 import {
   profileCardBackground,

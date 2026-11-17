@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/lib/auth";
 import { profileUrl } from "@/lib/profiles";
-import { useMyProfile } from "@/lib/use-profile";
+import { useMyProfile } from "@/hooks/use-my-profile";
 import { SUPPORTED_LANGUAGES, useLanguage } from "@/lib/i18n";
 
 export const Route = createFileRoute("/dashboard/settings")({

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { EMAIL_SIGNUP_ENABLED, registrationEntryPath } from "../src/lib/signup-availability";
+import { EMAIL_SIGNUP_ENABLED, registrationEntryPath } from "../src/lib/signup-config";
 
 describe("email signup availability", () => {
   it("keeps direct email signup gated off while hidden", () => {

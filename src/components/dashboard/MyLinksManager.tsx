@@ -41,7 +41,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import type { AppTableUpdate } from "@/lib/app-database";
+import type { AppTableUpdate } from "@/lib/database-types";
 import {
   CUSTOM_LINK_ICONS,
   CUSTOM_LINK_TYPES,
@@ -69,7 +69,7 @@ import {
   validateSocialUrl,
   type SocialKey,
   type SocialPlatform,
-} from "@/lib/socials";
+} from "@/lib/profile-validation";
 
 type CustomDraft = { name: string; destination: string; icon: string; linkType: CustomLinkType };
 const EMPTY_CUSTOM: CustomDraft = { name: "", destination: "", icon: "globe", linkType: "link" };

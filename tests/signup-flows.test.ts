@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import type { AuthSession } from "../src/lib/api";
-import { signUpDirectly } from "../src/lib/signup";
+import type { AuthSession } from "../src/lib/api-client";
+import { signUpDirectly } from "../src/lib/signup-flows";
 
 const values = {
   username: "newpage",

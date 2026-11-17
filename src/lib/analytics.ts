@@ -1,5 +1,5 @@
-import { apiFetch, getStoredToken } from "@/lib/api";
-import type { SocialKey } from "@/lib/socials";
+import { apiFetch, getStoredToken } from "@/lib/api-client";
+import type { SocialKey } from "@/lib/profile-validation";
 
 const VISITOR_KEY = "onelink_visitor";
 const VIEW_PREFIX = "onelink_viewed:";
@@ -76,7 +76,7 @@ type ClickEvent = {
 
 function sendClick(event: ClickEvent) {
   if (typeof window !== "undefined") {
-    void import("@/lib/firestore")
+    void import("@/lib/firestore-repository")
       .then(({ recordProfileEventFirestore }) => recordProfileEventFirestore(event))
       .catch(() => undefined);
     return;
@@ -106,7 +106,7 @@ export async function trackProfileView(profileId: string, isOwner: boolean) {
   const country = await getCountryCode();
   try {
     if (typeof window !== "undefined") {
-      const { recordProfileEventFirestore } = await import("@/lib/firestore");
+      const { recordProfileEventFirestore } = await import("@/lib/firestore-repository");
       await recordProfileEventFirestore({
         profile_id: profileId,
         event_type: "profile_view",
@@ -168,7 +168,7 @@ export type ProfileAnalytics = {
 export async function fetchMyAnalytics(profileId: string): Promise<ProfileAnalytics> {
   try {
     if (typeof window !== "undefined" && profileId) {
-      const { auth: fbAuth, fetchAnalyticsFirestore } = await import("@/lib/firestore");
+      const { auth: fbAuth, fetchAnalyticsFirestore } = await import("@/lib/firestore-repository");
       if (fbAuth.currentUser?.uid === profileId) {
         return await fetchAnalyticsFirestore(profileId);
       }

@@ -1,12 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { ProfileLinkCard } from "@/components/dashboard/ProfileLinkCard";
+import { ShareProfileCard } from "@/components/dashboard/ShareProfileCard";
 import { ProfilePreview } from "@/components/dashboard/ProfilePreview";
 import { QrCodeCard } from "@/components/dashboard/QrCodeCard";
 import { SocialLinksReadonly } from "@/components/dashboard/SocialLinksReadonly";
 import { profileUrl } from "@/lib/profiles";
 import { qrSettingsFromProfile } from "@/lib/qr-settings";
-import { useMyProfile } from "@/lib/use-profile";
+import { useMyProfile } from "@/hooks/use-my-profile";
 
 export const Route = createFileRoute("/dashboard/profile")({
   head: () => ({
@@ -48,7 +48,7 @@ function MyProfilePage() {
         <ProfilePreview profile={profile} avatarUrl={avatarUrl} />
       </section>
 
-      <ProfileLinkCard url={url} username={profile.username} />
+      <ShareProfileCard url={url} username={profile.username} />
       <QrCodeCard
         url={url}
         username={profile.username}

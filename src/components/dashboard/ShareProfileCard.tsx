@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 
-export function ProfileLinkCard({ url, username }: { url: string; username: string }) {
+export function ShareProfileCard({ url, username }: { url: string; username: string }) {
   const [copied, setCopied] = useState(false);
 
   async function copy(silent = false) {

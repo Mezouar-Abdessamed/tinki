@@ -4,11 +4,11 @@ import { Eye, Link2, MousePointerClick } from "lucide-react";
 
 import { CountriesAnalytics } from "@/components/dashboard/CountriesAnalytics";
 import { SocialAnalyticsChart } from "@/components/dashboard/SocialAnalyticsChart";
-import { StatsCard } from "@/components/dashboard/StatsCard";
+import { AnalyticsMetricCard } from "@/components/dashboard/AnalyticsMetricCard";
 import { fetchMyAnalytics } from "@/lib/analytics";
 import { fetchSocialLinkSettings } from "@/lib/social-link-settings";
-import { SOCIAL_PLATFORMS } from "@/lib/socials";
-import { useMyProfile } from "@/lib/use-profile";
+import { SOCIAL_PLATFORMS } from "@/lib/profile-validation";
+import { useMyProfile } from "@/hooks/use-my-profile";
 
 export const Route = createFileRoute("/dashboard/")({
   head: () => ({
@@ -82,21 +82,21 @@ function DashboardHome() {
       ) : null}
 
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        <StatsCard
+        <AnalyticsMetricCard
           label="Profile Views"
           value={analytics?.views ?? 0}
           hint="People who opened your page. Your own visits are never counted"
           icon={Eye}
           loading={loading}
         />
-        <StatsCard
+        <AnalyticsMetricCard
           label="Social Clicks"
           value={analytics?.clicks ?? 0}
           hint="All-time taps on your social icons — including platforms you've since removed or turned off"
           icon={MousePointerClick}
           loading={loading}
         />
-        <StatsCard
+        <AnalyticsMetricCard
           label="Custom Link Clicks"
           value={analytics?.customLinkClicks ?? 0}
           hint="Times a visitor tapped one of your custom links"

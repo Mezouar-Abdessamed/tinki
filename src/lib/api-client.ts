@@ -288,7 +288,7 @@ export const authApi = {
   },
 
   async deleteAccount(input: { username: string; password?: string }): Promise<void> {
-    const { auth: fbAuth, deleteAccountFirestore } = await import("@/lib/firestore");
+    const { auth: fbAuth, deleteAccountFirestore } = await import("@/lib/firestore-repository");
     if (fbAuth.currentUser) {
       await deleteAccountFirestore().catch(() => undefined);
     }
@@ -312,7 +312,7 @@ export const storageApi = {
     body: Blob,
     contentType: string,
   ): Promise<string> {
-    const { auth: fbAuth, uploadMediaFirestore } = await import("@/lib/firestore");
+    const { auth: fbAuth, uploadMediaFirestore } = await import("@/lib/firestore-repository");
     const ownerId = path.split("/")[0];
 
     if (fbAuth.currentUser && fbAuth.currentUser.uid === ownerId) {
@@ -350,7 +350,7 @@ export const storageApi = {
   async list(
     bucket: "avatars" | "covers" | "backgrounds",
   ): Promise<Array<{ id: string; name: string }>> {
-    const { auth: fbAuth, listMediaFirestore } = await import("@/lib/firestore");
+    const { auth: fbAuth, listMediaFirestore } = await import("@/lib/firestore-repository");
     if (fbAuth.currentUser) {
       try {
         return await listMediaFirestore(bucket);
@@ -366,7 +366,7 @@ export const storageApi = {
 
   async remove(bucket: "avatars" | "covers" | "backgrounds", paths: string[]): Promise<void> {
     if (paths.length === 0) return;
-    const { auth: fbAuth, removeMediaFirestore } = await import("@/lib/firestore");
+    const { auth: fbAuth, removeMediaFirestore } = await import("@/lib/firestore-repository");
     if (fbAuth.currentUser) {
       await removeMediaFirestore(bucket, paths).catch(() => undefined);
     }

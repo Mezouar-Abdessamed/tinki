@@ -5,11 +5,11 @@ import { PasswordInput } from "@/components/PasswordInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authApi } from "@/lib/api";
+import { authApi } from "@/lib/api-client";
 import { createMyProfile, isUsernameAvailable, isUsernameTakenError } from "@/lib/profiles";
-import { firstError, passwordSchema, usernameSchema } from "@/lib/socials";
+import { firstError, passwordSchema, usernameSchema } from "@/lib/profile-validation";
 
-export function ClaimUsername({
+export function ClaimUsernameForm({
   userId: _userId,
   requirePassword,
   onDone,

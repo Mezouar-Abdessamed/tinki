@@ -11,7 +11,7 @@ import {
   readPendingVerificationState,
   resendSignupVerificationEmail,
 } from "@/lib/firebase-auth";
-import { EMAIL_SIGNUP_ENABLED, registrationEntryPath } from "@/lib/signup-availability";
+import { EMAIL_SIGNUP_ENABLED, registrationEntryPath } from "@/lib/signup-config";
 
 type VerifyEmailSearch = {
   email?: string;

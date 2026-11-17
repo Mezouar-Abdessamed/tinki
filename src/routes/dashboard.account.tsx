@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { DeleteAccountSection } from "@/components/dashboard/DeleteAccountSection";
 import { ProfilePreview } from "@/components/dashboard/ProfilePreview";
-import { useMyProfile } from "@/lib/use-profile";
+import { useMyProfile } from "@/hooks/use-my-profile";
 
 export const Route = createFileRoute("/dashboard/account")({
   head: () => ({

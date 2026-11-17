@@ -6,9 +6,9 @@ import { AuthShell } from "@/components/AuthShell";
 import { PasswordInput } from "@/components/PasswordInput";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { authApi } from "@/lib/api";
+import { authApi } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth";
-import { firstError, passwordSchema } from "@/lib/socials";
+import { firstError, passwordSchema } from "@/lib/profile-validation";
 
 export const Route = createFileRoute("/reset-password")({
   validateSearch: (search: Record<string, unknown>): { token?: string } =>

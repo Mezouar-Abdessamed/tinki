@@ -3,7 +3,7 @@ import { LinkIcon } from "lucide-react";
 
 import { SocialIcon } from "@/components/SocialIcon";
 import { Button } from "@/components/ui/button";
-import { SOCIAL_PLATFORMS, type SocialField } from "@/lib/socials";
+import { SOCIAL_PLATFORMS, type SocialField } from "@/lib/profile-validation";
 
 type Props = { profile: Partial<Record<SocialField, string | null>> };
 

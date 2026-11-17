@@ -1,7 +1,7 @@
 import {
   signInFirebaseEmailPasswordServer,
   verifyFirebaseIdToken,
-} from "./firebase-auth.server";
+} from "./firebase-token-verifier.server";
 import { handleFirebaseProxyRequest } from "./firebase-proxy.server";
 import {
   getProfileByIdRest,
@@ -10,8 +10,8 @@ import {
   listCustomLinksRest,
   listSocialLinkSettingsRest,
   readMediaFromFirestoreRest,
-} from "./firestore-rest.server";
-import { getStore, StoreError, type PublicAuthUser } from "./store.server";
+} from "./firestore-public-rest.server";
+import { getStore, StoreError, type PublicAuthUser } from "./local-fallback-store.server";
 
 const SESSION_COOKIE = "tinki_session";
 const SESSION_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;

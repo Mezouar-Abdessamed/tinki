@@ -37,7 +37,7 @@ import {
   usernameSchema,
   validateSocialUrl,
   type SocialKey,
-} from "@/lib/socials";
+} from "@/lib/profile-validation";
 
 export enum OperationType {
   CREATE = "create",

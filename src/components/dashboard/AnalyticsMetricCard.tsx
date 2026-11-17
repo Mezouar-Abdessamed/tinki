@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
-export function StatsCard({
+export function AnalyticsMetricCard({
   label,
   value,
   hint,

@@ -1,5 +1,5 @@
 import firebaseConfig from "../../firebase-applet-config.json";
-import type { AppTableRow } from "@/lib/app-database";
+import type { AppTableRow } from "@/lib/database-types";
 import type { Profile } from "@/lib/profiles";
 
 type FirestoreValue =

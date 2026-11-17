@@ -16,7 +16,7 @@ import {
 
 import type { CSSProperties } from "react";
 
-import type { SocialKey } from "@/lib/socials";
+import type { SocialKey } from "@/lib/profile-validation";
 
 type IconProps = { className?: string | undefined; style?: CSSProperties | undefined };
 

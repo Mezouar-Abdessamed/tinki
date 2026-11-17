@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { deleteMyAccount } from "@/lib/account.functions";
+import { deleteMyAccount } from "@/lib/account-actions";
 import { useAuth } from "@/lib/auth";
 import { useLanguage } from "@/lib/i18n";
 

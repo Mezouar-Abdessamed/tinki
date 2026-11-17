@@ -5,8 +5,8 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, it } from "node:test";
 
-import { verifyFirebaseIdToken } from "../src/server/firebase-auth.server";
-import { TinkiStore, hashPassword, verifyPassword } from "../src/server/store.server";
+import { verifyFirebaseIdToken } from "../src/server/firebase-token-verifier.server";
+import { TinkiStore, hashPassword, verifyPassword } from "../src/server/local-fallback-store.server";
 
 function signTestJwt(
   payload: Record<string, unknown>,

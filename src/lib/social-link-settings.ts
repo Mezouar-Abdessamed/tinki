@@ -1,6 +1,6 @@
-import { apiFetch } from "@/lib/api";
-import type { AppTableRow } from "@/lib/app-database";
-import { SOCIAL_PLATFORMS, type SocialKey } from "@/lib/socials";
+import { apiFetch } from "@/lib/api-client";
+import type { AppTableRow } from "@/lib/database-types";
+import { SOCIAL_PLATFORMS, type SocialKey } from "@/lib/profile-validation";
 
 export type SocialLinkSetting = {
   id: string | undefined;
@@ -13,7 +13,7 @@ export type SocialLinkSetting = {
 export async function fetchSocialLinkSettings(profileId: string) {
   if (typeof window !== "undefined" && profileId) {
     try {
-      const { fetchSocialLinkSettingsFirestore } = await import("@/lib/firestore");
+      const { fetchSocialLinkSettingsFirestore } = await import("@/lib/firestore-repository");
       return await fetchSocialLinkSettingsFirestore(profileId);
     } catch {
       /* fallback to server API */
@@ -38,7 +38,7 @@ export async function fetchSocialLinkSettings(profileId: string) {
 
 export async function saveSocialLinkSettings(settings: SocialLinkSetting[]) {
   if (typeof window !== "undefined") {
-    const { auth: fbAuth, saveSocialLinkSettingsFirestore } = await import("@/lib/firestore");
+    const { auth: fbAuth, saveSocialLinkSettingsFirestore } = await import("@/lib/firestore-repository");
     if (fbAuth.currentUser) {
       await saveSocialLinkSettingsFirestore(settings);
       return;

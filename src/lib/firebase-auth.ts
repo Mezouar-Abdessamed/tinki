@@ -15,7 +15,7 @@ import {
   type User,
 } from "firebase/auth";
 
-import { apiFetch, authApi, notifyAuthListeners, setStoredToken, type AuthSession } from "@/lib/api";
+import { apiFetch, authApi, notifyAuthListeners, setStoredToken, type AuthSession } from "@/lib/api-client";
 import type { CustomLink, CustomLinkType } from "@/lib/custom-links";
 import {
   createCustomLinkFirestore,
@@ -25,7 +25,7 @@ import {
   saveSocialLinkSettingsFirestore,
   syncFirebaseAccountDoc,
   uploadMediaFirestore,
-} from "@/lib/firestore";
+} from "@/lib/firestore-repository";
 import {
   mapFirebaseAuthError,
   buildEmailVerificationContinueUrl,

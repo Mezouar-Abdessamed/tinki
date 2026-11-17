@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 
 import firebaseConfig from "../../firebase-applet-config.json";
-import { StoreError } from "./store.server";
+import { StoreError } from "./local-fallback-store.server";
 
 const GOOGLE_JWK_URL =
   "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com";

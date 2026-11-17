@@ -14,9 +14,9 @@ import {
   signInWithGooglePopup,
   warmUpFirebaseAuth,
 } from "@/lib/firebase-auth";
-import { signUpWithEmailConfirmation } from "@/lib/signup";
-import { EMAIL_SIGNUP_ENABLED, registrationEntryPath } from "@/lib/signup-availability";
-import { emailSchema, firstError, passwordSchema, usernameSchema } from "@/lib/socials";
+import { signUpWithEmailConfirmation } from "@/lib/signup-flows";
+import { EMAIL_SIGNUP_ENABLED, registrationEntryPath } from "@/lib/signup-config";
+import { emailSchema, firstError, passwordSchema, usernameSchema } from "@/lib/profile-validation";
 
 export const Route = createFileRoute("/register")({
   beforeLoad: () => {

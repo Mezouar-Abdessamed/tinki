@@ -37,8 +37,8 @@ import {
   QrDownloadRow,
   ShareStrip,
   brandQr,
-} from "@/components/landing/Mockups";
-import { Reveal } from "@/components/landing/Reveal";
+} from "@/components/landing/LandingShowcaseMockups";
+import { ScrollReveal } from "@/components/landing/ScrollReveal";
 import { SmoothScroll } from "@/components/landing/SmoothScroll";
 import { SocialIcon } from "@/components/SocialIcon";
 import { Button } from "@/components/ui/button";
@@ -67,8 +67,8 @@ import {
 import { getShinyHeadlineGradient } from "@/lib/landing-motion";
 import { textTypographyStyle } from "@/lib/profiles";
 import type { QrSettings } from "@/lib/qr-settings";
-import { registrationEntryPath } from "@/lib/signup-availability";
-import { SOCIAL_PLATFORMS } from "@/lib/socials";
+import { registrationEntryPath } from "@/lib/signup-config";
+import { SOCIAL_PLATFORMS } from "@/lib/profile-validation";
 
 const TITLE = "Tinki — Your links, style, and QR code. All in one personal page";
 const DESCRIPTION =
@@ -120,11 +120,11 @@ function SectionHead({
 }) {
   const { t } = useLanguage();
   return (
-    <Reveal className={center ? "mx-auto max-w-2xl text-center" : "max-w-2xl"}>
+    <ScrollReveal className={center ? "mx-auto max-w-2xl text-center" : "max-w-2xl"}>
       <p className="text-xs font-semibold tracking-wider text-primary uppercase">{t(eyebrow)}</p>
       <h2 className="mt-3 font-display text-3xl font-semibold text-balance sm:text-4xl">{t(title)}</h2>
       {body ? <p className="mt-4 text-base leading-relaxed text-muted-foreground">{t(body)}</p> : null}
-    </Reveal>
+    </ScrollReveal>
   );
 }
 
@@ -425,7 +425,7 @@ function Landing() {
 
             <div className="mt-12 grid gap-5 lg:grid-cols-12">
               {/* 01 Wide Bento Card: 16 Socials + Custom Links + Reordering */}
-              <Reveal className="liquid-glass flex flex-col justify-between rounded-2xl p-6 transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-1 sm:p-8 lg:col-span-7">
+              <ScrollReveal className="liquid-glass flex flex-col justify-between rounded-2xl p-6 transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-1 sm:p-8 lg:col-span-7">
                 <div>
                   <span className="font-display text-xs font-semibold text-primary">01</span>
                   <h3 className="mt-2 font-display text-xl font-semibold sm:text-2xl">
@@ -485,10 +485,10 @@ function Landing() {
                     })}
                   </div>
                 </div>
-              </Reveal>
+              </ScrollReveal>
 
               {/* 02 Companion Card: Cover Banners + Avatar + Public QR Button */}
-              <Reveal
+              <ScrollReveal
                 delay={60}
                 className="liquid-glass flex flex-col justify-between rounded-2xl p-6 transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-1 sm:p-8 lg:col-span-5"
               >
@@ -523,10 +523,10 @@ function Landing() {
                     <span className="font-medium text-primary">{t("Visible")}</span>
                   </div>
                 </div>
-              </Reveal>
+              </ScrollReveal>
 
               {/* 03: Five Languages & RTL */}
-              <Reveal
+              <ScrollReveal
                 delay={90}
                 className="liquid-glass flex flex-col justify-between rounded-2xl p-6 transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-1 lg:col-span-4"
               >
@@ -561,10 +561,10 @@ function Landing() {
                     </button>
                   ))}
                 </div>
-              </Reveal>
+              </ScrollReveal>
 
               {/* 04: Safety Checks */}
-              <Reveal
+              <ScrollReveal
                 delay={120}
                 className="liquid-glass flex flex-col justify-between rounded-2xl p-6 transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-1 lg:col-span-4"
               >
@@ -586,10 +586,10 @@ function Landing() {
                   <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
                   <span>{t("Readable — scanned and verified")}</span>
                 </div>
-              </Reveal>
+              </ScrollReveal>
 
               {/* 05: Security & Account Control */}
-              <Reveal
+              <ScrollReveal
                 delay={150}
                 className="liquid-glass flex flex-col justify-between rounded-2xl p-6 transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-1 lg:col-span-4"
               >
@@ -611,7 +611,7 @@ function Landing() {
                   <ShieldCheck className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
                   <span>{t("My Information & Security")}</span>
                 </div>
-              </Reveal>
+              </ScrollReveal>
             </div>
           </div>
         </section>
@@ -658,11 +658,11 @@ function Landing() {
               </button>
             </div>
 
-            <Reveal className="relative mt-8">
+            <ScrollReveal className="relative mt-8">
               <BrowserFrame url="tinki.app/sara.designs" className="mx-auto max-w-4xl">
                 <DemoPublicProfile theme={activeTheme} showCover showQrButton={previewQrButton} />
               </BrowserFrame>
-            </Reveal>
+            </ScrollReveal>
           </div>
         </section>
 
@@ -732,7 +732,7 @@ function Landing() {
               </div>
             </div>
 
-            <Reveal delay={100} className="grid grid-cols-3 gap-3">
+            <ScrollReveal delay={100} className="grid grid-cols-3 gap-3">
               {[
                 {
                   bg: "linear-gradient(160deg, oklch(0.38 0.1 195), oklch(0.18 0.03 240))",
@@ -770,14 +770,14 @@ function Landing() {
                   </figcaption>
                 </figure>
               ))}
-            </Reveal>
+            </ScrollReveal>
           </div>
         </section>
 
         {/* 6. Interactive QR Studio */}
         <section id="qr-studio" className="scroll-mt-20 border-t border-border bg-surface/28">
           <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 py-20 lg:grid-cols-[0.9fr_1.1fr] lg:py-24">
-            <Reveal className="flex flex-col items-center">
+            <ScrollReveal className="flex flex-col items-center">
               <div className="liquid-glass flex w-full max-w-xs flex-col items-center gap-4 rounded-2xl p-6 transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-1">
                 <DemoQr size={196} settings={qrSettings} />
                 <p className="flex items-center gap-1.5 text-xs font-medium text-primary">
@@ -786,7 +786,7 @@ function Landing() {
                 </p>
                 <QrDownloadRow />
               </div>
-            </Reveal>
+            </ScrollReveal>
 
             <div>
               <SectionHead
@@ -903,12 +903,12 @@ function Landing() {
               title="Know who visits and where from"
               body="See profile views, social icon taps, custom link clicks and visitor countries — while your own preview visits are never counted"
             />
-            <Reveal delay={100}>
+            <ScrollReveal delay={100}>
               <AnalyticsMock />
               <p className="mt-3 text-xs text-muted-foreground">
                 {t("Illustration with sample numbers — not real user data")}
               </p>
-            </Reveal>
+            </ScrollReveal>
           </div>
         </section>
 
@@ -923,17 +923,17 @@ function Landing() {
 
             <ol className="mt-12 grid gap-8 md:grid-cols-3">
               {WORKFLOW_STEPS.map((s, i) => (
-                <Reveal key={s.title} delay={i * 70}>
+                <ScrollReveal key={s.title} delay={i * 70}>
                   <li className="border-t border-border pt-6">
                     <span className="font-display text-sm font-semibold text-primary">0{i + 1}</span>
                     <h3 className="mt-3 font-display text-xl font-semibold">{t(s.title)}</h3>
                     <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{t(s.body)}</p>
                   </li>
-                </Reveal>
+                </ScrollReveal>
               ))}
             </ol>
 
-            <Reveal className="mt-16">
+            <ScrollReveal className="mt-16">
               <p className="text-xs font-semibold tracking-wider text-primary uppercase">
                 {t("Eight focused sections in one dashboard")}
               </p>
@@ -964,7 +964,7 @@ function Landing() {
                   );
                 })}
               </div>
-            </Reveal>
+            </ScrollReveal>
           </div>
         </section>
 
@@ -972,7 +972,7 @@ function Landing() {
         <section id="faq" className="scroll-mt-20 border-t border-border">
           <div className="mx-auto max-w-6xl px-5 py-20 lg:py-24">
             <SectionHead eyebrow="FAQ" title="Questions, answered" />
-            <Reveal className="mt-12">
+            <ScrollReveal className="mt-12">
               <dl className="grid gap-x-10 divide-y divide-border md:grid-cols-2 md:divide-y-0">
                 {LANDING_FAQ.map(([q, a]) => (
                   <div key={q} className="border-b border-border py-5">
@@ -981,13 +981,13 @@ function Landing() {
                   </div>
                 ))}
               </dl>
-            </Reveal>
+            </ScrollReveal>
           </div>
         </section>
 
         {/* 10. Final CTA */}
         <section className="border-t border-border bg-surface/28">
-          <Reveal className="mx-auto max-w-6xl px-5 py-20">
+          <ScrollReveal className="mx-auto max-w-6xl px-5 py-20">
             <div className="liquid-glass relative flex flex-col items-start justify-between gap-8 rounded-3xl p-8 sm:p-12 md:flex-row md:items-center">
               <div
                 aria-hidden="true"
@@ -1018,7 +1018,7 @@ function Landing() {
                 </Button>
               </div>
             </div>
-          </Reveal>
+          </ScrollReveal>
         </section>
       </main>
 

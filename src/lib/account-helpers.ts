@@ -1,4 +1,4 @@
-import type { AuthUser } from "@/lib/api";
+import type { AuthUser } from "@/lib/api-client";
 
 /**
  * Returns true only when an authenticated social account (e.g. Google)

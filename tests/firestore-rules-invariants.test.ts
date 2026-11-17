@@ -4,9 +4,9 @@ import os from "node:os";
 import path from "node:path";
 import { describe, it } from "vitest";
 
-import { handleApiOrMediaRequest } from "../src/server/api.server";
-import { mediaDocIdFromPath } from "../src/server/firestore-rest.server";
-import { TinkiStore } from "../src/server/store.server";
+import { handleApiOrMediaRequest } from "../src/server/api-router.server";
+import { mediaDocIdFromPath } from "../src/server/firestore-public-rest.server";
+import { TinkiStore } from "../src/server/local-fallback-store.server";
 import { isBackgroundStoragePath } from "../src/lib/profiles";
 
 describe("Firestore security specification & cross-restart session persistence", () => {

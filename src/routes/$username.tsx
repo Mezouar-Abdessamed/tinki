@@ -23,7 +23,7 @@ import {
 import { qrSettingsFromProfile } from "@/lib/qr-settings";
 import { fetchCustomLinks } from "@/lib/custom-links";
 import { fetchSocialLinkSettings } from "@/lib/social-link-settings";
-import { registrationEntryPath } from "@/lib/signup-availability";
+import { registrationEntryPath } from "@/lib/signup-config";
 
 export const Route = createFileRoute("/$username")({
   head: ({ params }) => {

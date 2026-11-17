@@ -1,7 +1,7 @@
 import type { CustomLinkType } from "@/lib/custom-links";
 import type { FontFamilyKey, PageMediaType } from "@/lib/profiles";
 import type { QrEyeShape, QrModuleShape, QrSettings } from "@/lib/qr-settings";
-import { SOCIAL_PLATFORMS, type SocialKey } from "@/lib/socials";
+import { SOCIAL_PLATFORMS, type SocialKey } from "@/lib/profile-validation";
 
 export const LANDING_NAV = [
   { href: "#features", label: "Features" },

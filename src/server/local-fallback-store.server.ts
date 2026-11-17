@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import firebaseConfig from "../../firebase-applet-config.json";
-import type { AppTableRow } from "@/lib/app-database";
+import type { AppTableRow } from "@/lib/database-types";
 import type { Profile } from "@/lib/profiles";
 import {
   RESERVED_USERNAMES,
@@ -13,7 +13,7 @@ import {
   usernameSchema,
   validateSocialUrl,
   type SocialKey,
-} from "@/lib/socials";
+} from "@/lib/profile-validation";
 
 export type StoredUser = {
   id: string;

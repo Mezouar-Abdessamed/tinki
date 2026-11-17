@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { requiresInitialPasswordSetup } from "./account-helpers";
+import { requiresInitialPasswordSetup } from "../src/lib/account-helpers";
 
 test("requiresInitialPasswordSetup handles social-only, linked, email-only, and empty identities", () => {
   assert.equal(requiresInitialPasswordSetup({ identities: [{ provider: "google" }] }), true);

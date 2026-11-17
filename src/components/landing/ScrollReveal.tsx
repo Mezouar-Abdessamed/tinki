@@ -2,7 +2,7 @@ import { motion, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
 
 /** Scroll-triggered reveal powered by motion/react, respecting prefers-reduced-motion. */
-export function Reveal({
+export function ScrollReveal({
   children,
   className = "",
   delay = 0,

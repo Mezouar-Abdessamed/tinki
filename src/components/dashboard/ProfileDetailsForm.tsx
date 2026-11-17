@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { hasProfileEdits } from "@/lib/profile-edit-state";
-import { storageApi } from "@/lib/api";
+import { storageApi } from "@/lib/api-client";
 import {
   AVATAR_ACCEPT,
   extensionForType,
@@ -20,7 +20,7 @@ import {
 } from "@/lib/avatar-image";
 import { getCoverUrl, isUsernameAvailable, updateMyProfile, type Profile } from "@/lib/profiles";
 import { useLanguage } from "@/lib/i18n";
-import { firstError, usernameSchema } from "@/lib/socials";
+import { firstError, usernameSchema } from "@/lib/profile-validation";
 
 
 const MAX_AVATAR_BYTES = 3 * 1024 * 1024;
@@ -87,7 +87,7 @@ async function cleanupAvatarFolder(userId: string, keepPath: string | null): Pro
   return false;
 }
 
-export function EditInformationsForm({
+export function ProfileDetailsForm({
   profile,
   avatarUrl,
   onSaved,

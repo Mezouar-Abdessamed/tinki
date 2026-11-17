@@ -8,14 +8,14 @@ import { PasswordInput } from "@/components/PasswordInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ApiError, authApi } from "@/lib/api";
+import { ApiError, authApi } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth";
 import {
   completeGoogleRedirectIfPending,
   signInWithGooglePopup,
   warmUpFirebaseAuth,
 } from "@/lib/firebase-auth";
-import { EMAIL_SIGNUP_ENABLED, registrationEntryPath } from "@/lib/signup-availability";
+import { EMAIL_SIGNUP_ENABLED, registrationEntryPath } from "@/lib/signup-config";
 
 export const Route = createFileRoute("/login")({
   validateSearch: (search: Record<string, unknown>): { email?: string } => ({

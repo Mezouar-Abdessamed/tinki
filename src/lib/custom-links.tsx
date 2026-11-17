@@ -22,8 +22,8 @@ import {
 } from "lucide-react";
 import type { CSSProperties } from "react";
 
-import { apiFetch } from "@/lib/api";
-import type { AppTableRow } from "@/lib/app-database";
+import { apiFetch } from "@/lib/api-client";
+import type { AppTableRow } from "@/lib/database-types";
 
 export type CustomLink = AppTableRow<"custom_links">;
 export type CustomLinkType = "link" | "phone" | "email";
@@ -102,7 +102,7 @@ export function validateCustomUrl(raw: string) {
 export async function fetchCustomLinks(profileId: string, enabledOnly = false) {
   if (typeof window !== "undefined" && profileId) {
     try {
-      const { fetchCustomLinksFirestore } = await import("@/lib/firestore");
+      const { fetchCustomLinksFirestore } = await import("@/lib/firestore-repository");
       const fsLinks = await fetchCustomLinksFirestore(profileId, enabledOnly);
       if (fsLinks.length > 0) return fsLinks;
     } catch {
@@ -122,7 +122,7 @@ export async function createCustomLink(input: {
   link_type: CustomLinkType;
 }) {
   if (typeof window !== "undefined") {
-    const { auth: fbAuth, createCustomLinkFirestore } = await import("@/lib/firestore");
+    const { auth: fbAuth, createCustomLinkFirestore } = await import("@/lib/firestore-repository");
     if (fbAuth.currentUser) {
       return createCustomLinkFirestore(input);
     }
@@ -139,7 +139,7 @@ export async function updateCustomLink(
   patch: Partial<Pick<CustomLink, "name" | "url" | "icon" | "link_type" | "enabled">>,
 ) {
   if (typeof window !== "undefined") {
-    const { auth: fbAuth, updateCustomLinkFirestore } = await import("@/lib/firestore");
+    const { auth: fbAuth, updateCustomLinkFirestore } = await import("@/lib/firestore-repository");
     if (fbAuth.currentUser) {
       return updateCustomLinkFirestore(id, patch);
     }
@@ -156,7 +156,7 @@ export async function updateCustomLink(
 
 export async function deleteCustomLink(id: string) {
   if (typeof window !== "undefined") {
-    const { auth: fbAuth, deleteCustomLinkFirestore } = await import("@/lib/firestore");
+    const { auth: fbAuth, deleteCustomLinkFirestore } = await import("@/lib/firestore-repository");
     if (fbAuth.currentUser) {
       await deleteCustomLinkFirestore(id);
       return;
@@ -169,7 +169,7 @@ export async function deleteCustomLink(id: string) {
 
 export async function reorderCustomLinks(targetProfileId: string, orderedIds: string[]) {
   if (typeof window !== "undefined") {
-    const { auth: fbAuth, reorderCustomLinksFirestore } = await import("@/lib/firestore");
+    const { auth: fbAuth, reorderCustomLinksFirestore } = await import("@/lib/firestore-repository");
     if (fbAuth.currentUser) {
       await reorderCustomLinksFirestore(targetProfileId, orderedIds);
       return;

@@ -3,7 +3,7 @@ import QRCode from "qrcode";
 import type { QrEyeShape, QrModuleShape, QrSettings } from "@/lib/qr-settings";
 import { getQrCenterBadgeMetrics, isCenterLogoClearedModule } from "@/lib/qr-validation";
 
-export const QR_CENTER_LOGO_URL = "/assets/aistudio/tinki_ca348073.svg";
+export const QR_CENTER_LOGO_URL = "/assets/tinki-qr-logo.svg";
 
 export type QrAvatar = {
   url?: string | null | undefined;

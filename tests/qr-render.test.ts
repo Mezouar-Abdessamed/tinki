@@ -11,7 +11,7 @@ import {
 
 describe("QR center logo rendering", () => {
   it("embeds the uploaded Tinki SVG logo inside a circular medallion with matching foreground color and border", () => {
-    expect(QR_CENTER_LOGO_URL).toBe("/assets/aistudio/tinki_ca348073.svg");
+    expect(QR_CENTER_LOGO_URL).toBe("/assets/tinki-qr-logo.svg");
     const svg = renderQrSvg(
       "https://tinki.app/sara.designs",
       {
@@ -22,7 +22,7 @@ describe("QR center logo rendering", () => {
       220,
       { fallback: "Sara" },
     );
-    expect(svg).toContain('href="/assets/aistudio/tinki_ca348073.svg"');
+    expect(svg).toContain('href="/assets/tinki-qr-logo.svg"');
     expect(svg).toContain('flood-color="#0f766e"');
     expect(svg).toContain('filter="url(#qr-logo-tint-0f766e)"');
     expect(svg).toContain('stroke="#0f766e" stroke-opacity="0.18"');
@@ -38,7 +38,7 @@ describe("QR center logo rendering", () => {
       },
       220,
     );
-    expect(svg).toContain('href="/assets/aistudio/tinki_ca348073.svg"');
+    expect(svg).toContain('href="/assets/tinki-qr-logo.svg"');
     expect(svg).toContain('flood-color="#f8fafc"');
     expect(svg).toContain('stroke="#f8fafc" stroke-opacity="0.18"');
     expect(svg).not.toContain('fill="#ffffff"');

@@ -5,8 +5,8 @@ import path from "node:path";
 import { describe, it } from "vitest";
 
 import { requiresInitialPasswordSetup } from "../src/lib/account-helpers";
-import { handleApiOrMediaRequest } from "../src/server/api.server";
-import { TinkiStore } from "../src/server/store.server";
+import { handleApiOrMediaRequest } from "../src/server/api-router.server";
+import { TinkiStore } from "../src/server/local-fallback-store.server";
 
 describe("ClaimUsername flow & non-circular Firestore rules", () => {
   it("requiresInitialPasswordSetup returns true only for social accounts without an email password", () => {
@@ -22,9 +22,9 @@ describe("ClaimUsername flow & non-circular Firestore rules", () => {
     assert.equal(requiresInitialPasswordSetup(null), false);
   });
 
-  it("ClaimUsername calls createMyProfile before authApi.updatePassword so failed claims do not lock password state", () => {
+  it("ClaimUsernameForm calls createMyProfile before authApi.updatePassword so failed claims do not lock password state", () => {
     const src = fs.readFileSync(
-      path.resolve(process.cwd(), "src/components/dashboard/ClaimUsername.tsx"),
+      path.resolve(process.cwd(), "src/components/dashboard/ClaimUsernameForm.tsx"),
       "utf8",
     );
     const createIdx = src.indexOf("await createMyProfile(parsed.data)");

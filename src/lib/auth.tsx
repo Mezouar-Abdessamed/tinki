@@ -1,7 +1,7 @@
 import { onAuthStateChanged } from "firebase/auth";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
-import { authApi, subscribeAuth, type AuthSession, type AuthUser } from "@/lib/api";
+import { authApi, subscribeAuth, type AuthSession, type AuthUser } from "@/lib/api-client";
 import {
   completeGoogleRedirectIfPending,
   getFirebaseAuth,

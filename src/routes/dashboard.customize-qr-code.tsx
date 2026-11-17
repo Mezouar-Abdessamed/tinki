@@ -19,8 +19,8 @@ import {
   type QrModuleShape,
   type QrSettings,
 } from "@/lib/qr-settings";
-import { useMyProfile } from "@/lib/use-profile";
-import { useQrReadability, type QrReadability } from "@/lib/use-qr-readability";
+import { useMyProfile } from "@/hooks/use-my-profile";
+import { useQrReadability, type QrReadability } from "@/hooks/use-qr-readability";
 import { UnsafeQrSettingsError } from "@/lib/qr-validation";
 
 export const Route = createFileRoute("/dashboard/customize-qr-code")({

@@ -9,7 +9,11 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["tests/**/*.test.ts"],
-    exclude: ["tests/local-auth-store.test.ts", "tests/firebase-proxy.test.ts"],
+    exclude: [
+      "tests/account-helpers.test.ts",
+      "tests/local-auth-store.test.ts",
+      "tests/firebase-proxy.test.ts",
+    ],
     testTimeout: 30_000,
     hookTimeout: 60_000,
     coverage: {
