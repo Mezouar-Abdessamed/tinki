@@ -1,1 +1,0 @@
-CREATE TABLE public.probe_apply_marker (id int); GRANT SELECT ON public.probe_apply_marker TO anon;

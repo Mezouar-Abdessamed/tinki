@@ -1,1 +1,0 @@
--- Placeholder for a previously rolled-back migration; intentionally empty.

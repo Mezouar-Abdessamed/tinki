@@ -1,1 +1,0 @@
-ALTER POLICY "Users can upload their own cover" ON storage.objects TO authenticated WITH CHECK (bucket_id = 'covers' AND (storage.foldername(name))[1] = auth.uid()::text AND public.is_safe_avatar_object(name, metadata) AND metadata->>'mimetype' IS NOT NULL);

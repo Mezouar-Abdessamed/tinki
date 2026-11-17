@@ -1,1 +1,0 @@
-ALTER TABLE public.profile_events ADD COLUMN IF NOT EXISTS country text;

@@ -1,3 +1,0 @@
-CREATE POLICY "Cover images are publicly readable" ON storage.objects FOR SELECT USING (bucket_id = 'covers');
-CREATE POLICY "Users can upload their own cover" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'covers' AND (storage.foldername(name))[1] = auth.uid()::text AND lower(name) ~ '\.(jpg|jpeg|png|webp)$' AND (metadata IS NULL OR metadata->>'mimetype' IS NULL OR lower(metadata->>'mimetype') IN ('image/jpeg','image/png','image/webp')));
-CREATE POLICY "Users can delete their own cover" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'covers' AND (storage.foldername(name))[1] = auth.uid()::text);
