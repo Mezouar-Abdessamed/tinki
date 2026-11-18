@@ -38,13 +38,16 @@ describe("ClaimUsername flow & non-circular Firestore rules", () => {
 
   it("firestore.rules breaks circular existsAfter between usernames and profiles while keeping one-way atomicity", () => {
     const rules = fs.readFileSync(path.resolve(process.cwd(), "firestore.rules"), "utf8");
-    const usernamesBlock = rules.match(/match \/usernames\/\{username\}[\s\S]*?\n {4}\}/)?.[0] ?? "";
+    const usernamesBlock =
+      rules.match(/match \/usernames\/\{username\}[\s\S]*?\n {4}\}/)?.[0] ?? "";
     const profilesBlock = rules.match(/match \/profiles\/\{profileId\}[\s\S]*?\n {4}\}/)?.[0] ?? "";
 
     assert.ok(usernamesBlock.includes("allow create:"));
     assert.equal(usernamesBlock.includes("documents/profiles/"), false);
     assert.ok(
-      profilesBlock.includes("existsAfter(/databases/$(database)/documents/usernames/$(incoming().username))"),
+      profilesBlock.includes(
+        "existsAfter(/databases/$(database)/documents/usernames/$(incoming().username))",
+      ),
     );
   });
 

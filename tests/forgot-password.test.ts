@@ -30,9 +30,8 @@ describe("POST /api/auth/forgot-password security", () => {
     process.env["TINKI_DATA_DIR"] = apiDir;
     process.env["ENABLE_LOCAL_STORE"] = "true";
     vi.resetModules();
-    ({ handleApiOrMediaRequest, resetApiRateLimits } = await import(
-      "../src/server/api-router.server"
-    ));
+    ({ handleApiOrMediaRequest, resetApiRateLimits } =
+      await import("../src/server/api-router.server"));
     const { getStore } = await import("../src/server/local-fallback-store.server");
     getStoreFn = getStore;
 
@@ -264,8 +263,8 @@ describe("TinkiStore resetTokens storage invariants", () => {
     fs.writeFileSync(dbPath, JSON.stringify(db3, null, 2), "utf8");
 
     const reloadedStore = new TinkiStore(dir);
-    await expect(reloadedStore.consumePasswordReset(bobIssued!.token, "BobNew123!")).rejects.toThrow(
-      /expired or is invalid/i,
-    );
+    await expect(
+      reloadedStore.consumePasswordReset(bobIssued!.token, "BobNew123!"),
+    ).rejects.toThrow(/expired or is invalid/i);
   });
 });

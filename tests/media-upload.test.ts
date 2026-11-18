@@ -3,12 +3,11 @@ import os from "node:os";
 import path from "node:path";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  MAX_FILES_PER_BUCKET,
-  TinkiStore,
-} from "../src/server/local-fallback-store.server";
+import { MAX_FILES_PER_BUCKET, TinkiStore } from "../src/server/local-fallback-store.server";
 
-const PNG_BYTES = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d]);
+const PNG_BYTES = Buffer.from([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
+]);
 const JPEG_BYTES = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46]);
 const WEBP_BYTES = Buffer.concat([
   Buffer.from("RIFF"),
@@ -27,8 +26,12 @@ const WEBM_BYTES = Buffer.concat([
   Buffer.from([0x1a, 0x45, 0xdf, 0xa3, 0x9f, 0x42, 0x86, 0x81, 0x01, 0x42, 0x82, 0x84]),
   Buffer.from("webm"),
 ]);
-const SVG_BYTES = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
-const HTML_BYTES = Buffer.from("<!doctype html><html><body><script>alert(1)</script></body></html>");
+const SVG_BYTES = Buffer.from(
+  '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>',
+);
+const HTML_BYTES = Buffer.from(
+  "<!doctype html><html><body><script>alert(1)</script></body></html>",
+);
 
 describe("Media upload & serving security (/api/storage & /media/*)", () => {
   const tempDirs: string[] = [];
@@ -46,9 +49,8 @@ describe("Media upload & serving security (/api/storage & /media/*)", () => {
     process.env["TINKI_DATA_DIR"] = apiDir;
     process.env["ENABLE_LOCAL_STORE"] = "true";
     vi.resetModules();
-    ({ handleApiOrMediaRequest, resetApiRateLimits } = await import(
-      "../src/server/api-router.server"
-    ));
+    ({ handleApiOrMediaRequest, resetApiRateLimits } =
+      await import("../src/server/api-router.server"));
     const { getStore } = await import("../src/server/local-fallback-store.server");
 
     const pendingRes = await handleApiOrMediaRequest(
@@ -147,7 +149,12 @@ describe("Media upload & serving security (/api/storage & /media/*)", () => {
   });
 
   it("forces the filename extension to match the detected type and rejects .meta.json filenames", async () => {
-    const metaUpload = await upload("avatars", `${userId}/avatar.png.meta.json`, PNG_BYTES, "image/png");
+    const metaUpload = await upload(
+      "avatars",
+      `${userId}/avatar.png.meta.json`,
+      PNG_BYTES,
+      "image/png",
+    );
     expect(metaUpload.status).toBe(400);
 
     const dotMetaUpload = await upload("avatars", `${userId}/.meta.json`, PNG_BYTES, "image/png");
@@ -185,11 +192,35 @@ describe("Media upload & serving security (/api/storage & /media/*)", () => {
       expectInline: boolean;
     }> = [
       { bucket: "avatars", name: "a.png", bytes: PNG_BYTES, mime: "image/png", expectInline: true },
-      { bucket: "avatars", name: "b.jpg", bytes: JPEG_BYTES, mime: "image/jpeg", expectInline: true },
-      { bucket: "covers", name: "c.webp", bytes: WEBP_BYTES, mime: "image/webp", expectInline: true },
+      {
+        bucket: "avatars",
+        name: "b.jpg",
+        bytes: JPEG_BYTES,
+        mime: "image/jpeg",
+        expectInline: true,
+      },
+      {
+        bucket: "covers",
+        name: "c.webp",
+        bytes: WEBP_BYTES,
+        mime: "image/webp",
+        expectInline: true,
+      },
       { bucket: "covers", name: "d.gif", bytes: GIF_BYTES, mime: "image/gif", expectInline: true },
-      { bucket: "backgrounds", name: "v.mp4", bytes: MP4_BYTES, mime: "video/mp4", expectInline: false },
-      { bucket: "backgrounds", name: "w.webm", bytes: WEBM_BYTES, mime: "video/webm", expectInline: false },
+      {
+        bucket: "backgrounds",
+        name: "v.mp4",
+        bytes: MP4_BYTES,
+        mime: "video/mp4",
+        expectInline: false,
+      },
+      {
+        bucket: "backgrounds",
+        name: "w.webm",
+        bytes: WEBM_BYTES,
+        mime: "video/webm",
+        expectInline: false,
+      },
     ];
 
     for (const s of samples) {
@@ -229,10 +260,10 @@ describe("Media upload & serving security (/api/storage & /media/*)", () => {
       `/media/avatars/%FF/avatar.png`,
       `/media/%E0%A4%A/${userId}/avatar.png`,
     ]) {
-      const badRes = await handleApiOrMediaRequest(
-        new Request(`http://localhost:3000${badPath}`),
-        { useLocalStore: false, firestoreFetch: fetchSpy },
-      );
+      const badRes = await handleApiOrMediaRequest(new Request(`http://localhost:3000${badPath}`), {
+        useLocalStore: false,
+        firestoreFetch: fetchSpy,
+      });
       expect(badRes?.status).toBe(400);
       expect((await badRes?.json()) as { error: string }).toMatchObject({
         error: "Invalid media path encoding",
@@ -287,9 +318,9 @@ describe("TinkiStore per-user and per-bucket storage quotas", () => {
     expect(() =>
       store.saveMediaFile(uid, "avatars", `${uid}/file-20.png`, PNG_BYTES, "image/png"),
     ).toThrow(/20 files per bucket/i);
-    expect(
-      store.saveMediaFile(uid, "avatars", `${uid}/file-0.png`, PNG_BYTES, "image/png"),
-    ).toBe(`${uid}/file-0.png`);
+    expect(store.saveMediaFile(uid, "avatars", `${uid}/file-0.png`, PNG_BYTES, "image/png")).toBe(
+      `${uid}/file-0.png`,
+    );
 
     // Clear avatars before checking 50 MB cumulative quota
     for (let i = 0; i < MAX_FILES_PER_BUCKET; i++) {

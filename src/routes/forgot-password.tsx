@@ -32,10 +32,8 @@ function ForgotPasswordPage() {
     const cleanEmail = email.trim().toLowerCase();
     setSubmitting(true);
     try {
-      await Promise.allSettled([
-        sendFirebasePasswordResetEmail(cleanEmail),
-        authApi.requestPasswordReset(cleanEmail, { clientDispatched: true }),
-      ]);
+      const clientDispatched = await sendFirebasePasswordResetEmail(cleanEmail);
+      await authApi.requestPasswordReset(cleanEmail, { clientDispatched });
     } catch {
       /* always show the same generic confirmation */
     } finally {

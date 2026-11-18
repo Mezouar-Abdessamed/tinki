@@ -84,12 +84,13 @@ service cloud.firestore {
     // --- Validation Blueprints (No existing()/diff() inside these helpers) ---
     function isValidAccount(data, userId) {
       return data.keys().hasAll(['id', 'email', 'providers', 'created_at', 'updated_at'])
-        && data.keys().hasOnly(['id', 'email', 'name', 'username', 'providers', 'created_at', 'updated_at'])
+        && data.keys().hasOnly(['id', 'email', 'name', 'username', 'providers', 'media_count', 'created_at', 'updated_at'])
         && data.id == userId
         && data.id == request.auth.uid
         && data.email is string && data.email.size() >= 5 && data.email.size() <= 254
         && (!('name' in data) || isOptString(data.name, 80))
         && (!('username' in data) || data.username == null || isValidUsernameStr(data.username))
+        && (!('media_count' in data) || (data.media_count is int && data.media_count >= 0 && data.media_count <= 20))
         && data.providers is list
         && data.providers.size() >= 1
         && data.providers.size() <= 4
@@ -244,6 +245,11 @@ service cloud.firestore {
         && data.enabled is bool
         && data.position is int && data.position >= 0 && data.position <= 1000
         && data.link_type is string && data.link_type in ['link', 'phone', 'email']
+        && (
+          (data.link_type == 'link' && (data.url.matches('^https?://.+'))) ||
+          (data.link_type == 'email' && data.url.matches('^mailto:.+')) ||
+          (data.link_type == 'phone' && data.url.matches('^tel:.+'))
+        )
         && data.created_at is timestamp
         && data.updated_at is timestamp;
     }
@@ -308,7 +314,15 @@ service cloud.firestore {
         && mediaId.split('__')[0] == data.bucket
         && mediaId.split('__')[1] == request.auth.uid
         && data.name is string && data.name.size() >= 1 && data.name.size() <= 128
-        && data.content_type is string && data.content_type.size() >= 3 && data.content_type.size() <= 120
+        && data.content_type is string
+        && data.content_type in [
+          'image/jpeg',
+          'image/png',
+          'image/webp',
+          'image/gif',
+          'video/mp4',
+          'video/webm'
+        ]
         && data.byte_length is int && data.byte_length >= 1 && data.byte_length <= 6291456
         && data.chunk_count is int && data.chunk_count >= 1 && data.chunk_count <= 20
         && data.created_at is timestamp;
@@ -338,6 +352,7 @@ service cloud.firestore {
         && isValidId(userId)
         && isOwner(userId)
         && isValidAccount(incoming(), userId)
+        && (!('media_count' in incoming()) || incoming().media_count == 0)
         && incoming().created_at == request.time
         && incoming().updated_at == request.time;
       allow update: if isVerifiedUser()
@@ -347,9 +362,23 @@ service cloud.firestore {
         && incoming().id == existing().id
         && incoming().created_at == existing().created_at
         && incoming().updated_at == request.time
-        && incoming().diff(existing()).affectedKeys().hasOnly([
-          'email', 'name', 'username', 'providers', 'updated_at'
-        ]);
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'email', 'name', 'username', 'providers', 'updated_at'
+          ])
+          || (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'media_count', 'updated_at'
+            ])
+            && incoming().media_count is int
+            && incoming().media_count >= 0
+            && incoming().media_count <= 20
+            && (
+              incoming().media_count == existing().get('media_count', 0) + 1
+              || incoming().media_count == existing().get('media_count', 0) - 1
+            )
+          )
+        );
       allow delete: if isVerifiedUser() && isValidId(userId) && isOwner(userId);
     }
 
@@ -510,7 +539,12 @@ service cloud.firestore {
       allow create: if isVerifiedUser()
         && isValidMediaId(mediaId)
         && isValidMediaObject(incoming(), mediaId)
-        && incoming().created_at == request.time;
+        && incoming().created_at == request.time
+        && !exists(/databases/$(database)/documents/media_objects/$(mediaId))
+        && exists(/databases/$(database)/documents/accounts/$(request.auth.uid))
+        && get(/databases/$(database)/documents/accounts/$(request.auth.uid)).data.get('media_count', 0) < 20
+        && getAfter(/databases/$(database)/documents/accounts/$(request.auth.uid)).data.media_count
+           == get(/databases/$(database)/documents/accounts/$(request.auth.uid)).data.get('media_count', 0) + 1;
       allow update: if false;
       allow delete: if isVerifiedUser()
         && isValidMediaId(mediaId)

@@ -102,12 +102,7 @@ export const MAX_USER_STORAGE_BYTES = 50 * 1024 * 1024;
 export const MAX_FILES_PER_BUCKET = 20;
 
 export type AllowedMediaMimeType =
-  | "image/jpeg"
-  | "image/png"
-  | "image/webp"
-  | "image/gif"
-  | "video/mp4"
-  | "video/webm";
+  "image/jpeg" | "image/png" | "image/webp" | "image/gif" | "video/mp4" | "video/webm";
 
 const IMAGE_MIME_TYPES = new Set<AllowedMediaMimeType>([
   "image/jpeg",
@@ -342,9 +337,7 @@ function isStrictHttpsUrl(value: string, maxLength: number): boolean {
   return parsed.protocol === "https:" && parsed.hostname.length > 0;
 }
 
-const hexColorSchema = z
-  .string()
-  .regex(HEX_COLOR_RE, "Must be a 6-digit hex color like #1A2B3C");
+const hexColorSchema = z.string().regex(HEX_COLOR_RE, "Must be a 6-digit hex color like #1A2B3C");
 
 const backgroundTypeSchema = z.enum(["default", "solid", "linear", "radial"]);
 const fontFamilySchema = z.enum(["display", "sans", "serif", "mono", "condensed"]);
@@ -615,7 +608,10 @@ export class TinkiStore {
       fs.chmodSync(secretFile, 0o600);
       return generated;
     } catch (err) {
-      console.error(`[TinkiStore] Failed to load or persist session secret at "${secretFile}":`, err);
+      console.error(
+        `[TinkiStore] Failed to load or persist session secret at "${secretFile}":`,
+        err,
+      );
       return crypto.randomBytes(32).toString("hex");
     }
   }
@@ -1446,8 +1442,9 @@ export class TinkiStore {
     const passwordHash = await hashPassword(password);
 
     let user =
-      (cleanUid ? this.data.users.find((u) => u.id === cleanUid || u.googleUid === cleanUid) : undefined) ??
-      this.data.users.find((u) => u.email.toLowerCase() === cleanEmail);
+      (cleanUid
+        ? this.data.users.find((u) => u.id === cleanUid || u.googleUid === cleanUid)
+        : undefined) ?? this.data.users.find((u) => u.email.toLowerCase() === cleanEmail);
 
     if (user) {
       user.passwordHash = passwordHash;
@@ -2047,7 +2044,11 @@ export class TinkiStore {
 
     const detected = detectMediaContentType(bytes);
     if (!detected || !isMediaTypeAllowedForBucket(bucket, detected)) {
-      throw new StoreError("Unsupported or unrecognized file content", 415, "unsupported_media_type");
+      throw new StoreError(
+        "Unsupported or unrecognized file content",
+        415,
+        "unsupported_media_type",
+      );
     }
 
     if (detected !== declared) {

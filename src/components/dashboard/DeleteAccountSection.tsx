@@ -86,7 +86,7 @@ export function DeleteAccountSection({ username }: { username: string }) {
               />
             ) : null}
             <Input
-               placeholder={t(`Type "${username}" to confirm`)}
+              placeholder={t(`Type "${username}" to confirm`)}
               value={confirmName}
               onChange={(event) => setConfirmName(event.target.value)}
             />

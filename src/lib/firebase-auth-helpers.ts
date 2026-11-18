@@ -3,6 +3,19 @@ const FIREBASE_AUTH_HOSTS = new Map<string, "identitytoolkit" | "securetoken">([
   ["https://securetoken.googleapis.com", "securetoken"],
 ]);
 
+const PROXY_ALLOWED_PATHS: Record<"identitytoolkit" | "securetoken", ReadonlySet<string>> = {
+  identitytoolkit: new Set([
+    "/v1/projects",
+    "/v1/accounts:signInWithPassword",
+    "/v1/accounts:signInWithIdp",
+    "/v1/accounts:createAuthUri",
+    "/v1/accounts:lookup",
+    "/v1/accounts:update",
+    "/v1/accounts:resetPassword",
+  ]),
+  securetoken: new Set(["/v1/token"]),
+};
+
 export function toFirebaseProxyUrl(inputUrl: string): string | null {
   let parsed: URL;
   try {
@@ -13,6 +26,7 @@ export function toFirebaseProxyUrl(inputUrl: string): string | null {
 
   const service = FIREBASE_AUTH_HOSTS.get(parsed.origin);
   if (!service) return null;
+  if (!PROXY_ALLOWED_PATHS[service].has(parsed.pathname)) return null;
 
   return `/api/firebase-proxy/${service}${parsed.pathname}${parsed.search}`;
 }

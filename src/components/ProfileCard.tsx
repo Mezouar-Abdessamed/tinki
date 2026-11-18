@@ -33,7 +33,9 @@ export type ProfileCardData = {
   cover_photo_x?: number | null;
   cover_photo_y?: number | null;
   cover_photo_path?: string | null;
-} & Partial<Record<SocialField, string | null>> & CardAppearance & PageAppearance;
+} & Partial<Record<SocialField, string | null>> &
+  CardAppearance &
+  PageAppearance;
 
 type ProfileCardProps = {
   profile: ProfileCardData;
@@ -70,8 +72,16 @@ export function ProfileCard({
   const settings = new Map(socialLinkSettings.map((item) => [item.platform, item]));
   const links = SOCIAL_PLATFORMS.filter((platform) => {
     const value = profile[platform.field];
-    return typeof value === "string" && value.trim().length > 0 && (settings.get(platform.key)?.enabled ?? true);
-  }).sort((a, b) => (settings.get(a.key)?.position ?? SOCIAL_PLATFORMS.indexOf(a)) - (settings.get(b.key)?.position ?? SOCIAL_PLATFORMS.indexOf(b)));
+    return (
+      typeof value === "string" &&
+      value.trim().length > 0 &&
+      (settings.get(platform.key)?.enabled ?? true)
+    );
+  }).sort(
+    (a, b) =>
+      (settings.get(a.key)?.position ?? SOCIAL_PLATFORMS.indexOf(a)) -
+      (settings.get(b.key)?.position ?? SOCIAL_PLATFORMS.indexOf(b)),
+  );
   // Verification is fixed to a single username by design; no admin system.
   const showVerifiedBadge = profile.username === "abdessamed";
   const hasCover = Boolean(profile.cover_photo_path || coverUrl);
@@ -97,7 +107,14 @@ export function ProfileCard({
     >
       <div className="bg-halo pointer-events-none absolute inset-x-0 top-0 h-40" />
       <div className={hasCover ? "relative" : "absolute inset-x-0 top-0"}>
-        {hasCover && <CoverBanner url={coverUrl ?? null} x={profile.cover_photo_x ?? 50} y={profile.cover_photo_y ?? 50} className="w-full" />}
+        {hasCover && (
+          <CoverBanner
+            url={coverUrl ?? null}
+            x={profile.cover_photo_x ?? 50}
+            y={profile.cover_photo_y ?? 50}
+            className="w-full"
+          />
+        )}
         {showVerifiedBadge ? (
           <BadgeCheck
             aria-label="Verified account"
@@ -106,38 +123,40 @@ export function ProfileCard({
           />
         ) : null}
       </div>
-      <div className={`relative flex flex-col items-center ${profile.cover_photo_path || coverUrl ? `${compact ? "px-6 pb-6" : "px-8 pb-8 sm:px-10 sm:pb-10"} ${hideAvatar ? "pt-6" : "-mt-10 sm:-mt-14"}` : ""}`}>
+      <div
+        className={`relative flex flex-col items-center ${profile.cover_photo_path || coverUrl ? `${compact ? "px-6 pb-6" : "px-8 pb-8 sm:px-10 sm:pb-10"} ${hideAvatar ? "pt-6" : "-mt-10 sm:-mt-14"}` : ""}`}
+      >
         {!hideAvatar && (
-        <div
-          className={`overflow-hidden rounded-full border border-border bg-muted ${
-            compact ? "h-20 w-20" : "h-28 w-28"
-          }`}
-          style={{ boxShadow: "var(--shadow-glow)" }}
-        >
-          {avatarUrl ? (
-            <img
-              src={avatarUrl}
-              alt={`${profile.display_name || profile.username} profile picture`}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center font-display text-2xl text-muted-foreground">
-              {initials(profile)}
-            </div>
-          )}
-        </div>
+          <div
+            className={`overflow-hidden rounded-full border border-border bg-muted ${
+              compact ? "h-20 w-20" : "h-28 w-28"
+            }`}
+            style={{ boxShadow: "var(--shadow-glow)" }}
+          >
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={`${profile.display_name || profile.username} profile picture`}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center font-display text-2xl text-muted-foreground">
+                {initials(profile)}
+              </div>
+            )}
+          </div>
         )}
 
-        <h2
-          className={`mt-5 text-center ${compact ? "text-xl" : "text-3xl"}`}
-          style={nameStyle}
-        >
+        <h2 className={`mt-5 text-center ${compact ? "text-xl" : "text-3xl"}`} style={nameStyle}>
           {profile.display_name || profile.username}
         </h2>
         <p className="mt-1 text-sm text-primary">@{profile.username}</p>
 
         {profile.bio ? (
-          <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground" style={bioStyle}>
+          <p
+            className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground"
+            style={bioStyle}
+          >
             {profile.bio}
           </p>
         ) : null}

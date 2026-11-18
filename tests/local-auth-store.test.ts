@@ -329,7 +329,9 @@ describe("TinkiStore local auth & persistence", () => {
       store.updatePassword(session.user.id, "NewPassword1!", "WrongOld"),
     ).rejects.toThrow(/current password is incorrect/i);
     await store.updatePassword(session.user.id, "NewPassword1!", "OldPassword1!");
-    expect(await store.login({ email: "reset@example.com", password: "NewPassword1!" })).toBeTruthy();
+    expect(
+      await store.login({ email: "reset@example.com", password: "NewPassword1!" }),
+    ).toBeTruthy();
 
     const staleReset = store.createPasswordReset("reset@example.com");
     const reset = store.createPasswordReset("reset@example.com");
@@ -337,18 +339,20 @@ describe("TinkiStore local auth & persistence", () => {
       throw new Error("Expected password reset tokens to be generated");
     }
     expect(staleReset.token).not.toBe(reset.token);
-    await expect(
-      store.consumePasswordReset(staleReset.token, "StaleAttempt1!"),
-    ).rejects.toThrow(/expired or is invalid/i);
+    await expect(store.consumePasswordReset(staleReset.token, "StaleAttempt1!")).rejects.toThrow(
+      /expired or is invalid/i,
+    );
 
     const newSession = await store.consumePasswordReset(reset.token, "ResetPass99!");
     expect(newSession.user.id).toBe(session.user.id);
 
     // Token is single-use
-    await expect(
-      store.consumePasswordReset(reset.token, "AnotherPass1!"),
-    ).rejects.toThrow(/expired or is invalid/i);
-    expect(await store.login({ email: "reset@example.com", password: "ResetPass99!" })).toBeTruthy();
+    await expect(store.consumePasswordReset(reset.token, "AnotherPass1!")).rejects.toThrow(
+      /expired or is invalid/i,
+    );
+    expect(
+      await store.login({ email: "reset@example.com", password: "ResetPass99!" }),
+    ).toBeTruthy();
   });
 
   it("manages profile fields, custom links CRUD + reorder, analytics, media, and account deletion", async () => {
@@ -417,7 +421,9 @@ describe("TinkiStore local auth & persistence", () => {
 
     // Media upload & read
     const mediaPath = `${session.user.id}/avatar.png`;
-    const validPng = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d]);
+    const validPng = Buffer.from([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
+    ]);
     store.saveMediaFile(session.user.id, "avatars", mediaPath, validPng, "image/png");
     const file = store.readMediaFile("avatars", mediaPath);
     expect(file).toBeTruthy();
@@ -439,9 +445,9 @@ describe("TinkiStore local auth & persistence", () => {
     expect(store.verifySessionToken(activeBeforeDelete.access_token)).toBeTruthy();
 
     // Delete account verifies password & username and removes data + media
-    await expect(
-      store.deleteAccount(session.user.id, "creator", "WrongPassword"),
-    ).rejects.toThrow(/current password is incorrect/i);
+    await expect(store.deleteAccount(session.user.id, "creator", "WrongPassword")).rejects.toThrow(
+      /current password is incorrect/i,
+    );
     await store.deleteAccount(session.user.id, "creator", "Password123!");
     await store.flush();
     expect(store.verifySessionToken(activeBeforeDelete.access_token)).toBeNull();

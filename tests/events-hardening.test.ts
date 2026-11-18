@@ -83,11 +83,21 @@ describe("POST /api/events and analytics.ts hardening", () => {
       // Bad event_type
       { profile_id: aliceId, event_type: "arbitrary_event", visitor_id: validUuid },
       // Unlisted social platform
-      { profile_id: aliceId, event_type: "social_click", platform: "myspace", visitor_id: validUuid },
+      {
+        profile_id: aliceId,
+        event_type: "social_click",
+        platform: "myspace",
+        visitor_id: validUuid,
+      },
       // social_click missing platform
       { profile_id: aliceId, event_type: "social_click", visitor_id: validUuid },
       // platform attached to profile_view
-      { profile_id: aliceId, event_type: "profile_view", platform: "github", visitor_id: validUuid },
+      {
+        profile_id: aliceId,
+        event_type: "profile_view",
+        platform: "github",
+        visitor_id: validUuid,
+      },
       // Non-ISO-3166 alpha-2 country codes
       { profile_id: aliceId, event_type: "profile_view", visitor_id: validUuid, country: "USA" },
       { profile_id: aliceId, event_type: "profile_view", visitor_id: validUuid, country: "us" },
@@ -155,7 +165,9 @@ describe("POST /api/events and analytics.ts hardening", () => {
       const url = String(input);
       if (url.includes(`/documents/profiles/${aliceId}`)) {
         return new Response(
-          JSON.stringify({ fields: { id: { stringValue: aliceId }, username: { stringValue: "aliceev" } } }),
+          JSON.stringify({
+            fields: { id: { stringValue: aliceId }, username: { stringValue: "aliceev" } },
+          }),
           { status: 200, headers: { "content-type": "application/json" } },
         );
       }
@@ -198,9 +210,7 @@ describe("POST /api/events and analytics.ts hardening", () => {
     expect(extractCountryFromHeaders(new Headers({ "cf-ipcountry": "fr" }))).toBe("FR");
     expect(extractCountryFromHeaders(new Headers({ "x-vercel-ip-country": "de" }))).toBe("DE");
     expect(
-      extractCountryFromHeaders(
-        new Headers({ "cf-ipcountry": "XX", "x-vercel-ip-country": "jp" }),
-      ),
+      extractCountryFromHeaders(new Headers({ "cf-ipcountry": "XX", "x-vercel-ip-country": "jp" })),
     ).toBe("JP");
     expect(extractCountryFromHeaders(new Headers({ "cf-ipcountry": "T1" }))).toBeNull();
 
@@ -231,7 +241,9 @@ describe("POST /api/events and analytics.ts hardening", () => {
       const url = String(input);
       if (url.includes(`/documents/profiles/${bobId}`)) {
         return new Response(
-          JSON.stringify({ fields: { id: { stringValue: bobId }, username: { stringValue: "bobev" } } }),
+          JSON.stringify({
+            fields: { id: { stringValue: bobId }, username: { stringValue: "bobev" } },
+          }),
           { status: 200, headers: { "content-type": "application/json" } },
         );
       }
@@ -374,7 +386,9 @@ describe("POST /api/events and analytics.ts hardening", () => {
       const url = String(input);
       if (url.includes(`/documents/profiles/${aliceId}`)) {
         return new Response(
-          JSON.stringify({ fields: { id: { stringValue: aliceId }, username: { stringValue: "aliceev" } } }),
+          JSON.stringify({
+            fields: { id: { stringValue: aliceId }, username: { stringValue: "aliceev" } },
+          }),
           { status: 200, headers: { "content-type": "application/json" } },
         );
       }

@@ -29,15 +29,9 @@ describe("isDynamicImportError", () => {
         ),
       ),
     ).toBe(true);
-    expect(
-      isDynamicImportError(new Error("Importing a module script failed.")),
-    ).toBe(true);
-    expect(
-      isDynamicImportError("error loading dynamically imported module"),
-    ).toBe(true);
-    expect(isDynamicImportError(new Error("Loading chunk 42 failed."))).toBe(
-      true,
-    );
+    expect(isDynamicImportError(new Error("Importing a module script failed."))).toBe(true);
+    expect(isDynamicImportError("error loading dynamically imported module")).toBe(true);
+    expect(isDynamicImportError(new Error("Loading chunk 42 failed."))).toBe(true);
   });
 
   it("ignores unrelated application errors", () => {
@@ -54,9 +48,7 @@ describe("tryConsumeChunkReloadAllowance", () => {
     expect(tryConsumeChunkReloadAllowance(storage, t0)).toBe(true);
     expect(storage.getItem(CHUNK_RELOAD_STORAGE_KEY)).toBe(String(t0));
     expect(tryConsumeChunkReloadAllowance(storage, t0 + 1_000)).toBe(false);
-    expect(
-      tryConsumeChunkReloadAllowance(storage, t0 + CHUNK_RELOAD_COOLDOWN_MS),
-    ).toBe(true);
+    expect(tryConsumeChunkReloadAllowance(storage, t0 + CHUNK_RELOAD_COOLDOWN_MS)).toBe(true);
   });
 
   it("returns false safely when storage is unavailable or throws", () => {

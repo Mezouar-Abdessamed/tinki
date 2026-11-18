@@ -82,16 +82,20 @@ function createInMemoryFirestoreFetch(seedDocs: Map<string, InMemoryFirestoreDoc
       for (const write of reqBody.writes ?? []) {
         if (typeof write.delete === "string") {
           const delIdx = write.delete.indexOf(docPrefix);
-          const relPath = delIdx >= 0 ? write.delete.slice(delIdx + docPrefix.length) : write.delete;
+          const relPath =
+            delIdx >= 0 ? write.delete.slice(delIdx + docPrefix.length) : write.delete;
           // Enforce the same security invariant as firestore.rules for media chunks:
           // parent media_objects/{id} must still exist when evaluating chunk deletion in this batch
           if (/^media_objects\/[^/]+\/chunks\//.test(relPath)) {
             const parentPath = relPath.split("/").slice(0, 2).join("/");
             if (!seedDocs.has(parentPath)) {
-              return new Response(JSON.stringify({ error: { code: 403, message: "Missing parent" } }), {
-                status: 403,
-                headers: { "content-type": "application/json" },
-              });
+              return new Response(
+                JSON.stringify({ error: { code: 403, message: "Missing parent" } }),
+                {
+                  status: 403,
+                  headers: { "content-type": "application/json" },
+                },
+              );
             }
           }
           seedDocs.delete(relPath);
@@ -175,12 +179,18 @@ describe("Complete account deletion & Google-only recent re-authentication", () 
       [`usernames/other`, { username: "other", owner_id: otherUid }],
       [`profiles/${uid}`, { id: uid, username: "gcreator", display_name: "G Creator" }],
       [`profiles/${otherUid}`, { id: otherUid, username: "other", display_name: "Other" }],
-      [`custom_links/link-1`, { id: "link-1", profile_id: uid, name: "Site", url: "https://a.example" }],
+      [
+        `custom_links/link-1`,
+        { id: "link-1", profile_id: uid, name: "Site", url: "https://a.example" },
+      ],
       [`custom_links/link-other`, { id: "link-other", profile_id: otherUid, name: "Keep" }],
       [`social_link_settings/set-1`, { id: "set-1", profile_id: uid, platform: "github" }],
       [`social_link_settings/set-other`, { id: "set-other", profile_id: otherUid, platform: "x" }],
       [`profile_events/ev-1`, { id: "ev-1", profile_id: uid, event_type: "profile_view" }],
-      [`profile_events/ev-other`, { id: "ev-other", profile_id: otherUid, event_type: "profile_view" }],
+      [
+        `profile_events/ev-other`,
+        { id: "ev-other", profile_id: otherUid, event_type: "profile_view" },
+      ],
       [
         `media_objects/avatars__${uid}__pic_png`,
         { id: `avatars__${uid}__pic_png`, owner_id: uid, bucket: "avatars", chunk_count: 2 },
@@ -189,7 +199,12 @@ describe("Complete account deletion & Google-only recent re-authentication", () 
       [`media_objects/avatars__${uid}__pic_png/chunks/1`, { index: 1, data: "BAUG" }],
       [
         `media_objects/avatars__${otherUid}__pic_png`,
-        { id: `avatars__${otherUid}__pic_png`, owner_id: otherUid, bucket: "avatars", chunk_count: 1 },
+        {
+          id: `avatars__${otherUid}__pic_png`,
+          owner_id: otherUid,
+          bucket: "avatars",
+          chunk_count: 1,
+        },
       ],
       [`media_objects/avatars__${otherUid}__pic_png/chunks/0`, { index: 0, data: "BwgJ" }],
     ]);

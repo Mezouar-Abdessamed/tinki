@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import net from "node:net";
 
 import {
   firstError,
@@ -98,17 +99,12 @@ function toClientSession(session: AuthSessionPayload): {
 
 function isHttpsRequest(request: Request, url: URL): boolean {
   if (url.protocol === "https:") return true;
-  const xfp = (request.headers.get("x-forwarded-proto") ?? "")
-    .split(",")[0]
-    ?.trim()
-    .toLowerCase();
+  const xfp = (request.headers.get("x-forwarded-proto") ?? "").split(",")[0]?.trim().toLowerCase();
   return xfp === "https";
 }
 
 function getExpectedOrigin(request: Request, url: URL): string {
-  const forwardedHost = (request.headers.get("x-forwarded-host") ?? "")
-    .split(",")[0]
-    ?.trim();
+  const forwardedHost = (request.headers.get("x-forwarded-host") ?? "").split(",")[0]?.trim();
   const host = forwardedHost || request.headers.get("host")?.trim() || url.host;
   const protocol = isHttpsRequest(request, url) ? "https" : url.protocol.replace(/:$/, "");
   return `${protocol}://${host}`.toLowerCase();
@@ -151,6 +147,14 @@ type RateBucket = {
   windowMs: number;
 };
 
+/**
+ * In-memory per-instance sliding-window rate limiter.
+ *
+ * NOTE: State lives in the Node/worker process memory and is NOT shared across
+ * horizontally scaled instances (for strict global multi-instance enforcement,
+ * back this interface with a shared store such as Redis or an Admin-SDK-backed
+ * Firestore collection).
+ */
 export class SlidingWindowRateLimiter {
   private buckets = new Map<string, RateBucket>();
 
@@ -222,6 +226,10 @@ export function extractCountryFromHeaders(headers: Headers): string | null {
   return null;
 }
 
+/**
+ * In-memory per-instance 1-hour view deduplicator keyed by (profileId, visitorId).
+ * State is local to each server instance.
+ */
 export class HourlyViewDeduplicator {
   private lastViewedAt = new Map<string, number>();
 
@@ -266,17 +274,63 @@ export function resetApiRateLimits(): void {
   defaultViewDeduplicator.clear();
 }
 
-export function getClientIp(request: Request): string {
-  const xff = request.headers.get("x-forwarded-for");
-  if (xff) {
-    const first = xff.split(",")[0]?.trim();
-    if (first) return first;
+function normalizeIpCandidate(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed || trimmed.length > 128) return null;
+
+  let candidate = trimmed;
+  if (candidate.startsWith("[")) {
+    const closeBracket = candidate.indexOf("]");
+    if (closeBracket === -1) return null;
+    candidate = candidate.slice(1, closeBracket);
+  } else {
+    const colonIdx = candidate.lastIndexOf(":");
+    // Strip IPv4:port without touching IPv6 literals containing multiple colons
+    if (colonIdx > 0 && candidate.indexOf(":") === colonIdx) {
+      candidate = candidate.slice(0, colonIdx);
+    }
   }
-  const realIp = request.headers.get("x-real-ip")?.trim();
-  if (realIp) return realIp;
-  const cfIp = request.headers.get("cf-connecting-ip")?.trim();
-  if (cfIp) return cfIp;
-  return "127.0.0.1";
+
+  return net.isIP(candidate) !== 0 ? candidate : null;
+}
+
+function extractRightmostIp(headerValue: string | null): string | null {
+  if (!headerValue) return null;
+  const parts = headerValue
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const last = parts[parts.length - 1];
+  if (!last) return null;
+  return normalizeIpCandidate(last);
+}
+
+/**
+ * Extracts the client IP without trusting client-spoofable leftmost XFF entries.
+ *
+ * When TRUSTED_PROXY_HEADER is configured (e.g. "cf-connecting-ip" on Cloudflare,
+ * "x-vercel-forwarded-for" on Vercel, or "x-forwarded-for"), ONLY that header is
+ * inspected; for list headers ("x-forwarded-for"), ONLY the last proxy-appended entry
+ * is used. When unset, defaults to the last entry of "x-forwarded-for".
+ */
+export function getClientIp(
+  request: Request,
+  trustedProxyHeader: string | undefined = process.env["TRUSTED_PROXY_HEADER"],
+): string {
+  const configured = (trustedProxyHeader ?? "").trim().toLowerCase();
+  if (configured) {
+    if (!/^[a-z0-9-]+$/.test(configured)) {
+      return "127.0.0.1";
+    }
+    const headerVal = request.headers.get(configured);
+    if (configured === "x-forwarded-for") {
+      return extractRightmostIp(headerVal) ?? "127.0.0.1";
+    }
+    return (headerVal ? normalizeIpCandidate(headerVal) : null) ?? "127.0.0.1";
+  }
+
+  // Default: trust ONLY the rightmost IP appended by the immediate trusted proxy.
+  return extractRightmostIp(request.headers.get("x-forwarded-for")) ?? "127.0.0.1";
 }
 
 function rateLimitedResponse(retryAfterSeconds: number): Response {
@@ -298,6 +352,7 @@ export type ApiHandlerOptions = {
   rateLimiter?: SlidingWindowRateLimiter | undefined;
   viewDeduplicator?: HourlyViewDeduplicator | undefined;
   nowMs?: (() => number) | undefined;
+  trustedProxyHeader?: string | undefined;
   useLocalStore?: boolean | undefined;
   firestoreFetch?: typeof fetch | undefined;
   verifyFirebaseToken?: ((idToken: string) => Promise<GoogleTokenClaims>) | undefined;
@@ -313,10 +368,9 @@ export async function handleApiOrMediaRequest(
   const limiter = options.rateLimiter ?? defaultRateLimiter;
   const viewDeduplicator = options.viewDeduplicator ?? defaultViewDeduplicator;
   const now = options.nowMs ? options.nowMs() : Date.now();
-  const clientIp = getClientIp(request);
+  const clientIp = getClientIp(request, options.trustedProxyHeader);
   const localStoreEnabled =
-    process.env["NODE_ENV"] !== "production" &&
-    (options.useLocalStore ?? isLocalStoreEnabled());
+    process.env["NODE_ENV"] !== "production" && (options.useLocalStore ?? isLocalStoreEnabled());
   const verifyToken = options.verifyFirebaseToken ?? verifyFirebaseIdToken;
   const deleteAuthUser = options.deleteFirebaseAuthUser ?? deleteFirebaseAuthUserServer;
 
@@ -433,8 +487,7 @@ export async function handleApiOrMediaRequest(
         }
       }
 
-      const isMediaUpload =
-        method === "POST" && /^\/api\/storage\/[^/]+\/upload$/.test(pathname);
+      const isMediaUpload = method === "POST" && /^\/api\/storage\/[^/]+\/upload$/.test(pathname);
       const contentType = normalizeDeclaredMediaType(request.headers.get("content-type") ?? "");
       if (isMediaUpload) {
         if (
@@ -626,7 +679,8 @@ export async function handleApiOrMediaRequest(
 
       return json(
         {
-          error: "Local fallback store is disabled. Set ENABLE_LOCAL_STORE=true in development or tests.",
+          error:
+            "Local fallback store is disabled. Set ENABLE_LOCAL_STORE=true in development or tests.",
           code: "local_store_disabled",
         },
         503,
@@ -748,7 +802,11 @@ export async function handleApiOrMediaRequest(
                 ? store.completeVerifiedEmailSignup(claims)
                 : await store.syncFirebasePasswordLogin(claims, password);
               return json({ session: toClientSession(session), user: session.user }, 200, {
-                "set-cookie": sessionCookieHeader(request, session.access_token, SESSION_COOKIE_MAX_AGE),
+                "set-cookie": sessionCookieHeader(
+                  request,
+                  session.access_token,
+                  SESSION_COOKIE_MAX_AGE,
+                ),
               });
             } catch (verifyErr) {
               if (verifyErr instanceof StoreError && verifyErr.code === "unverified_email") {
@@ -802,7 +860,11 @@ export async function handleApiOrMediaRequest(
     if (pathname === "/api/auth/update-password" && method === "POST") {
       const user = requireUser(request);
       const body = await readJson<{ password?: string; currentPassword?: string }>(request);
-      const session = await store.updatePassword(user.id, body.password ?? "", body.currentPassword);
+      const session = await store.updatePassword(
+        user.id,
+        body.password ?? "",
+        body.currentPassword,
+      );
       return json({ ok: true, session: toClientSession(session), user: session.user }, 200, {
         "set-cookie": sessionCookieHeader(request, session.access_token, SESSION_COOKIE_MAX_AGE),
       });
@@ -982,10 +1044,7 @@ export async function handleApiOrMediaRequest(
       }
       const parsed = saveSocialLinkSettingsBodySchema.safeParse(rawBody);
       if (!parsed.success) {
-        return json(
-          { error: firstError(parsed.error), code: "invalid_social_settings" },
-          400,
-        );
+        return json({ error: firstError(parsed.error), code: "invalid_social_settings" }, 400);
       }
       store.saveSocialLinkSettings(user.id, parsed.data.settings);
       return withSlidingSession(json({ ok: true }));

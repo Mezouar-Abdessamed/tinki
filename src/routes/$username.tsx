@@ -114,7 +114,6 @@ function PublicProfilePage() {
     void trackProfileView(profileId, isOwner);
   }, [profileId, isOwner, authLoading]);
 
-
   if (profileQuery.isLoading) {
     return (
       <main className="flex min-h-screen items-center justify-center">
@@ -160,30 +159,30 @@ function PublicProfilePage() {
 
       <div className="relative z-10 w-full max-w-md">
         {profile.show_qr_button !== false && (
-        <Dialog open={showQr} onOpenChange={setShowQr}>
-          <DialogTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="Show QR code"
-              className="absolute start-3 top-3 z-20 rounded-full bg-background/80 shadow-md backdrop-blur"
-            >
-              <QrCodeIcon className="h-5 w-5" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="flex max-w-xs flex-col items-center gap-4">
-            <QrCode
-              value={url}
-              username={profile.username}
-              size={200}
-              settings={qrSettingsFromProfile(profile)}
-              avatar={{
-                url: avatarQuery.data,
-                fallback: profile.display_name || profile.username,
-              }}
-            />
-          </DialogContent>
-        </Dialog>
+          <Dialog open={showQr} onOpenChange={setShowQr}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Show QR code"
+                className="absolute start-3 top-3 z-20 rounded-full bg-background/80 shadow-md backdrop-blur"
+              >
+                <QrCodeIcon className="h-5 w-5" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="flex max-w-xs flex-col items-center gap-4">
+              <QrCode
+                value={url}
+                username={profile.username}
+                size={200}
+                settings={qrSettingsFromProfile(profile)}
+                avatar={{
+                  url: avatarQuery.data,
+                  fallback: profile.display_name || profile.username,
+                }}
+              />
+            </DialogContent>
+          </Dialog>
         )}
 
         <ProfileCard
@@ -208,7 +207,10 @@ function PublicProfilePage() {
               <ArrowUpRight aria-hidden="true" className="rtl:-scale-x-100" />
             </Link>
           </Button>
-          <Link to="/" className="text-xs text-muted-foreground transition-colors hover:text-primary">
+          <Link
+            to="/"
+            className="text-xs text-muted-foreground transition-colors hover:text-primary"
+          >
             Powered by Tinki
           </Link>
         </div>

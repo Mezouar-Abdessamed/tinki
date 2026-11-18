@@ -1,8 +1,5 @@
 import type { AuthSession } from "@/lib/api-client";
-import {
-  sendSignupVerificationEmail,
-  type SignupVerificationResult,
-} from "@/lib/firebase-auth";
+import { sendSignupVerificationEmail, type SignupVerificationResult } from "@/lib/firebase-auth";
 
 export type SignupValues = {
   email: string;
@@ -18,10 +15,7 @@ export type SignUpFn = (input: {
 }) => Promise<AuthSession>;
 
 /** Create an account and require a real authenticated session before continuing. */
-export async function signUpDirectly(
-  values: SignupValues,
-  signUp: SignUpFn,
-): Promise<AuthSession> {
+export async function signUpDirectly(values: SignupValues, signUp: SignUpFn): Promise<AuthSession> {
   const session = await signUp({
     email: values.email,
     password: values.password,

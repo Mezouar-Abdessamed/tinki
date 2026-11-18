@@ -388,7 +388,12 @@ describe("API router (handleApiOrMediaRequest)", () => {
         );
 
       // Happy path upload
-      const up = (await uploadReq("avatars", `${alice.userId}/avatar.png`, PNG_BYTES, "image/png"))!;
+      const up = (await uploadReq(
+        "avatars",
+        `${alice.userId}/avatar.png`,
+        PNG_BYTES,
+        "image/png",
+      ))!;
       expect(up.status).toBe(201);
       expect(await up.json()).toEqual({ path: `${alice.userId}/avatar.png` });
 
@@ -428,8 +433,15 @@ describe("API router (handleApiOrMediaRequest)", () => {
         (await uploadReq("secrets", `${alice.userId}/a.png`, PNG_BYTES, "image/png")).status,
       ).toBe(400);
       expect(
-        (await uploadReq("avatars", `${alice.userId}/steal.png`, PNG_BYTES, "image/png", bob.cookie))
-          .status,
+        (
+          await uploadReq(
+            "avatars",
+            `${alice.userId}/steal.png`,
+            PNG_BYTES,
+            "image/png",
+            bob.cookie,
+          )
+        ).status,
       ).toBe(403);
       expect(
         (await uploadReq("avatars", `${alice.userId}/../evil.png`, PNG_BYTES, "image/png")).status,

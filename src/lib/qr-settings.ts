@@ -90,14 +90,12 @@ export function qrSettingsFromProfile(row: QrSettingsRow | null | undefined): Qr
       level === "L" || level === "M" || level === "Q" || level === "H"
         ? level
         : DEFAULT_QR_SETTINGS.errorCorrection,
-    moduleShape:
-      QR_MODULE_SHAPES.some((shape) => shape.value === row.qr_module_shape)
-        ? (row.qr_module_shape as QrModuleShape)
-        : DEFAULT_QR_SETTINGS.moduleShape,
-    eyeShape:
-      QR_EYE_SHAPES.some((shape) => shape.value === row.qr_eye_shape)
-        ? (row.qr_eye_shape as QrEyeShape)
-        : DEFAULT_QR_SETTINGS.eyeShape,
+    moduleShape: QR_MODULE_SHAPES.some((shape) => shape.value === row.qr_module_shape)
+      ? (row.qr_module_shape as QrModuleShape)
+      : DEFAULT_QR_SETTINGS.moduleShape,
+    eyeShape: QR_EYE_SHAPES.some((shape) => shape.value === row.qr_eye_shape)
+      ? (row.qr_eye_shape as QrEyeShape)
+      : DEFAULT_QR_SETTINGS.eyeShape,
   };
 }
 

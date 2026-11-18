@@ -65,7 +65,6 @@ function DashboardHome() {
   // even though those clicks are still recorded. Active-platform filtering
   // belongs only to the chart breakdown below.
 
-
   return (
     <div className="space-y-8">
       <header>

@@ -10,14 +10,16 @@ import { signOutFirebaseGoogle } from "@/lib/firebase-auth";
 import { useMyProfile } from "@/hooks/use-my-profile";
 
 export const Route = createFileRoute("/dashboard")({
-  head: () => ({ meta: [
-    { title: "Dashboard — Tinki" },
-    { name: "description", content: "Manage your Tinki profile and links" },
-    { property: "og:title", content: "Dashboard — Tinki" },
-    { property: "og:description", content: "Manage your Tinki profile and links" },
-    { property: "og:type", content: "website" },
-    { name: "twitter:card", content: "summary" },
-  ] }),
+  head: () => ({
+    meta: [
+      { title: "Dashboard — Tinki" },
+      { name: "description", content: "Manage your Tinki profile and links" },
+      { property: "og:title", content: "Dashboard — Tinki" },
+      { property: "og:description", content: "Manage your Tinki profile and links" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: DashboardLayout,
 });
 

@@ -39,7 +39,10 @@ export const Route = createFileRoute("/verify-email")({
   head: () => ({
     meta: [
       { title: "Confirm your email — Tinki" },
-      { name: "description", content: "Confirm your email address to continue to your Tinki profile" },
+      {
+        name: "description",
+        content: "Confirm your email address to continue to your Tinki profile",
+      },
       { property: "og:title", content: "Confirm your email — Tinki" },
       {
         property: "og:description",
@@ -136,8 +139,7 @@ function VerifyEmailPage() {
   );
 
   useEffect(() => {
-    const oobCode =
-      search.mode === "verifyEmail" || !search.mode ? search.oobCode : undefined;
+    const oobCode = search.mode === "verifyEmail" || !search.mode ? search.oobCode : undefined;
     void runVerificationCheck({
       silent: true,
       ...(oobCode ? { oobCode } : {}),

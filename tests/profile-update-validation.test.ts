@@ -357,7 +357,11 @@ describe("Profile update strict Zod validation (updateProfile & PATCH /api/profi
     expect(bobClaimRes?.status).toBe(409);
 
     expect(() =>
-      store.updateProfile(bobId, { username: "aliceval" }, { nowMs: t0 + usernameCooldownMs - 1000 }),
+      store.updateProfile(
+        bobId,
+        { username: "aliceval" },
+        { nowMs: t0 + usernameCooldownMs - 1000 },
+      ),
     ).toThrow(StoreErrorClass);
 
     await expect(
@@ -389,4 +393,3 @@ describe("Profile update strict Zod validation (updateProfile & PATCH /api/profi
     expect(store.refreshSessionForUser(bobId)?.user.user_metadata.username).toBe("aliceval");
   });
 });
-

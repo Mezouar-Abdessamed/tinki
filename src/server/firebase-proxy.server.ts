@@ -11,14 +11,12 @@ type ProxyService = keyof typeof ALLOWED_UPSTREAM_HOSTS;
 const ALLOWED_PATHS_BY_SERVICE: Record<ProxyService, ReadonlySet<string>> = {
   identitytoolkit: new Set([
     "/v1/projects",
-    "/v1/accounts:signUp",
     "/v1/accounts:signInWithPassword",
     "/v1/accounts:signInWithIdp",
     "/v1/accounts:createAuthUri",
     "/v1/accounts:lookup",
     "/v1/accounts:update",
     "/v1/accounts:resetPassword",
-    "/v1/accounts:sendOobCode",
   ]),
   securetoken: new Set(["/v1/token"]),
 };

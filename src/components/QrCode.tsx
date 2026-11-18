@@ -37,7 +37,17 @@ export function QrCode({
       setSvg(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value, size, foregroundColor, backgroundColor, margin, errorCorrection, moduleShape, eyeShape, avatar]);
+  }, [
+    value,
+    size,
+    foregroundColor,
+    backgroundColor,
+    margin,
+    errorCorrection,
+    moduleShape,
+    eyeShape,
+    avatar,
+  ]);
 
   function triggerDownload(href: string, filename: string) {
     const link = document.createElement("a");
@@ -72,11 +82,13 @@ export function QrCode({
           <div
             className="block"
             style={{ width: size }}
-            // eslint-disable-next-line react/no-danger
             dangerouslySetInnerHTML={{ __html: svg }}
           />
         ) : (
-          <div style={{ width: size, height: size }} className="animate-pulse rounded-md bg-muted" />
+          <div
+            style={{ width: size, height: size }}
+            className="animate-pulse rounded-md bg-muted"
+          />
         )}
       </div>
       {showDownload && (

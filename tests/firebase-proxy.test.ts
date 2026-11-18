@@ -18,7 +18,15 @@ describe("Firebase Auth proxy & client error helpers", () => {
     expect(toFirebaseProxyUrl("https://securetoken.googleapis.com/v1/token?key=k1")).toBe(
       "/api/firebase-proxy/securetoken/v1/token?key=k1",
     );
-    expect(toFirebaseProxyUrl("http://identitytoolkit.googleapis.com/v1/projects?key=k1")).toBeNull();
+    expect(
+      toFirebaseProxyUrl("https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=k1"),
+    ).toBeNull();
+    expect(
+      toFirebaseProxyUrl("https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=k1"),
+    ).toBeNull();
+    expect(
+      toFirebaseProxyUrl("http://identitytoolkit.googleapis.com/v1/projects?key=k1"),
+    ).toBeNull();
     expect(toFirebaseProxyUrl("https://evil.example/v1/projects?key=k1")).toBeNull();
     expect(toFirebaseProxyUrl("not a url")).toBeNull();
   });
@@ -30,14 +38,18 @@ describe("Firebase Auth proxy & client error helpers", () => {
       "expected-key",
     );
     expect(ok.service).toBe("identitytoolkit");
-    expect(ok.upstreamUrl).toBe("https://identitytoolkit.googleapis.com/v1/projects?key=expected-key");
+    expect(ok.upstreamUrl).toBe(
+      "https://identitytoolkit.googleapis.com/v1/projects?key=expected-key",
+    );
 
     const okToken = resolveFirebaseProxyTarget(
       "/api/firebase-proxy/securetoken/v1/token",
       "?key=expected-key",
       "expected-key",
     );
-    expect(okToken.upstreamUrl).toBe("https://securetoken.googleapis.com/v1/token?key=expected-key");
+    expect(okToken.upstreamUrl).toBe(
+      "https://securetoken.googleapis.com/v1/token?key=expected-key",
+    );
 
     expect(() =>
       resolveFirebaseProxyTarget(
@@ -65,21 +77,21 @@ describe("Firebase Auth proxy & client error helpers", () => {
 
     // Strictly allowlisted client endpoints succeed
     for (const allowedPath of [
-      "/api/firebase-proxy/identitytoolkit/v1/accounts:signUp",
       "/api/firebase-proxy/identitytoolkit/v1/accounts:signInWithPassword",
       "/api/firebase-proxy/identitytoolkit/v1/accounts:signInWithIdp",
       "/api/firebase-proxy/identitytoolkit/v1/accounts:createAuthUri",
       "/api/firebase-proxy/identitytoolkit/v1/accounts:lookup",
       "/api/firebase-proxy/identitytoolkit/v1/accounts:update",
       "/api/firebase-proxy/identitytoolkit/v1/accounts:resetPassword",
-      "/api/firebase-proxy/identitytoolkit/v1/accounts:sendOobCode",
     ]) {
       const target = resolveFirebaseProxyTarget(allowedPath, "?key=expected-key", "expected-key");
       expect(target.service).toBe("identitytoolkit");
     }
 
-    // Disallowed/unused endpoints and URL-encoded tricks fail with 403
+    // Disallowed/unused endpoints (including signUp & sendOobCode) and URL-encoded tricks fail with 403
     for (const disallowedPath of [
+      "/api/firebase-proxy/identitytoolkit/v1/accounts:signUp",
+      "/api/firebase-proxy/identitytoolkit/v1/accounts:sendOobCode",
       "/api/firebase-proxy/identitytoolkit/v1/accounts:delete",
       "/api/firebase-proxy/identitytoolkit/v1/accounts:signInWithCustomToken",
       "/api/firebase-proxy/identitytoolkit/v1/accounts:signInWithPhoneNumber",
@@ -182,6 +194,8 @@ describe("Firebase Auth proxy & client error helpers", () => {
         "dzwolf240@gmail.com",
         "myhandle",
       ),
-    ).toBe("https://ais-dev.example.run.app/verify-email?email=dzwolf240%40gmail.com&username=myhandle");
+    ).toBe(
+      "https://ais-dev.example.run.app/verify-email?email=dzwolf240%40gmail.com&username=myhandle",
+    );
   });
 });

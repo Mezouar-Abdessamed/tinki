@@ -35,6 +35,10 @@
           "type": "array",
           "description": "Connected authentication provider identifiers."
         },
+        "media_count": {
+          "type": "integer",
+          "description": "Number of media_objects currently owned by this user (max 20)."
+        },
         "created_at": {
           "type": "string",
           "format": "date-time",
@@ -228,13 +232,7 @@
           "format": "date-time"
         }
       },
-      "required": [
-        "id",
-        "username",
-        "verified",
-        "created_at",
-        "updated_at"
-      ]
+      "required": ["id", "username", "verified", "created_at", "updated_at"]
     },
     "UsernameClaim": {
       "title": "UsernameClaim",
@@ -285,7 +283,8 @@
         "url": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 500
+          "maxLength": 500,
+          "pattern": "^(https?://.+|mailto:.+|tel:.+)$"
         },
         "icon": {
           "type": "string",
@@ -311,7 +310,18 @@
           "format": "date-time"
         }
       },
-      "required": ["id", "profile_id", "name", "url", "icon", "enabled", "position", "link_type", "created_at", "updated_at"]
+      "required": [
+        "id",
+        "profile_id",
+        "name",
+        "url",
+        "icon",
+        "enabled",
+        "position",
+        "link_type",
+        "created_at",
+        "updated_at"
+      ]
     },
     "SocialLinkSetting": {
       "title": "SocialLinkSetting",
@@ -366,7 +376,15 @@
           "format": "date-time"
         }
       },
-      "required": ["id", "profile_id", "platform", "enabled", "position", "created_at", "updated_at"]
+      "required": [
+        "id",
+        "profile_id",
+        "platform",
+        "enabled",
+        "position",
+        "created_at",
+        "updated_at"
+      ]
     },
     "ProfileEvent": {
       "title": "ProfileEvent",
@@ -445,8 +463,7 @@
         },
         "content_type": {
           "type": "string",
-          "minLength": 3,
-          "maxLength": 120
+          "enum": ["image/jpeg", "image/png", "image/webp", "image/gif", "video/mp4", "video/webm"]
         },
         "byte_length": {
           "type": "integer"
@@ -459,7 +476,17 @@
           "format": "date-time"
         }
       },
-      "required": ["id", "owner_id", "bucket", "object_path", "name", "content_type", "byte_length", "chunk_count", "created_at"]
+      "required": [
+        "id",
+        "owner_id",
+        "bucket",
+        "object_path",
+        "name",
+        "content_type",
+        "byte_length",
+        "chunk_count",
+        "created_at"
+      ]
     },
     "MediaChunk": {
       "title": "MediaChunk",

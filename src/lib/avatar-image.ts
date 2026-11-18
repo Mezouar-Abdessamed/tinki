@@ -16,11 +16,18 @@ export function isAllowedAvatarType(type: string): boolean {
 }
 
 export function extensionForType(type: string): string {
-  return type.toLowerCase() === "image/png" ? "png" : type.toLowerCase() === "image/webp" ? "webp" : "jpg";
+  return type.toLowerCase() === "image/png"
+    ? "png"
+    : type.toLowerCase() === "image/webp"
+      ? "webp"
+      : "jpg";
 }
 
 /** Decode + re-encode the picked file; throws when the bytes are not a real raster image. */
-export async function reencodeAvatar(file: File, maxDimension = MAX_DIMENSION): Promise<{ blob: Blob; contentType: string }> {
+export async function reencodeAvatar(
+  file: File,
+  maxDimension = MAX_DIMENSION,
+): Promise<{ blob: Blob; contentType: string }> {
   if (!isAllowedAvatarType(file.type)) throw new Error("Unsupported image type");
 
   const bitmap = await createImageBitmap(file).catch(() => {

@@ -154,13 +154,21 @@ export function DemoPublicProfile({
             compact={compact}
           />
         </div>
-        <p className="mt-4 text-center text-xs text-white/80 drop-shadow-xs">{t("Powered by Tinki")}</p>
+        <p className="mt-4 text-center text-xs text-white/80 drop-shadow-xs">
+          {t("Powered by Tinki")}
+        </p>
       </div>
     </div>
   );
 }
 
-export function PhoneFrame({ children, className = "" }: { children: ReactNode; className?: string }) {
+export function PhoneFrame({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <div
       className={`rounded-[2.25rem] border border-border bg-surface p-2 shadow-[var(--shadow-panel)] ${className}`}
@@ -175,7 +183,15 @@ export function PhoneFrame({ children, className = "" }: { children: ReactNode; 
   );
 }
 
-export function BrowserFrame({ children, url, className = "" }: { children: ReactNode; url: string; className?: string }) {
+export function BrowserFrame({
+  children,
+  url,
+  className = "",
+}: {
+  children: ReactNode;
+  url: string;
+  className?: string;
+}) {
   return (
     <div className={`liquid-glass overflow-hidden rounded-xl border border-white/10 ${className}`}>
       <div className="flex items-center gap-3 border-b border-border px-4 py-2.5" dir="ltr">
@@ -209,7 +225,13 @@ export function ShareStrip() {
   );
 }
 
-export function DemoQr({ size = 150, settings = brandQr }: { size?: number; settings?: QrSettings }) {
+export function DemoQr({
+  size = 150,
+  settings = brandQr,
+}: {
+  size?: number;
+  settings?: QrSettings;
+}) {
   return (
     <div inert className="pointer-events-none">
       <QrCode
@@ -285,14 +307,19 @@ export function AnalyticsMock() {
             ))}
           </div>
 
-          <p className="mt-5 text-xs font-medium text-muted-foreground">{t("Clicks by platform")}</p>
+          <p className="mt-5 text-xs font-medium text-muted-foreground">
+            {t("Clicks by platform")}
+          </p>
           <ul className="mt-2.5 space-y-2">
             {ANALYTICS_PLATFORM_MOCK.map((p) => (
               <li key={p.key} className="flex items-center gap-2.5 text-xs">
                 <SocialIcon platform={p.key} className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <span className="w-20 shrink-0 truncate">{p.label}</span>
                 <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-secondary">
-                  <span className="block h-full rounded-full bg-primary" style={{ width: `${(p.value / maxPlatform) * 100}%` }} />
+                  <span
+                    className="block h-full rounded-full bg-primary"
+                    style={{ width: `${(p.value / maxPlatform) * 100}%` }}
+                  />
                 </span>
                 <span className="w-8 shrink-0 text-end font-medium tabular-nums">{p.value}</span>
               </li>
@@ -307,17 +334,26 @@ export function AnalyticsMock() {
           </p>
           <ul className="mt-3 space-y-2.5">
             {ANALYTICS_COUNTRY_MOCK.map((country) => (
-              <li key={country.code} className="relative overflow-hidden rounded-lg border border-border bg-surface">
+              <li
+                key={country.code}
+                className="relative overflow-hidden rounded-lg border border-border bg-surface"
+              >
                 <div
                   className="absolute inset-y-0 start-0 bg-primary/12"
                   style={{ width: `${Math.max((country.views / maxCountry) * 100, 8)}%` }}
                   aria-hidden="true"
                 />
                 <div className="relative flex items-center gap-2.5 px-3 py-2 text-xs">
-                  <span className="w-6 shrink-0 font-semibold text-muted-foreground uppercase">{country.code}</span>
+                  <span className="w-6 shrink-0 font-semibold text-muted-foreground uppercase">
+                    {country.code}
+                  </span>
                   <span className="min-w-0 flex-1 truncate font-medium">{t(country.name)}</span>
-                  <span className="shrink-0 text-muted-foreground tabular-nums">{country.share}</span>
-                  <span className="w-9 shrink-0 text-end font-semibold tabular-nums">{country.views}</span>
+                  <span className="shrink-0 text-muted-foreground tabular-nums">
+                    {country.share}
+                  </span>
+                  <span className="w-9 shrink-0 text-end font-semibold tabular-nums">
+                    {country.views}
+                  </span>
                 </div>
               </li>
             ))}

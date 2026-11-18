@@ -67,9 +67,7 @@ describe("Single source of truth (Firestore default, gated local store & debounc
     assert.throws(
       () => getStore(),
       (err: unknown) =>
-        err instanceof StoreError &&
-        err.status === 503 &&
-        err.code === "local_store_disabled",
+        err instanceof StoreError && err.status === 503 && err.code === "local_store_disabled",
     );
   });
 

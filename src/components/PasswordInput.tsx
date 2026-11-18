@@ -49,17 +49,13 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
             <Eye
               className={cn(
                 "absolute inset-0 size-4 transition-all duration-300 ease-out",
-                visible
-                  ? "scale-50 rotate-90 opacity-0"
-                  : "scale-100 rotate-0 opacity-100",
+                visible ? "scale-50 rotate-90 opacity-0" : "scale-100 rotate-0 opacity-100",
               )}
             />
             <EyeOff
               className={cn(
                 "absolute inset-0 size-4 transition-all duration-300 ease-out",
-                visible
-                  ? "scale-100 rotate-0 opacity-100"
-                  : "-rotate-90 scale-50 opacity-0",
+                visible ? "scale-100 rotate-0 opacity-100" : "-rotate-90 scale-50 opacity-0",
               )}
             />
           </span>

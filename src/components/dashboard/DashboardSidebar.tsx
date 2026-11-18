@@ -28,11 +28,9 @@ export const DASHBOARD_NAV = [
   { to: "/dashboard/account", label: "Account & Deletion", icon: UserCog },
 ] as const;
 
-
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const items = DASHBOARD_NAV;
-
 
   return (
     <nav className="flex flex-col gap-1">
@@ -40,20 +38,20 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
         const active = pathname === item.to;
         return (
           <Fragment key={item.to}>
-          {(index === 3 || index === 5) && <hr className="mx-3 my-2 border-border" />}
-          <Link
-            to={item.to}
-            onClick={onNavigate}
-            aria-current={active ? "page" : undefined}
-            className={`flex min-w-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-              active
-                ? "border border-border bg-secondary font-medium text-foreground"
-                : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
-            }`}
-          >
-            <item.icon className={`h-4 w-4 shrink-0 ${active ? "text-primary" : ""}`} />
-            <span className="truncate">{item.label}</span>
-          </Link>
+            {(index === 3 || index === 5) && <hr className="mx-3 my-2 border-border" />}
+            <Link
+              to={item.to}
+              onClick={onNavigate}
+              aria-current={active ? "page" : undefined}
+              className={`flex min-w-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                active
+                  ? "border border-border bg-secondary font-medium text-foreground"
+                  : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+              }`}
+            >
+              <item.icon className={`h-4 w-4 shrink-0 ${active ? "text-primary" : ""}`} />
+              <span className="truncate">{item.label}</span>
+            </Link>
           </Fragment>
         );
       })}

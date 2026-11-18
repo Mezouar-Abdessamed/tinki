@@ -14,10 +14,7 @@ import appCss from "../styles.css?url";
 import { AuthProvider } from "@/lib/auth";
 import { Toaster } from "@/components/ui/sonner";
 import { LanguageProvider } from "@/lib/i18n";
-import {
-  isDynamicImportError,
-  tryConsumeChunkReloadAllowance,
-} from "@/lib/route-error-recovery";
+import { isDynamicImportError, tryConsumeChunkReloadAllowance } from "@/lib/route-error-recovery";
 
 function NotFoundComponent() {
   return (

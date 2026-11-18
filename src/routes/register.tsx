@@ -145,7 +145,8 @@ function RegisterPage() {
       toast.success("Signed in with Google");
       navigate({ to: "/dashboard" });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Google sign-in didn't work. Please try again";
+      const message =
+        error instanceof Error ? error.message : "Google sign-in didn't work. Please try again";
       if (message.toLowerCase().includes("cancelled")) return;
       toast.error(message);
     } finally {

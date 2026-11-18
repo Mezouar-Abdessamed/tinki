@@ -51,7 +51,11 @@ function readFirebaseProjectId(): string {
     cachedProjectId = firebaseConfig.projectId.trim();
     return cachedProjectId;
   }
-  throw new StoreError("Authentication service is not configured on the server", 500, "firebase_not_configured");
+  throw new StoreError(
+    "Authentication service is not configured on the server",
+    500,
+    "firebase_not_configured",
+  );
 }
 
 function base64UrlToBuffer(segment: string): Buffer {
@@ -76,7 +80,11 @@ async function fetchGoogleJwks(forceRefresh = false): Promise<Map<string, JwkEnt
 
   const response = await fetch(GOOGLE_JWK_URL);
   if (!response.ok) {
-    throw new StoreError("Unable to verify Google credentials right now", 502, "google_jwk_unavailable");
+    throw new StoreError(
+      "Unable to verify Google credentials right now",
+      502,
+      "google_jwk_unavailable",
+    );
   }
 
   const body = (await response.json()) as { keys?: JwkEntry[] };
@@ -179,7 +187,11 @@ export async function verifyFirebaseIdToken(
     throw new StoreError("Verification token timestamp is invalid", 401, "invalid_token");
   }
   if (payload["aud"] !== projectId || payload["iss"] !== expectedIssuer) {
-    throw new StoreError("Verification token does not match this application", 401, "invalid_audience");
+    throw new StoreError(
+      "Verification token does not match this application",
+      401,
+      "invalid_audience",
+    );
   }
 
   const sub = typeof payload["sub"] === "string" ? payload["sub"].trim() : "";
@@ -192,10 +204,17 @@ export async function verifyFirebaseIdToken(
     throw new StoreError("Account did not share an email address", 400, "missing_email");
   }
   if (payload["email_verified"] !== true) {
-    throw new StoreError("Your email address must be verified before continuing", 403, "unverified_email");
+    throw new StoreError(
+      "Your email address must be verified before continuing",
+      403,
+      "unverified_email",
+    );
   }
 
-  const name = typeof payload["name"] === "string" && payload["name"].trim() ? payload["name"].trim() : undefined;
+  const name =
+    typeof payload["name"] === "string" && payload["name"].trim()
+      ? payload["name"].trim()
+      : undefined;
   const picture =
     typeof payload["picture"] === "string" && payload["picture"].trim()
       ? payload["picture"].trim()
@@ -210,7 +229,9 @@ export async function verifyFirebaseIdToken(
       ? firebaseClaims["sign_in_provider"].trim()
       : undefined;
   const parsedAuthTime =
-    typeof payload["auth_time"] === "number" && Number.isFinite(payload["auth_time"]) && payload["auth_time"] > 0
+    typeof payload["auth_time"] === "number" &&
+    Number.isFinite(payload["auth_time"]) &&
+    payload["auth_time"] > 0
       ? payload["auth_time"]
       : undefined;
 
@@ -302,7 +323,12 @@ export async function sendFirebasePasswordResetEmailServer(
   const send = async (withContinueUrl: boolean) => {
     const payload =
       withContinueUrl && continueUrl
-        ? { requestType: "PASSWORD_RESET", email: cleanEmail, continueUrl, canHandleCodeInApp: true }
+        ? {
+            requestType: "PASSWORD_RESET",
+            email: cleanEmail,
+            continueUrl,
+            canHandleCodeInApp: true,
+          }
         : { requestType: "PASSWORD_RESET", email: cleanEmail };
     return fetch(endpoint, {
       method: "POST",

@@ -50,22 +50,30 @@ export function ProfilePreview({
           : "relative overflow-hidden rounded-xl p-5 sm:p-8",
         className,
       )}
-      style={background ? { ...background, ...(fullPage ? { backgroundAttachment: "scroll" } : {}) } : undefined}
+      style={
+        background
+          ? { ...background, ...(fullPage ? { backgroundAttachment: "scroll" } : {}) }
+          : undefined
+      }
     >
       {video ? <PageBackgroundVideo src={video} /> : null}
       <div
-        className={cn("relative z-10 mx-auto w-full max-w-md", fullPage && "profile-page-preview-card", backgroundOnly && "pointer-events-none opacity-0")}
+        className={cn(
+          "relative z-10 mx-auto w-full max-w-md",
+          fullPage && "profile-page-preview-card",
+          backgroundOnly && "pointer-events-none opacity-0",
+        )}
         aria-hidden={backgroundOnly || undefined}
         inert={backgroundOnly || undefined}
       >
-      <ProfileCard
-        profile={profile}
-        avatarUrl={avatarUrl}
-        coverUrl={coverQuery.data}
-        customLinks={customLinksQuery.data ?? []}
-        socialLinkSettings={socialSettingsQuery.data ?? []}
-        compact={!fullPage}
-      />
+        <ProfileCard
+          profile={profile}
+          avatarUrl={avatarUrl}
+          coverUrl={coverQuery.data}
+          customLinks={customLinksQuery.data ?? []}
+          socialLinkSettings={socialSettingsQuery.data ?? []}
+          compact={!fullPage}
+        />
       </div>
     </div>
   );

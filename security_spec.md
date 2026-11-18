@@ -13,17 +13,17 @@
 
 ## 2. The "Dirty Dozen" Adversarial Payloads
 
-| # | Target Collection | Attack Vector | Expected Result |
-|---|---|---|---|
-| 1 | `/accounts/{otherUid}` | Unauthenticated or non-owner `get` / `list` to steal PII emails | `PERMISSION_DENIED` |
-| 2 | `/profiles/{uid}` (create/update) | Ghost shadow field (`{ ..., "isAdmin": true }`) | `PERMISSION_DENIED` |
-| 3 | `/profiles/{uid}` (create/update) | Forging verification badge (`{ ..., "username": "attacker", "verified": true }`) | `PERMISSION_DENIED` |
-| 4 | `/profiles/{uid}` (create) | Creating profile with spoofed owner (`{ "id": "victimUid", ... }`) or spoofed `created_at` | `PERMISSION_DENIED` |
-| 5 | `/profiles/{uid}` (update) | Unverified email token (`email_verified: false`) attempting update | `PERMISSION_DENIED` |
-| 6 | `/profiles/{uid}` (update) | Value poisoning (overlong `bio` of 51+ chars or invalid hex color `"red"` or invalid font enum) | `PERMISSION_DENIED` |
-| 7 | `/usernames/{username}` (create) | Claiming a username pointing `owner_id` to someone else OR creating without atomic profile write | `PERMISSION_DENIED` |
-| 8 | `/usernames/{username}` (list) | Blanket list query attempting to enumerate all handles | `PERMISSION_DENIED` |
-| 9 | `/custom_links/{linkId}` (create/update) | Orphan write pointing `profile_id` to victim's profile or mutating `profile_id` | `PERMISSION_DENIED` |
-| 10 | `/profile_events/{eventId}` (create) | Profile owner attempting to inflate own `profile_view` or target non-existent `profile_id` | `PERMISSION_DENIED` |
-| 11 | `/profile_events/{eventId}` (list/get) | Non-owner signed-in user trying to read another user's visitor analytics / country stats | `PERMISSION_DENIED` |
-| 12 | `/media_objects/{mediaId}/chunks/{chunkId}` | Non-owner creating or deleting binary chunks under another user's `media_objects/{mediaId}` | `PERMISSION_DENIED` |
+| #   | Target Collection                           | Attack Vector                                                                                    | Expected Result     |
+| --- | ------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------- |
+| 1   | `/accounts/{otherUid}`                      | Unauthenticated or non-owner `get` / `list` to steal PII emails                                  | `PERMISSION_DENIED` |
+| 2   | `/profiles/{uid}` (create/update)           | Ghost shadow field (`{ ..., "isAdmin": true }`)                                                  | `PERMISSION_DENIED` |
+| 3   | `/profiles/{uid}` (create/update)           | Forging verification badge (`{ ..., "username": "attacker", "verified": true }`)                 | `PERMISSION_DENIED` |
+| 4   | `/profiles/{uid}` (create)                  | Creating profile with spoofed owner (`{ "id": "victimUid", ... }`) or spoofed `created_at`       | `PERMISSION_DENIED` |
+| 5   | `/profiles/{uid}` (update)                  | Unverified email token (`email_verified: false`) attempting update                               | `PERMISSION_DENIED` |
+| 6   | `/profiles/{uid}` (update)                  | Value poisoning (overlong `bio` of 51+ chars or invalid hex color `"red"` or invalid font enum)  | `PERMISSION_DENIED` |
+| 7   | `/usernames/{username}` (create)            | Claiming a username pointing `owner_id` to someone else OR creating without atomic profile write | `PERMISSION_DENIED` |
+| 8   | `/usernames/{username}` (list)              | Blanket list query attempting to enumerate all handles                                           | `PERMISSION_DENIED` |
+| 9   | `/custom_links/{linkId}` (create/update)    | Orphan write pointing `profile_id` to victim's profile or mutating `profile_id`                  | `PERMISSION_DENIED` |
+| 10  | `/profile_events/{eventId}` (create)        | Profile owner attempting to inflate own `profile_view` or target non-existent `profile_id`       | `PERMISSION_DENIED` |
+| 11  | `/profile_events/{eventId}` (list/get)      | Non-owner signed-in user trying to read another user's visitor analytics / country stats         | `PERMISSION_DENIED` |
+| 12  | `/media_objects/{mediaId}/chunks/{chunkId}` | Non-owner creating or deleting binary chunks under another user's `media_objects/{mediaId}`      | `PERMISSION_DENIED` |

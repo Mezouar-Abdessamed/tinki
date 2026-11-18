@@ -7,7 +7,14 @@ import { useEffect } from "react";
 export function SmoothScroll() {
   useEffect(() => {
     const onDocumentClick = (event: MouseEvent) => {
-      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
         return;
       }
       const target = event.target as Element | null;

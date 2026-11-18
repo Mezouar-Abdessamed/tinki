@@ -101,10 +101,13 @@ export const authApi = {
     password: string;
     username: string;
   }): Promise<{ pending: { email: string; username: string } }> {
-    return apiFetch<{ pending: { email: string; username: string } }>("/api/auth/register-pending", {
-      method: "POST",
-      body: JSON.stringify(input),
-    });
+    return apiFetch<{ pending: { email: string; username: string } }>(
+      "/api/auth/register-pending",
+      {
+        method: "POST",
+        body: JSON.stringify(input),
+      },
+    );
   },
 
   async confirmEmailSignup(idToken: string, username?: string): Promise<AuthSession> {
@@ -158,9 +161,8 @@ export const authApi = {
       }
     }
 
-    const { EmailAuthProvider, reauthenticateWithCredential, updatePassword } = await import(
-      "firebase/auth"
-    );
+    const { EmailAuthProvider, reauthenticateWithCredential, updatePassword } =
+      await import("firebase/auth");
     const { auth: fbAuth } = await import("@/lib/firestore-repository");
     const fbUser = fbAuth.currentUser;
     if (!fbUser) {
@@ -180,9 +182,7 @@ export const authApi = {
     try {
       return await apiFetch<{ ok: boolean }>("/api/auth/forgot-password", {
         method: "POST",
-        ...(options?.clientDispatched
-          ? { headers: { "x-reset-email-dispatched": "client" } }
-          : {}),
+        ...(options?.clientDispatched ? { headers: { "x-reset-email-dispatched": "client" } } : {}),
         body: JSON.stringify({ email }),
       });
     } catch (err) {

@@ -19,7 +19,13 @@ import {
   type User,
 } from "firebase/auth";
 
-import { ApiError, apiFetch, authApi, notifyAuthListeners, type AuthSession } from "@/lib/api-client";
+import {
+  ApiError,
+  apiFetch,
+  authApi,
+  notifyAuthListeners,
+  type AuthSession,
+} from "@/lib/api-client";
 import type { CustomLink, CustomLinkType } from "@/lib/custom-links";
 import {
   checkUsernameAvailableFirestore,
@@ -48,11 +54,7 @@ const migrationInFlight = new Map<string, Promise<void>>();
 function createResilientFirebaseFetch(): typeof fetch {
   return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const rawUrl =
-      typeof input === "string"
-        ? input
-        : input instanceof URL
-          ? input.toString()
-          : input.url;
+      typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
     const proxyUrl = toFirebaseProxyUrl(rawUrl);
 
     if (!proxyUrl || typeof window === "undefined") {
@@ -154,7 +156,9 @@ async function migrateLegacyServerProfileIfMissing(
   await syncFirebaseAccountDoc(fbUser, null).catch(() => undefined);
 
   try {
-    const { profile: legacyProfile } = await apiFetch<{ profile: Profile | null }>("/api/profiles/me");
+    const { profile: legacyProfile } = await apiFetch<{ profile: Profile | null }>(
+      "/api/profiles/me",
+    );
     if (!legacyProfile || !legacyProfile.username) return;
 
     const migratedAvatar = await migrateMediaAssetToFirestore(
@@ -189,9 +193,9 @@ async function migrateLegacyServerProfileIfMissing(
 
     const sourceId = legacyProfile.id || serverUserId;
     const [{ links }, { settings }] = await Promise.all([
-      apiFetch<{ links: CustomLink[] }>(`/api/profiles/${encodeURIComponent(sourceId)}/custom-links`).catch(
-        () => ({ links: [] as CustomLink[] }),
-      ),
+      apiFetch<{ links: CustomLink[] }>(
+        `/api/profiles/${encodeURIComponent(sourceId)}/custom-links`,
+      ).catch(() => ({ links: [] as CustomLink[] })),
       apiFetch<{ settings: SocialLinkSetting[] }>(
         `/api/profiles/${encodeURIComponent(sourceId)}/social-settings`,
       ).catch(() => ({ settings: [] as SocialLinkSetting[] })),
@@ -333,10 +337,7 @@ async function sendVerificationEmailWithFallback(
         typeof error === "object" && error !== null && "code" in error
           ? String((error as { code: unknown }).code)
           : "";
-      if (
-        code !== "auth/unauthorized-continue-uri" &&
-        code !== "auth/invalid-continue-uri"
-      ) {
+      if (code !== "auth/unauthorized-continue-uri" && code !== "auth/invalid-continue-uri") {
         throw error;
       }
     }
@@ -634,9 +635,9 @@ export async function checkAndCompleteEmailVerification(options?: {
   return { status: "confirmed", session };
 }
 
-export async function sendFirebasePasswordResetEmail(email: string): Promise<void> {
+export async function sendFirebasePasswordResetEmail(email: string): Promise<boolean> {
   const cleanEmail = email.trim().toLowerCase();
-  if (!cleanEmail) return;
+  if (!cleanEmail) return false;
   const auth = getFirebaseAuth();
   const origin = typeof window !== "undefined" ? window.location.origin : "";
 
@@ -647,23 +648,22 @@ export async function sendFirebasePasswordResetEmail(email: string): Promise<voi
           url: `${origin}/reset-password`,
           handleCodeInApp: true,
         });
-        return;
+        return true;
       } catch (error: unknown) {
         const code =
           typeof error === "object" && error !== null && "code" in error
             ? String((error as { code: unknown }).code)
             : "";
-        if (
-          code !== "auth/unauthorized-continue-uri" &&
-          code !== "auth/invalid-continue-uri"
-        ) {
+        if (code !== "auth/unauthorized-continue-uri" && code !== "auth/invalid-continue-uri") {
           throw error;
         }
       }
     }
     await sendPasswordResetEmail(auth, cleanEmail);
+    return true;
   } catch {
     /* never reveal whether an account exists for the supplied email */
+    return false;
   }
 }
 

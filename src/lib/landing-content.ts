@@ -102,27 +102,52 @@ export const LANDING_QR_PRESETS: Array<{
   {
     id: "classic",
     label: "Classic",
-    patch: { foregroundColor: "#0d1117", backgroundColor: "#ffffff", moduleShape: "square", eyeShape: "square" },
+    patch: {
+      foregroundColor: "#0d1117",
+      backgroundColor: "#ffffff",
+      moduleShape: "square",
+      eyeShape: "square",
+    },
   },
   {
     id: "soft",
     label: "Soft",
-    patch: { foregroundColor: "#0f766e", backgroundColor: "#ffffff", moduleShape: "rounded", eyeShape: "rounded" },
+    patch: {
+      foregroundColor: "#0f766e",
+      backgroundColor: "#ffffff",
+      moduleShape: "rounded",
+      eyeShape: "rounded",
+    },
   },
   {
     id: "dots",
     label: "Dots",
-    patch: { foregroundColor: "#1e293b", backgroundColor: "#ffffff", moduleShape: "dots", eyeShape: "circle" },
+    patch: {
+      foregroundColor: "#1e293b",
+      backgroundColor: "#ffffff",
+      moduleShape: "dots",
+      eyeShape: "circle",
+    },
   },
   {
     id: "elegant",
     label: "Elegant",
-    patch: { foregroundColor: "#3b0764", backgroundColor: "#fdf4ff", moduleShape: "classy", eyeShape: "leaf" },
+    patch: {
+      foregroundColor: "#3b0764",
+      backgroundColor: "#fdf4ff",
+      moduleShape: "classy",
+      eyeShape: "leaf",
+    },
   },
   {
     id: "night",
     label: "Night",
-    patch: { foregroundColor: "#f8fafc", backgroundColor: "#0d1117", moduleShape: "rounded", eyeShape: "rounded" },
+    patch: {
+      foregroundColor: "#f8fafc",
+      backgroundColor: "#0d1117",
+      moduleShape: "rounded",
+      eyeShape: "rounded",
+    },
   },
 ];
 
@@ -160,9 +185,21 @@ export const FONT_SHOWCASE: Array<{ family: FontFamilyKey; label: string; sample
   { family: "condensed", label: "Oswald", sample: "Bold condensed titles" },
 ];
 
-export const BACKGROUND_MODES: Array<{ key: PageMediaType | "gradient" | "pattern"; label: string; summary: string }> = [
-  { key: "gradient", label: "Solid & gradients", summary: "Pick one color or blend linear and radial angles" },
-  { key: "pattern", label: "Photo & patterns", summary: "Built-in patterns, full fixed photos, or custom tiles" },
+export const BACKGROUND_MODES: Array<{
+  key: PageMediaType | "gradient" | "pattern";
+  label: string;
+  summary: string;
+}> = [
+  {
+    key: "gradient",
+    label: "Solid & gradients",
+    summary: "Pick one color or blend linear and radial angles",
+  },
+  {
+    key: "pattern",
+    label: "Photo & patterns",
+    summary: "Built-in patterns, full fixed photos, or custom tiles",
+  },
   { key: "video", label: "Looping video", summary: "Upload an MP4, WebM or MOV clip up to 5 MB" },
 ];
 
@@ -182,14 +219,46 @@ export const WORKFLOW_STEPS = [
 ] as const;
 
 export const DASHBOARD_MODULES = [
-  { id: "dashboard", title: "Dashboard", body: "Profile views, all-time social clicks, custom link clicks, platform charts and visitor countries" },
-  { id: "profile", title: "My Profile", body: "Live public card preview, one-tap link copy, share actions and QR download" },
-  { id: "links", title: "My Links", body: "16 social profiles and custom website, phone or email links with drag order and visibility switches" },
-  { id: "customize", title: "Customize profile", body: "Ready-made themes, card gradients, 5 fonts, link icon colors and photo or video backgrounds" },
-  { id: "qr", title: "Customize QR Code", body: "Presets, custom colors, 5 dot shapes, 4 corner shapes, tinted center logo and scan check" },
-  { id: "info", title: "My Information & Security", body: "Avatar, cover banner focal crop, username, bio, sign-in methods and password recovery" },
-  { id: "settings", title: "Settings", body: "Public QR quick-button toggle, 5-language switcher with Arabic RTL and quick page shortcuts" },
-  { id: "account", title: "Account & Deletion", body: "Preview your live page and permanently delete your account and data whenever you choose" },
+  {
+    id: "dashboard",
+    title: "Dashboard",
+    body: "Profile views, all-time social clicks, custom link clicks, platform charts and visitor countries",
+  },
+  {
+    id: "profile",
+    title: "My Profile",
+    body: "Live public card preview, one-tap link copy, share actions and QR download",
+  },
+  {
+    id: "links",
+    title: "My Links",
+    body: "16 social profiles and custom website, phone or email links with drag order and visibility switches",
+  },
+  {
+    id: "customize",
+    title: "Customize profile",
+    body: "Ready-made themes, card gradients, 5 fonts, link icon colors and photo or video backgrounds",
+  },
+  {
+    id: "qr",
+    title: "Customize QR Code",
+    body: "Presets, custom colors, 5 dot shapes, 4 corner shapes, tinted center logo and scan check",
+  },
+  {
+    id: "info",
+    title: "My Information & Security",
+    body: "Avatar, cover banner focal crop, username, bio, sign-in methods and password recovery",
+  },
+  {
+    id: "settings",
+    title: "Settings",
+    body: "Public QR quick-button toggle, 5-language switcher with Arabic RTL and quick page shortcuts",
+  },
+  {
+    id: "account",
+    title: "Account & Deletion",
+    body: "Preview your live page and permanently delete your account and data whenever you choose",
+  },
 ] as const;
 
 export const ANALYTICS_PLATFORM_MOCK: Array<{ key: SocialKey; label: string; value: number }> = [
@@ -199,7 +268,12 @@ export const ANALYTICS_PLATFORM_MOCK: Array<{ key: SocialKey; label: string; val
   { key: "youtube", label: "YouTube", value: 41 },
 ];
 
-export const ANALYTICS_COUNTRY_MOCK: Array<{ code: string; name: string; views: number; share: string }> = [
+export const ANALYTICS_COUNTRY_MOCK: Array<{
+  code: string;
+  name: string;
+  views: number;
+  share: string;
+}> = [
   { code: "DZ", name: "Algeria", views: 540, share: "42.1%" },
   { code: "FR", name: "France", views: 308, share: "24.0%" },
   { code: "CA", name: "Canada", views: 180, share: "14.0%" },

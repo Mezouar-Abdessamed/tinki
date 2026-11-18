@@ -278,11 +278,7 @@ export const SOCIAL_PLATFORM_KEYS = SOCIAL_PLATFORMS.map((p) => p.key) as [
   ...SocialKey[],
 ];
 
-export const PROFILE_EVENT_TYPES = [
-  "profile_view",
-  "social_click",
-  "custom_link_click",
-] as const;
+export const PROFILE_EVENT_TYPES = ["profile_view", "social_click", "custom_link_click"] as const;
 
 export const profileEventBodySchema = z
   .object({
@@ -358,10 +354,7 @@ export const socialLinkSettingItemSchema = z
 
 export const socialLinkSettingsArraySchema = z
   .array(socialLinkSettingItemSchema)
-  .max(
-    SOCIAL_PLATFORMS.length,
-    `settings cannot exceed ${SOCIAL_PLATFORMS.length} platforms`,
-  );
+  .max(SOCIAL_PLATFORMS.length, `settings cannot exceed ${SOCIAL_PLATFORMS.length} platforms`);
 
 export const saveSocialLinkSettingsBodySchema = z
   .object({

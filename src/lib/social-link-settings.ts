@@ -57,7 +57,8 @@ export async function saveSocialLinkSettings(settings: SocialLinkSetting[]) {
   }
 
   if (typeof window !== "undefined") {
-    const { auth: fbAuth, saveSocialLinkSettingsFirestore } = await import("@/lib/firestore-repository");
+    const { auth: fbAuth, saveSocialLinkSettingsFirestore } =
+      await import("@/lib/firestore-repository");
     if (fbAuth.currentUser) {
       await saveSocialLinkSettingsFirestore(settings);
       return;

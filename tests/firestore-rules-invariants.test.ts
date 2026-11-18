@@ -14,7 +14,10 @@ describe("Firestore security specification & cross-restart session persistence",
     const blueprint = JSON.parse(
       fs.readFileSync(path.resolve(process.cwd(), "firebase-blueprint.json"), "utf8"),
     ) as {
-      entities: Record<string, { properties: Record<string, { maxLength?: number; pattern?: string }> }>;
+      entities: Record<
+        string,
+        { properties: Record<string, { maxLength?: number; pattern?: string }> }
+      >;
       firestore: Record<string, { schema: string }>;
     };
     const rules = fs.readFileSync(path.resolve(process.cwd(), "firestore.rules"), "utf8");
@@ -43,7 +46,9 @@ describe("Firestore security specification & cross-restart session persistence",
     assert.ok(rules.includes("resource.data.profile_id == request.auth.uid"));
     assert.ok(rules.includes("request.auth == null || request.auth.uid != incoming().profile_id"));
     assert.ok(
-      rules.includes("existsAfter(/databases/$(database)/documents/usernames/$(incoming().username))"),
+      rules.includes(
+        "existsAfter(/databases/$(database)/documents/usernames/$(incoming().username))",
+      ),
     );
     const usernamesMatch = rules.match(/match \/usernames\/\{username\}[\s\S]*?\n {4}\}/);
     assert.ok(usernamesMatch, "Expected match /usernames/{username} block");
@@ -52,7 +57,68 @@ describe("Firestore security specification & cross-restart session persistence",
       "usernames/{username} must not circularly reference profiles via existsAfter/getAfter",
     );
     assert.ok(rules.includes("data.object_path.split('/')[0] == request.auth.uid"));
-    assert.ok(rules.includes("'classy'") && rules.includes("'diamond'") && rules.includes("'leaf'"));
+    assert.ok(
+      rules.includes("'classy'") && rules.includes("'diamond'") && rules.includes("'leaf'"),
+    );
+
+    const customLinkHelper = rules.match(
+      /function isValidCustomLink\(data, linkId\)[\s\S]*?\n {4}\}/,
+    );
+    assert.ok(customLinkHelper, "Expected isValidCustomLink helper in firestore.rules");
+    assert.ok(
+      customLinkHelper[0].includes("data.link_type == 'link'") &&
+        customLinkHelper[0].includes("data.url.matches('^https?://.+')"),
+      "isValidCustomLink must require https?:// URLs when link_type is 'link'",
+    );
+    assert.ok(
+      customLinkHelper[0].includes("data.link_type == 'email'") &&
+        customLinkHelper[0].includes("data.url.matches('^mailto:.+')"),
+      "isValidCustomLink must require mailto: URLs when link_type is 'email'",
+    );
+    assert.ok(
+      customLinkHelper[0].includes("data.link_type == 'phone'") &&
+        customLinkHelper[0].includes("data.url.matches('^tel:.+')"),
+      "isValidCustomLink must require tel: URLs when link_type is 'phone'",
+    );
+
+    const customLinksMatch = rules.match(/match \/custom_links\/\{linkId\}[\s\S]*?\n {4}\}/);
+    assert.ok(customLinksMatch, "Expected match /custom_links/{linkId} block");
+    assert.match(
+      customLinksMatch[0],
+      /allow create:[\s\S]*isValidCustomLink\(incoming\(\), linkId\)/,
+    );
+    assert.match(
+      customLinksMatch[0],
+      /allow update:[\s\S]*isValidCustomLink\(incoming\(\), linkId\)/,
+    );
+
+    const mediaObjHelper = rules.match(
+      /function isValidMediaObject\(data, mediaId\)[\s\S]*?\n {4}\}/,
+    );
+    assert.ok(mediaObjHelper, "Expected isValidMediaObject helper in firestore.rules");
+    for (const mime of [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+      "video/mp4",
+      "video/webm",
+    ]) {
+      assert.ok(mediaObjHelper[0].includes(`'${mime}'`), `isValidMediaObject must allow ${mime}`);
+    }
+
+    const mediaObjectsMatch = rules.match(/match \/media_objects\/\{mediaId\}[\s\S]*?\n {4}\}/);
+    assert.ok(mediaObjectsMatch, "Expected match /media_objects/{mediaId} block");
+    assert.match(mediaObjectsMatch[0], /allow create:[\s\S]*data\.get\('media_count', 0\) < 20/);
+    assert.match(
+      mediaObjectsMatch[0],
+      /allow create:[\s\S]*getAfter\(\/databases\/\$\(database\)\/documents\/accounts\/\$\(request\.auth\.uid\)\)\.data\.media_count/,
+    );
+
+    const accountsMatch = rules.match(/match \/accounts\/\{userId\}[\s\S]*?\n {4}\}/);
+    assert.ok(accountsMatch, "Expected match /accounts/{userId} block");
+    assert.match(accountsMatch[0], /incoming\(\)\.media_count == 0/);
+    assert.match(accountsMatch[0], /incoming\(\)\.media_count <= 20/);
   });
 
   it("validates deterministic media IDs and Firebase UID background storage paths", () => {

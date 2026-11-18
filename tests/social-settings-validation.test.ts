@@ -186,9 +186,7 @@ describe("saveSocialLinkSettings & PUT /api/social-settings validation", () => {
       ]),
     ).toThrow(/Not authorized/i);
 
-    const afterFailed = store
-      .listSocialLinkSettings(aliceId)
-      .find((s) => s.platform === "github");
+    const afterFailed = store.listSocialLinkSettings(aliceId).find((s) => s.platform === "github");
     expect(afterFailed?.enabled).toBe(true);
     expect(afterFailed?.position).toBe(0);
   });
@@ -197,9 +195,9 @@ describe("saveSocialLinkSettings & PUT /api/social-settings validation", () => {
     const fetchSpy = vi.fn<typeof fetch>();
     vi.stubGlobal("fetch", fetchSpy);
 
-    await expect(
-      saveSocialLinkSettings("bad" as unknown as SocialLinkSetting[]),
-    ).rejects.toThrow(/array/i);
+    await expect(saveSocialLinkSettings("bad" as unknown as SocialLinkSetting[])).rejects.toThrow(
+      /array/i,
+    );
 
     await expect(
       saveSocialLinkSettings([

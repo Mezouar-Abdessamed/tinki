@@ -1,5 +1,14 @@
 import { BarChart3 } from "lucide-react";
-import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import { SocialIcon } from "@/components/SocialIcon";
 import { SOCIAL_PLATFORMS, type SocialKey } from "@/lib/profile-validation";

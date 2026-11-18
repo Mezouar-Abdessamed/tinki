@@ -303,7 +303,13 @@ export async function syncFirebaseAccountDoc(
   const providers = [
     ...new Set(
       fbUser.providerData
-        .map((p) => (p.providerId === "password" ? "email" : p.providerId === "google.com" ? "google" : p.providerId))
+        .map((p) =>
+          p.providerId === "password"
+            ? "email"
+            : p.providerId === "google.com"
+              ? "google"
+              : p.providerId,
+        )
         .filter(Boolean),
     ),
   ];
@@ -318,18 +324,26 @@ export async function syncFirebaseAccountDoc(
         name: fbUser.displayName ? fbUser.displayName.trim().slice(0, 80) : null,
         username: username ? username.trim().toLowerCase() : null,
         providers: providers.slice(0, 4),
+        media_count: 0,
         created_at: serverTimestamp(),
         updated_at: serverTimestamp(),
       });
     } else {
       const current = existing.data();
       const nextUsername = username ? username.trim().toLowerCase() : (current["username"] ?? null);
-      const nextName = fbUser.displayName ? fbUser.displayName.trim().slice(0, 80) : (current["name"] ?? null);
+      const nextName = fbUser.displayName
+        ? fbUser.displayName.trim().slice(0, 80)
+        : (current["name"] ?? null);
       await updateDoc(ref, {
         email: fbUser.email.trim().toLowerCase().slice(0, 254),
         name: nextName,
         username: nextUsername,
-        providers: [...new Set([...(Array.isArray(current["providers"]) ? current["providers"] : []), ...providers])].slice(0, 4),
+        providers: [
+          ...new Set([
+            ...(Array.isArray(current["providers"]) ? current["providers"] : []),
+            ...providers,
+          ]),
+        ].slice(0, 4),
         updated_at: serverTimestamp(),
       });
     }
@@ -411,7 +425,9 @@ export async function createProfileFirestore(
   const username = parsed.data;
   const available = await checkUsernameAvailableFirestore(username);
   if (!available) {
-    const err = new Error('duplicate key value violates unique constraint "profiles_username_key"') as Error & {
+    const err = new Error(
+      'duplicate key value violates unique constraint "profiles_username_key"',
+    ) as Error & {
       code?: string;
     };
     err.code = "23505";
@@ -436,20 +452,38 @@ export async function createProfileFirestore(
     cover_photo_y: clamp(seed?.cover_photo_y, 0, 100, 50),
     show_qr_button: seed?.show_qr_button ?? true,
     verified: username === "abdessamed",
-    card_background_color: hexOrFallback(seed?.card_background_color, PROFILE_DEFAULTS.card_background_color),
-    card_gradient_color: hexOrFallback(seed?.card_gradient_color, PROFILE_DEFAULTS.card_gradient_color),
+    card_background_color: hexOrFallback(
+      seed?.card_background_color,
+      PROFILE_DEFAULTS.card_background_color,
+    ),
+    card_gradient_color: hexOrFallback(
+      seed?.card_gradient_color,
+      PROFILE_DEFAULTS.card_gradient_color,
+    ),
     card_gradient_angle: clamp(seed?.card_gradient_angle, 0, 360, 135),
     social_icon_color: hexOrNull(seed?.social_icon_color),
     social_icon_bg_color: hexOrNull(seed?.social_icon_bg_color),
-    page_background_color: hexOrFallback(seed?.page_background_color, PROFILE_DEFAULTS.page_background_color),
-    page_gradient_color: hexOrFallback(seed?.page_gradient_color, PROFILE_DEFAULTS.page_gradient_color),
+    page_background_color: hexOrFallback(
+      seed?.page_background_color,
+      PROFILE_DEFAULTS.page_background_color,
+    ),
+    page_gradient_color: hexOrFallback(
+      seed?.page_gradient_color,
+      PROFILE_DEFAULTS.page_gradient_color,
+    ),
     page_gradient_angle: clamp(seed?.page_gradient_angle, 0, 360, 135),
     page_background_image_url: optStr(seed?.page_background_image_url ?? null, 500),
     page_background_video_url: optStr(seed?.page_background_video_url ?? null, 500),
     name_color: hexOrNull(seed?.name_color),
     bio_color: hexOrNull(seed?.bio_color),
-    qr_foreground_color: hexOrFallback(seed?.qr_foreground_color, PROFILE_DEFAULTS.qr_foreground_color),
-    qr_background_color: hexOrFallback(seed?.qr_background_color, PROFILE_DEFAULTS.qr_background_color),
+    qr_foreground_color: hexOrFallback(
+      seed?.qr_foreground_color,
+      PROFILE_DEFAULTS.qr_foreground_color,
+    ),
+    qr_background_color: hexOrFallback(
+      seed?.qr_background_color,
+      PROFILE_DEFAULTS.qr_background_color,
+    ),
     qr_margin: Math.round(clamp(seed?.qr_margin, 0, 10, 4)),
     created_at: serverTimestamp(),
     updated_at: serverTimestamp(),
@@ -525,12 +559,19 @@ export async function updateMyProfileFirestore(patch: Partial<Profile>): Promise
     }
   }
 
-  if (patch.card_background_type !== undefined) sanitized["card_background_type"] = patch.card_background_type;
+  if (patch.card_background_type !== undefined)
+    sanitized["card_background_type"] = patch.card_background_type;
   if (patch.card_background_color !== undefined) {
-    sanitized["card_background_color"] = hexOrFallback(patch.card_background_color, current.card_background_color);
+    sanitized["card_background_color"] = hexOrFallback(
+      patch.card_background_color,
+      current.card_background_color,
+    );
   }
   if (patch.card_gradient_color !== undefined) {
-    sanitized["card_gradient_color"] = hexOrFallback(patch.card_gradient_color, current.card_gradient_color);
+    sanitized["card_gradient_color"] = hexOrFallback(
+      patch.card_gradient_color,
+      current.card_gradient_color,
+    );
   }
   if (patch.card_gradient_angle !== undefined) {
     sanitized["card_gradient_angle"] = clamp(patch.card_gradient_angle, 0, 360, 135);
@@ -541,12 +582,19 @@ export async function updateMyProfileFirestore(patch: Partial<Profile>): Promise
   if (patch.social_icon_bg_color !== undefined) {
     sanitized["social_icon_bg_color"] = hexOrNull(patch.social_icon_bg_color);
   }
-  if (patch.page_background_type !== undefined) sanitized["page_background_type"] = patch.page_background_type;
+  if (patch.page_background_type !== undefined)
+    sanitized["page_background_type"] = patch.page_background_type;
   if (patch.page_background_color !== undefined) {
-    sanitized["page_background_color"] = hexOrFallback(patch.page_background_color, current.page_background_color);
+    sanitized["page_background_color"] = hexOrFallback(
+      patch.page_background_color,
+      current.page_background_color,
+    );
   }
   if (patch.page_gradient_color !== undefined) {
-    sanitized["page_gradient_color"] = hexOrFallback(patch.page_gradient_color, current.page_gradient_color);
+    sanitized["page_gradient_color"] = hexOrFallback(
+      patch.page_gradient_color,
+      current.page_gradient_color,
+    );
   }
   if (patch.page_gradient_angle !== undefined) {
     sanitized["page_gradient_angle"] = clamp(patch.page_gradient_angle, 0, 360, 135);
@@ -555,7 +603,8 @@ export async function updateMyProfileFirestore(patch: Partial<Profile>): Promise
     sanitized["page_background_image_url"] = optStr(patch.page_background_image_url, 500);
   }
   if (patch.page_background_image_mode !== undefined) {
-    sanitized["page_background_image_mode"] = patch.page_background_image_mode === "repeat" ? "repeat" : "cover";
+    sanitized["page_background_image_mode"] =
+      patch.page_background_image_mode === "repeat" ? "repeat" : "cover";
   }
   if (patch.page_background_use_image !== undefined) {
     sanitized["page_background_use_image"] = Boolean(patch.page_background_use_image);
@@ -564,26 +613,36 @@ export async function updateMyProfileFirestore(patch: Partial<Profile>): Promise
     sanitized["page_background_video_url"] = optStr(patch.page_background_video_url, 500);
   }
   if (patch.page_background_media_type !== undefined) {
-    sanitized["page_background_media_type"] = patch.page_background_media_type === "video" ? "video" : "image";
+    sanitized["page_background_media_type"] =
+      patch.page_background_media_type === "video" ? "video" : "image";
   }
   if (patch.name_font_family !== undefined) sanitized["name_font_family"] = patch.name_font_family;
-  if (patch.name_font_weight !== undefined) sanitized["name_font_weight"] = clamp(patch.name_font_weight, 100, 900, 600);
+  if (patch.name_font_weight !== undefined)
+    sanitized["name_font_weight"] = clamp(patch.name_font_weight, 100, 900, 600);
   if (patch.name_font_style !== undefined) sanitized["name_font_style"] = patch.name_font_style;
   if (patch.bio_font_family !== undefined) sanitized["bio_font_family"] = patch.bio_font_family;
-  if (patch.bio_font_weight !== undefined) sanitized["bio_font_weight"] = clamp(patch.bio_font_weight, 100, 900, 400);
+  if (patch.bio_font_weight !== undefined)
+    sanitized["bio_font_weight"] = clamp(patch.bio_font_weight, 100, 900, 400);
   if (patch.bio_font_style !== undefined) sanitized["bio_font_style"] = patch.bio_font_style;
   if (patch.name_color !== undefined) sanitized["name_color"] = hexOrNull(patch.name_color);
   if (patch.bio_color !== undefined) sanitized["bio_color"] = hexOrNull(patch.bio_color);
   if (patch.qr_foreground_color !== undefined) {
-    sanitized["qr_foreground_color"] = hexOrFallback(patch.qr_foreground_color, current.qr_foreground_color);
+    sanitized["qr_foreground_color"] = hexOrFallback(
+      patch.qr_foreground_color,
+      current.qr_foreground_color,
+    );
   }
   if (patch.qr_background_color !== undefined) {
-    sanitized["qr_background_color"] = hexOrFallback(patch.qr_background_color, current.qr_background_color);
+    sanitized["qr_background_color"] = hexOrFallback(
+      patch.qr_background_color,
+      current.qr_background_color,
+    );
   }
   if (patch.qr_margin !== undefined) {
     sanitized["qr_margin"] = Math.round(clamp(patch.qr_margin, 0, 10, 4));
   }
-  if (patch.qr_error_correction !== undefined) sanitized["qr_error_correction"] = patch.qr_error_correction;
+  if (patch.qr_error_correction !== undefined)
+    sanitized["qr_error_correction"] = patch.qr_error_correction;
   if (patch.qr_module_shape !== undefined) sanitized["qr_module_shape"] = patch.qr_module_shape;
   if (patch.qr_eye_shape !== undefined) sanitized["qr_eye_shape"] = patch.qr_eye_shape;
 
@@ -597,7 +656,9 @@ export async function updateMyProfileFirestore(patch: Partial<Profile>): Promise
     }
     const nextUsername = parsed.data;
     if (!(await checkUsernameAvailableFirestore(nextUsername))) {
-      const err = new Error('duplicate key value violates unique constraint "profiles_username_key"') as Error & {
+      const err = new Error(
+        'duplicate key value violates unique constraint "profiles_username_key"',
+      ) as Error & {
         code?: string;
       };
       err.code = "23505";
@@ -659,6 +720,60 @@ export async function fetchCustomLinksFirestore(
   }
 }
 
+const VALID_CUSTOM_LINK_TYPES = new Set<string>(["link", "phone", "email"]);
+
+function hasControlChar(value: string): boolean {
+  for (let i = 0; i < value.length; i += 1) {
+    const code = value.charCodeAt(i);
+    if (code <= 0x1f || code === 0x7f) return true;
+  }
+  return false;
+}
+
+export function validateCustomLinkUrl(rawUrl: string, linkType: string): string {
+  if (!VALID_CUSTOM_LINK_TYPES.has(linkType)) {
+    throw new Error("Unsupported custom link type");
+  }
+  const cleanUrl = rawUrl.trim();
+  if (!cleanUrl) {
+    throw new Error("Link URL is required");
+  }
+  if (cleanUrl.length > 500) {
+    throw new Error("Link URL must be 500 characters or fewer");
+  }
+  if (hasControlChar(cleanUrl)) {
+    throw new Error("Link URL contains invalid characters");
+  }
+
+  if (linkType === "link") {
+    let parsed: URL;
+    try {
+      parsed = new URL(cleanUrl);
+    } catch {
+      throw new Error("Custom link URL must be a valid https:// or http:// URL");
+    }
+    if (
+      (parsed.protocol !== "https:" && parsed.protocol !== "http:") ||
+      !/^https?:\/\/.+/i.test(cleanUrl)
+    ) {
+      throw new Error("Custom link URL must start with https:// or http://");
+    }
+    return cleanUrl.replace(/^(https?):\/\//i, (match) => match.toLowerCase());
+  }
+
+  if (linkType === "email") {
+    if (!/^mailto:.+/i.test(cleanUrl)) {
+      throw new Error("Email link URL must start with mailto:");
+    }
+    return `mailto:${cleanUrl.slice("mailto:".length)}`;
+  }
+
+  if (!/^tel:.+/i.test(cleanUrl)) {
+    throw new Error("Phone link URL must start with tel:");
+  }
+  return `tel:${cleanUrl.slice("tel:".length)}`;
+}
+
 export async function createCustomLinkFirestore(input: {
   name: string;
   url: string;
@@ -669,6 +784,11 @@ export async function createCustomLinkFirestore(input: {
 }): Promise<CustomLink> {
   const user = auth.currentUser;
   if (!user) throw new Error("Not signed in");
+  const cleanName = input.name.trim().slice(0, 80);
+  if (!cleanName) throw new Error("Link name must be 1-80 characters");
+  const cleanUrl = validateCustomLinkUrl(input.url, input.link_type);
+  const cleanIcon = (input.icon || "globe").trim().slice(0, 40);
+
   const existing = await fetchCustomLinksFirestore(user.uid, false);
   const nextPos =
     typeof input.position === "number"
@@ -677,11 +797,6 @@ export async function createCustomLinkFirestore(input: {
         ? Math.max(...existing.map((l) => l.position)) + 1
         : 0;
   const linkId = crypto.randomUUID();
-  const cleanName = input.name.trim().slice(0, 80);
-  if (!cleanName) throw new Error("Link name must be 1-80 characters");
-  const cleanUrl = input.url.trim().slice(0, 500);
-  if (!cleanUrl) throw new Error("Link URL is required");
-  const cleanIcon = (input.icon || "globe").trim().slice(0, 40);
 
   const path = `custom_links/${linkId}`;
   try {
@@ -708,14 +823,61 @@ export async function updateCustomLinkFirestore(
   id: string,
   patch: Partial<Pick<CustomLink, "name" | "url" | "icon" | "link_type" | "enabled">>,
 ): Promise<CustomLink> {
+  if (patch.link_type !== undefined && !VALID_CUSTOM_LINK_TYPES.has(patch.link_type)) {
+    throw new Error("Unsupported custom link type");
+  }
+
   const updateData: Record<string, unknown> = { updated_at: serverTimestamp() };
-  if (patch.name !== undefined) updateData["name"] = patch.name.trim().slice(0, 80);
-  if (patch.url !== undefined) updateData["url"] = patch.url.trim().slice(0, 500);
+  if (patch.name !== undefined) {
+    const cleanName = patch.name.trim().slice(0, 80);
+    if (!cleanName) throw new Error("Link name must be 1-80 characters");
+    updateData["name"] = cleanName;
+  }
   if (patch.icon !== undefined) updateData["icon"] = patch.icon.trim().slice(0, 40);
   if (patch.link_type !== undefined) updateData["link_type"] = patch.link_type;
   if (patch.enabled !== undefined) updateData["enabled"] = Boolean(patch.enabled);
 
+  if (patch.url !== undefined && patch.link_type !== undefined) {
+    updateData["url"] = validateCustomLinkUrl(patch.url, patch.link_type);
+  } else if (patch.url !== undefined) {
+    const trimmed = patch.url.trim();
+    if (!trimmed) {
+      throw new Error("Link URL is required");
+    }
+    if (!/^(https?:\/\/|mailto:|tel:)/i.test(trimmed)) {
+      throw new Error("Custom link URL uses an unsupported protocol");
+    }
+  }
+
   const path = `custom_links/${id}`;
+  if (
+    (patch.url !== undefined && patch.link_type === undefined) ||
+    (patch.link_type !== undefined && patch.url === undefined)
+  ) {
+    let existingData: DocumentData | undefined;
+    try {
+      const existingSnap = await getDoc(doc(db, "custom_links", id));
+      existingData = existingSnap.data();
+    } catch (error) {
+      handleFirestoreError(error, OperationType.GET, path);
+    }
+
+    const effectiveType =
+      patch.link_type ??
+      (typeof existingData?.["link_type"] === "string" ? existingData["link_type"] : "link");
+    const effectiveUrl =
+      patch.url ?? (typeof existingData?.["url"] === "string" ? existingData["url"] : undefined);
+
+    if (effectiveUrl !== undefined) {
+      const validated = validateCustomLinkUrl(effectiveUrl, effectiveType);
+      if (patch.url !== undefined) {
+        updateData["url"] = validated;
+      }
+    } else if (patch.url !== undefined) {
+      updateData["url"] = validateCustomLinkUrl(patch.url, effectiveType);
+    }
+  }
+
   try {
     await updateDoc(doc(db, "custom_links", id), updateData);
     const saved = await getDoc(doc(db, "custom_links", id));
@@ -757,7 +919,9 @@ export async function reorderCustomLinksFirestore(
 }
 
 // --- Social Link Settings ---
-export async function fetchSocialLinkSettingsFirestore(profileId: string): Promise<SocialLinkSetting[]> {
+export async function fetchSocialLinkSettingsFirestore(
+  profileId: string,
+): Promise<SocialLinkSetting[]> {
   if (!profileId) return [];
   try {
     const q = query(collection(db, "social_link_settings"), where("profile_id", "==", profileId));
@@ -783,14 +947,18 @@ export async function fetchSocialLinkSettingsFirestore(profileId: string): Promi
   }
 }
 
-export async function saveSocialLinkSettingsFirestore(settings: SocialLinkSetting[]): Promise<void> {
+export async function saveSocialLinkSettingsFirestore(
+  settings: SocialLinkSetting[],
+): Promise<void> {
   const user = auth.currentUser;
   if (!user) throw new Error("Not signed in");
   const existingSnap = await getDocs(
     query(collection(db, "social_link_settings"), where("profile_id", "==", user.uid)),
   ).catch((error) => handleFirestoreError(error, OperationType.LIST, "social_link_settings"));
 
-  const existingPlatforms = new Set(existingSnap.docs.map((d) => String(d.data()["platform"] ?? "")));
+  const existingPlatforms = new Set(
+    existingSnap.docs.map((d) => String(d.data()["platform"] ?? "")),
+  );
   const batch = writeBatch(db);
 
   settings.forEach((setting, position) => {
@@ -927,6 +1095,25 @@ export async function fetchAnalyticsFirestore(profileId: string): Promise<Profil
 
 // --- Chunked Persistent Media Storage ---
 const MEDIA_CHUNK_BYTES = 450_000;
+export const MAX_MEDIA_OBJECTS_PER_OWNER = 20;
+export const ALLOWED_MEDIA_CONTENT_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "video/mp4",
+  "video/webm",
+] as const;
+
+const ALLOWED_MEDIA_CONTENT_TYPE_SET = new Set<string>(ALLOWED_MEDIA_CONTENT_TYPES);
+
+export function normalizeMediaContentType(rawType: string): string {
+  const baseType = rawType.split(";")[0]?.trim().toLowerCase() ?? "";
+  if (!ALLOWED_MEDIA_CONTENT_TYPE_SET.has(baseType)) {
+    throw new Error("Unsupported file type. Allowed types: JPEG, PNG, WebP, GIF, MP4, or WebM");
+  }
+  return baseType;
+}
 
 export function buildMediaDocId(
   bucket: "avatars" | "covers" | "backgrounds",
@@ -961,9 +1148,36 @@ export async function uploadMediaFirestore(
     throw new Error("Unauthorized media upload path");
   }
 
+  const normalizedContentType = normalizeMediaContentType(contentType || body.type || "");
+
   const bytes = new Uint8Array(await body.arrayBuffer());
   if (bytes.byteLength === 0 || bytes.byteLength > 6 * 1024 * 1024) {
     throw new Error("File size must be between 1 byte and 6 MB");
+  }
+
+  const accountRef = doc(db, "accounts", user.uid);
+  let accountSnap = await getDoc(accountRef).catch((error) =>
+    handleFirestoreError(error, OperationType.GET, `accounts/${user.uid}`),
+  );
+  if (!accountSnap.exists()) {
+    if (!user.email || !user.emailVerified) {
+      throw new Error("Verified account required before uploading media");
+    }
+    await syncFirebaseAccountDoc(user);
+    accountSnap = await getDoc(accountRef).catch((error) =>
+      handleFirestoreError(error, OperationType.GET, `accounts/${user.uid}`),
+    );
+  }
+
+  const rawCount = accountSnap.exists() ? accountSnap.data()?.["media_count"] : 0;
+  const currentCount =
+    typeof rawCount === "number" && Number.isFinite(rawCount)
+      ? Math.max(0, Math.floor(rawCount))
+      : 0;
+  if (currentCount >= MAX_MEDIA_OBJECTS_PER_OWNER) {
+    throw new Error(
+      `Upload limit reached: maximum of ${MAX_MEDIA_OBJECTS_PER_OWNER} media files per user exceeded`,
+    );
   }
 
   const chunkCount = Math.ceil(bytes.byteLength / MEDIA_CHUNK_BYTES);
@@ -977,7 +1191,7 @@ export async function uploadMediaFirestore(
     bucket,
     object_path: objectPath,
     name: parts[1].slice(0, 128),
-    content_type: (contentType || body.type || "application/octet-stream").slice(0, 120),
+    content_type: normalizedContentType,
     byte_length: bytes.byteLength,
     chunk_count: chunkCount,
     created_at: serverTimestamp(),
@@ -992,6 +1206,11 @@ export async function uploadMediaFirestore(
       data: b64,
     });
   }
+
+  batch.update(accountRef, {
+    media_count: currentCount + 1,
+    updated_at: serverTimestamp(),
+  });
 
   try {
     await batch.commit();
@@ -1028,6 +1247,22 @@ export async function removeMediaFirestore(
   const user = auth.currentUser;
   if (!user || paths.length === 0) return;
 
+  const accountRef = doc(db, "accounts", user.uid);
+  let accountHasCount = false;
+  let currentCount = 0;
+  try {
+    const accountSnap = await getDoc(accountRef);
+    if (accountSnap.exists()) {
+      const rawCount = accountSnap.data()?.["media_count"];
+      if (typeof rawCount === "number" && Number.isFinite(rawCount) && rawCount > 0) {
+        accountHasCount = true;
+        currentCount = Math.floor(rawCount);
+      }
+    }
+  } catch {
+    /* proceed with media deletion even if account counter is missing */
+  }
+
   for (const objectPath of paths) {
     const mediaId = buildMediaDocId(bucket, objectPath);
     const mediaRef = doc(db, "media_objects", mediaId);
@@ -1042,6 +1277,13 @@ export async function removeMediaFirestore(
         batch.delete(doc(db, "media_objects", mediaId, "chunks", String(i)));
       }
       batch.delete(mediaRef);
+      if (accountHasCount && currentCount > 0) {
+        currentCount -= 1;
+        batch.update(accountRef, {
+          media_count: currentCount,
+          updated_at: serverTimestamp(),
+        });
+      }
       await batch.commit();
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `media_objects/${mediaId}`);
@@ -1049,9 +1291,7 @@ export async function removeMediaFirestore(
   }
 }
 
-async function deleteDocRefsInBatches(
-  refs: Array<ReturnType<typeof doc>>,
-): Promise<void> {
+async function deleteDocRefsInBatches(refs: Array<ReturnType<typeof doc>>): Promise<void> {
   for (let i = 0; i < refs.length; i += 400) {
     const batch = writeBatch(db);
     for (const ref of refs.slice(i, i + 400)) {

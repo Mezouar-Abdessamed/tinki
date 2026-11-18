@@ -122,8 +122,12 @@ function SectionHead({
   return (
     <ScrollReveal className={center ? "mx-auto max-w-2xl text-center" : "max-w-2xl"}>
       <p className="text-xs font-semibold tracking-wider text-primary uppercase">{t(eyebrow)}</p>
-      <h2 className="mt-3 font-display text-3xl font-semibold text-balance sm:text-4xl">{t(title)}</h2>
-      {body ? <p className="mt-4 text-base leading-relaxed text-muted-foreground">{t(body)}</p> : null}
+      <h2 className="mt-3 font-display text-3xl font-semibold text-balance sm:text-4xl">
+        {t(title)}
+      </h2>
+      {body ? (
+        <p className="mt-4 text-base leading-relaxed text-muted-foreground">{t(body)}</p>
+      ) : null}
     </ScrollReveal>
   );
 }
@@ -178,7 +182,8 @@ function Landing() {
     </Link>
   ) : (
     <Link to={registrationEntryPath()}>
-      {t("Create account")}{"\u00a0"}{" "}
+      {t("Create account")}
+      {"\u00a0"}{" "}
       <ArrowRight className="ms-2 inline h-4 w-4 transition-transform duration-200 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
     </Link>
   );
@@ -224,7 +229,9 @@ function Landing() {
             className="flex cursor-pointer items-center justify-between gap-3"
           >
             <span lang={option.code}>{option.label}</span>
-            {lang === option.code ? <Check className="h-3.5 w-3.5 text-primary" aria-hidden="true" /> : null}
+            {lang === option.code ? (
+              <Check className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+            ) : null}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
@@ -259,7 +266,9 @@ function Landing() {
       {/* 1. Navigation */}
       <header
         className={`sticky top-0 z-40 transition-[background-color,border-color,padding] duration-300 ${
-          scrolled ? "border-b border-border bg-background/85 backdrop-blur-md" : "border-b border-transparent"
+          scrolled
+            ? "border-b border-border bg-background/85 backdrop-blur-md"
+            : "border-b border-transparent"
         }`}
       >
         <div
@@ -278,7 +287,11 @@ function Landing() {
               <a
                 key={n.href}
                 href={n.href}
-                style={{ ["--enter-y" as string]: "-6px", ["--enter-dur" as string]: "450ms", ["--enter-delay" as string]: `${100 + index * 50}ms` }}
+                style={{
+                  ["--enter-y" as string]: "-6px",
+                  ["--enter-dur" as string]: "450ms",
+                  ["--enter-delay" as string]: `${100 + index * 50}ms`,
+                }}
                 className="landing-enter-down text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 {t(n.label)}
@@ -311,7 +324,10 @@ function Landing() {
                   <div className="flex justify-center" onClick={() => setMobileMenuOpen(false)}>
                     <Logo />
                   </div>
-                  <nav aria-label={t("Main")} className="flex flex-1 flex-col items-center justify-center gap-2">
+                  <nav
+                    aria-label={t("Main")}
+                    className="flex flex-1 flex-col items-center justify-center gap-2"
+                  >
                     {LANDING_NAV.map((n) => (
                       <a
                         key={n.href}
@@ -341,7 +357,11 @@ function Landing() {
         <section className="mx-auto grid max-w-6xl items-center gap-10 px-5 pt-6 pb-14 lg:grid-cols-[1.08fr_0.92fr] lg:pt-8 lg:pb-16">
           <div className="flex flex-col items-center text-center lg:items-start lg:text-start">
             <h1
-              style={{ ["--enter-y" as string]: "20px", ["--enter-dur" as string]: "700ms", ["--enter-delay" as string]: "120ms" }}
+              style={{
+                ["--enter-y" as string]: "20px",
+                ["--enter-dur" as string]: "700ms",
+                ["--enter-delay" as string]: "120ms",
+              }}
               className="landing-enter-up max-w-3xl font-display text-[clamp(2.3rem,4.5vw,4rem)] leading-[1.03] font-bold text-balance"
             >
               {t("Your links, style, and QR code")}
@@ -351,7 +371,11 @@ function Landing() {
               </span>
             </h1>
             <p
-              style={{ ["--enter-y" as string]: "16px", ["--enter-dur" as string]: "650ms", ["--enter-delay" as string]: "240ms" }}
+              style={{
+                ["--enter-y" as string]: "16px",
+                ["--enter-dur" as string]: "650ms",
+                ["--enter-delay" as string]: "240ms",
+              }}
               className="landing-enter-up mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg"
             >
               {t(
@@ -359,7 +383,11 @@ function Landing() {
               )}
             </p>
             <div
-              style={{ ["--enter-y" as string]: "16px", ["--enter-dur" as string]: "650ms", ["--enter-delay" as string]: "360ms" }}
+              style={{
+                ["--enter-y" as string]: "16px",
+                ["--enter-dur" as string]: "650ms",
+                ["--enter-delay" as string]: "360ms",
+              }}
               className="landing-enter-up mt-8 flex w-full flex-col items-center gap-4 sm:w-auto sm:flex-row lg:items-center"
             >
               <Button
@@ -377,12 +405,27 @@ function Landing() {
               </a>
             </div>
             <div
-              style={{ ["--enter-y" as string]: "12px", ["--enter-dur" as string]: "550ms", ["--enter-delay" as string]: "460ms" }}
+              style={{
+                ["--enter-y" as string]: "12px",
+                ["--enter-dur" as string]: "550ms",
+                ["--enter-delay" as string]: "460ms",
+              }}
               className="landing-enter-up mt-9 flex flex-wrap items-center justify-center gap-3 text-muted-foreground lg:justify-start"
               aria-label={t("Supported platforms include")}
             >
               {(
-                ["instagram", "tiktok", "facebook", "snapchat", "linkedin", "x", "youtube", "whatsapp", "github", "discord"] as const
+                [
+                  "instagram",
+                  "tiktok",
+                  "facebook",
+                  "snapchat",
+                  "linkedin",
+                  "x",
+                  "youtube",
+                  "whatsapp",
+                  "github",
+                  "discord",
+                ] as const
               ).map((k) => (
                 <SocialIcon key={k} platform={k} className="h-4 w-4" />
               ))}
@@ -393,14 +436,22 @@ function Landing() {
           </div>
 
           <div
-            style={{ ["--enter-y" as string]: "36px", ["--enter-dur" as string]: "750ms", ["--enter-delay" as string]: "300ms" }}
+            style={{
+              ["--enter-y" as string]: "36px",
+              ["--enter-dur" as string]: "750ms",
+              ["--enter-delay" as string]: "300ms",
+            }}
             className="landing-enter-up relative mx-auto w-full max-w-[330px] sm:max-w-[350px]"
           >
             <PhoneFrame className="liquid-glass">
               <DemoPublicProfile compact showCover showQrButton />
             </PhoneFrame>
             <div
-              style={{ ["--enter-y" as string]: "16px", ["--enter-dur" as string]: "600ms", ["--enter-delay" as string]: "500ms" }}
+              style={{
+                ["--enter-y" as string]: "16px",
+                ["--enter-dur" as string]: "600ms",
+                ["--enter-delay" as string]: "500ms",
+              }}
               className="landing-enter-up liquid-glass absolute bottom-4 -start-5 z-20 hidden items-center gap-3 rounded-2xl p-3 text-start sm:flex lg:-start-8"
             >
               <DemoQr size={72} />
@@ -467,7 +518,10 @@ function Landing() {
                           key={row.title}
                           className="flex items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2"
                         >
-                          <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                          <GripVertical
+                            className="h-4 w-4 shrink-0 text-muted-foreground"
+                            aria-hidden="true"
+                          />
                           <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-border bg-background text-primary">
                             <RowIcon className="h-4 w-4" aria-hidden="true" />
                           </span>
@@ -679,11 +733,7 @@ function Landing() {
               <div className="mt-8 space-y-3">
                 {BACKGROUND_MODES.map((mode) => {
                   const ModeIcon =
-                    mode.key === "video"
-                      ? Film
-                      : mode.key === "pattern"
-                        ? ImageIcon
-                        : Sparkles;
+                    mode.key === "video" ? Film : mode.key === "pattern" ? ImageIcon : Sparkles;
                   return (
                     <div
                       key={mode.key}
@@ -862,7 +912,9 @@ function Landing() {
                         <button
                           key={eye.value}
                           type="button"
-                          onClick={() => setQrSettings((curr) => ({ ...curr, eyeShape: eye.value }))}
+                          onClick={() =>
+                            setQrSettings((curr) => ({ ...curr, eyeShape: eye.value }))
+                          }
                           aria-pressed={active}
                           className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
                             active
@@ -886,7 +938,10 @@ function Landing() {
                   "High-resolution PNG download",
                 ].map((item) => (
                   <li key={item} className="flex items-center gap-2.5 text-muted-foreground">
-                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-hidden="true" />
+                    <span
+                      className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
+                      aria-hidden="true"
+                    />
                     <span>{t(item)}</span>
                   </li>
                 ))}
@@ -925,9 +980,13 @@ function Landing() {
               {WORKFLOW_STEPS.map((s, i) => (
                 <ScrollReveal key={s.title} delay={i * 70}>
                   <li className="border-t border-border pt-6">
-                    <span className="font-display text-sm font-semibold text-primary">0{i + 1}</span>
+                    <span className="font-display text-sm font-semibold text-primary">
+                      0{i + 1}
+                    </span>
                     <h3 className="mt-3 font-display text-xl font-semibold">{t(s.title)}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{t(s.body)}</p>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                      {t(s.body)}
+                    </p>
                   </li>
                 </ScrollReveal>
               ))}
@@ -1028,7 +1087,9 @@ function Landing() {
           <div>
             <Logo />
             <p className="mt-3 max-w-xs text-sm text-muted-foreground">
-              {t("One personal page for social profiles, custom links, covers, analytics and QR codes")}
+              {t(
+                "One personal page for social profiles, custom links, covers, analytics and QR codes",
+              )}
             </p>
           </div>
           <div>

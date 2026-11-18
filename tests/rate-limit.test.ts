@@ -3,10 +3,12 @@ import os from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
-import { SlidingWindowRateLimiter } from "../src/server/api-router.server";
+import { SlidingWindowRateLimiter, getClientIp } from "../src/server/api-router.server";
 import { hashPassword, verifyPassword } from "../src/server/local-fallback-store.server";
 
-const PNG_BYTES = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d]);
+const PNG_BYTES = Buffer.from([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
+]);
 
 describe("API rate limiting & async scrypt password hashing", () => {
   const prevDataDir = process.env["TINKI_DATA_DIR"];
@@ -320,5 +322,172 @@ describe("API rate limiting & async scrypt password hashing", () => {
     } finally {
       clearInterval(timer);
     }
+  });
+
+  it("getClientIp ignores spoofed leftmost X-Forwarded-For entries and respects TRUSTED_PROXY_HEADER", () => {
+    const prevHeader = process.env["TRUSTED_PROXY_HEADER"];
+    delete process.env["TRUSTED_PROXY_HEADER"];
+    try {
+      // Default: uses ONLY the rightmost XFF entry appended by the trusted proxy
+      expect(
+        getClientIp(
+          new Request("http://localhost:3000/api/events", {
+            headers: {
+              "x-forwarded-for": "1.1.1.1, 2.2.2.2, 198.51.100.42",
+              "cf-connecting-ip": "9.9.9.9",
+              "x-vercel-forwarded-for": "8.8.8.8",
+              "x-real-ip": "7.7.7.7",
+            },
+          }),
+        ),
+      ).toBe("198.51.100.42");
+
+      // Normalizes bracketed IPv6 or IPv4:port in rightmost slot and ignores malformed tail without walking left
+      expect(
+        getClientIp(
+          new Request("http://localhost:3000/api/events", {
+            headers: { "x-forwarded-for": "1.1.1.1, [2001:db8::1]:443" },
+          }),
+        ),
+      ).toBe("2001:db8::1");
+      expect(
+        getClientIp(
+          new Request("http://localhost:3000/api/events", {
+            headers: { "x-forwarded-for": "1.1.1.1, not-a-valid-ip" },
+          }),
+        ),
+      ).toBe("127.0.0.1");
+
+      // TRUSTED_PROXY_HEADER=cf-connecting-ip uses ONLY cf-connecting-ip and ignores XFF
+      process.env["TRUSTED_PROXY_HEADER"] = "cf-connecting-ip";
+      expect(
+        getClientIp(
+          new Request("http://localhost:3000/api/events", {
+            headers: {
+              "x-forwarded-for": "1.1.1.1, 2.2.2.2",
+              "x-vercel-forwarded-for": "8.8.8.8",
+              "cf-connecting-ip": "203.0.113.19",
+            },
+          }),
+        ),
+      ).toBe("203.0.113.19");
+
+      // TRUSTED_PROXY_HEADER=x-vercel-forwarded-for uses ONLY x-vercel-forwarded-for
+      process.env["TRUSTED_PROXY_HEADER"] = "X-Vercel-Forwarded-For";
+      expect(
+        getClientIp(
+          new Request("http://localhost:3000/api/events", {
+            headers: {
+              "x-forwarded-for": "1.1.1.1, 2.2.2.2",
+              "cf-connecting-ip": "9.9.9.9",
+              "x-vercel-forwarded-for": "198.51.100.99",
+            },
+          }),
+        ),
+      ).toBe("198.51.100.99");
+    } finally {
+      if (prevHeader === undefined) delete process.env["TRUSTED_PROXY_HEADER"];
+      else process.env["TRUSTED_PROXY_HEADER"] = prevHeader;
+    }
+  });
+
+  it("spoofed X-Forwarded-For headers cannot reset or bypass IP rate limits", async () => {
+    const rateLimiter = new SlidingWindowRateLimiter();
+    const clockMs = 1_820_000_000_000;
+
+    // 1. Default mode (last XFF entry): attacker prepends rotating spoofed IPs while proxy appends real IP
+    for (let i = 0; i < 5; i++) {
+      const res = (await handleApiOrMediaRequest(
+        new Request("http://localhost:3000/api/auth/forgot-password", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-forwarded-for": `10.0.0.${i + 1}, 198.51.100.77`,
+            "cf-connecting-ip": `172.16.0.${i + 1}`,
+          },
+          body: JSON.stringify({ email: "" }),
+        }),
+        { rateLimiter, nowMs: () => clockMs },
+      ))!;
+      expect(res.status).toBe(200);
+    }
+
+    const blockedDefault = (await handleApiOrMediaRequest(
+      new Request("http://localhost:3000/api/auth/forgot-password", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-forwarded-for": "203.0.113.250, 198.51.100.77",
+          "cf-connecting-ip": "172.16.0.99",
+        },
+        body: JSON.stringify({ email: "" }),
+      }),
+      { rateLimiter, nowMs: () => clockMs },
+    ))!;
+    expect(blockedDefault.status).toBe(429);
+
+    // 2. TRUSTED_PROXY_HEADER=cf-connecting-ip: rotating entire X-Forwarded-For chains does NOT reset limit
+    for (let i = 0; i < 5; i++) {
+      const res = (await handleApiOrMediaRequest(
+        new Request("http://localhost:3000/api/auth/login", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-forwarded-for": `192.0.2.${i + 1}, 203.0.113.${i + 10}`,
+            "cf-connecting-ip": "198.51.100.88",
+          },
+          body: JSON.stringify({ email: "alice.rl@example.com", password: "WrongPassword" }),
+        }),
+        { rateLimiter, nowMs: () => clockMs, trustedProxyHeader: "cf-connecting-ip" },
+      ))!;
+      expect(res.status).toBe(401);
+    }
+
+    const blockedCf = (await handleApiOrMediaRequest(
+      new Request("http://localhost:3000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-forwarded-for": "203.0.113.254",
+          "cf-connecting-ip": "198.51.100.88",
+        },
+        body: JSON.stringify({ email: "alice.rl@example.com", password: "Password123!" }),
+      }),
+      { rateLimiter, nowMs: () => clockMs, trustedProxyHeader: "cf-connecting-ip" },
+    ))!;
+    expect(blockedCf.status).toBe(429);
+
+    // 3. TRUSTED_PROXY_HEADER=x-vercel-forwarded-for: rotating XFF & cf-connecting-ip does NOT reset limit
+    for (let i = 0; i < 5; i++) {
+      const res = (await handleApiOrMediaRequest(
+        new Request("http://localhost:3000/api/auth/check-signup", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-forwarded-for": `198.51.100.${i + 1}`,
+            "cf-connecting-ip": `192.0.2.${i + 1}`,
+            "x-vercel-forwarded-for": "203.0.113.44",
+          },
+          body: JSON.stringify({ email: "v@example.com", username: "verceluser" }),
+        }),
+        { rateLimiter, nowMs: () => clockMs, trustedProxyHeader: "x-vercel-forwarded-for" },
+      ))!;
+      expect(res.status).toBe(200);
+    }
+
+    const blockedVercel = (await handleApiOrMediaRequest(
+      new Request("http://localhost:3000/api/auth/check-signup", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-forwarded-for": "198.51.100.250",
+          "cf-connecting-ip": "192.0.2.250",
+          "x-vercel-forwarded-for": "203.0.113.44",
+        },
+        body: JSON.stringify({ email: "v@example.com", username: "verceluser" }),
+      }),
+      { rateLimiter, nowMs: () => clockMs, trustedProxyHeader: "x-vercel-forwarded-for" },
+    ))!;
+    expect(blockedVercel.status).toBe(429);
   });
 });

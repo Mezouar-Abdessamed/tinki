@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { hasProfileEdits, type ProfileEditValues } from "../src/lib/profile-edit-state";
 
-const saved: ProfileEditValues = { username: "owner", displayName: "Owner", bio: "Hello", avatarPath: "owner/avatar.png", coverPath: "owner/cover.png", coverX: 50, coverY: 50 };
+const saved: ProfileEditValues = {
+  username: "owner",
+  displayName: "Owner",
+  bio: "Hello",
+  avatarPath: "owner/avatar.png",
+  coverPath: "owner/cover.png",
+  coverX: 50,
+  coverY: 50,
+};
 
 describe("staged information edits", () => {
   it("keeps unchanged information clean", () => {

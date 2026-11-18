@@ -143,11 +143,13 @@ describe("TinkiStore demo seeding guard & startup cleanup", () => {
 
     // Real user data remains intact
     expect(cleanedStore.getProfileByUsername("alice")?.id).toBe(realSession.user.id);
-    expect(cleanedStore.listCustomLinks(realSession.user.id).map((l) => l.id)).toEqual([realLink.id]);
+    expect(cleanedStore.listCustomLinks(realSession.user.id).map((l) => l.id)).toEqual([
+      realLink.id,
+    ]);
     expect(cleanedStore.getAnalytics(realSession.user.id, realSession.user.id).views).toBe(1);
     expect(
-      (await cleanedStore.login({ email: "alice@example.com", password: "RealPassword123!" }))
-        .user.id,
+      (await cleanedStore.login({ email: "alice@example.com", password: "RealPassword123!" })).user
+        .id,
     ).toBe(realSession.user.id);
     cleanedStore.dispose();
   });

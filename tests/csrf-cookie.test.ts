@@ -343,6 +343,9 @@ describe("Cookie security flags & CSRF protection (Origin + Content-Type)", () =
     ))!;
     // Rejected by Firebase proxy API key check (not by CSRF 403/415)
     expect(proxyRes.status).toBe(403);
-    expect(await proxyRes.json()).toEqual({ error: "Invalid Firebase API key", code: "bad_request" });
+    expect(await proxyRes.json()).toEqual({
+      error: "Invalid Firebase API key",
+      code: "bad_request",
+    });
   });
 });

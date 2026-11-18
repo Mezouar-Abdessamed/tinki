@@ -75,11 +75,12 @@ type CustomDraft = { name: string; destination: string; icon: string; linkType: 
 const EMPTY_CUSTOM: CustomDraft = { name: "", destination: "", icon: "globe", linkType: "link" };
 
 type DeleteTarget =
-  | { kind: "social"; platform: SocialPlatform }
-  | { kind: "custom"; link: CustomLink };
+  { kind: "social"; platform: SocialPlatform } | { kind: "custom"; link: CustomLink };
 
 function SortableRow({ id, children }: { id: string; children: (handle: ReactNode) => ReactNode }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+  });
   return (
     <div
       ref={setNodeRef}
@@ -131,12 +132,30 @@ function LinkRow({
         <p className="mt-0.5 truncate text-xs text-muted-foreground">{detail || "Not connected"}</p>
       </div>
       <div className="flex shrink-0 items-center gap-0.5">
-        <Switch checked={enabled} onCheckedChange={onToggle} aria-label={`${enabled ? "Disable" : "Enable"} ${title}`} />
-        <Button type="button" variant="ghost" size="icon" onClick={onEdit} title="Edit" aria-label={`Edit ${title}`}>
+        <Switch
+          checked={enabled}
+          onCheckedChange={onToggle}
+          aria-label={`${enabled ? "Disable" : "Enable"} ${title}`}
+        />
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={onEdit}
+          title="Edit"
+          aria-label={`Edit ${title}`}
+        >
           <Pencil />
         </Button>
         {onDelete ? (
-          <Button type="button" variant="ghost" size="icon" onClick={onDelete} title="Delete" aria-label={`Delete ${title}`}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={onDelete}
+            title="Delete"
+            aria-label={`Delete ${title}`}
+          >
             <Trash2 className="text-destructive" />
           </Button>
         ) : null}
@@ -145,7 +164,13 @@ function LinkRow({
   );
 }
 
-export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; onProfileSaved: () => void }) {
+export function MyLinksManager({
+  profile,
+  onProfileSaved,
+}: {
+  profile: Profile;
+  onProfileSaved: () => void;
+}) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
   const [socialSettings, setSocialSettings] = useState<SocialLinkSetting[]>([]);
   const [customLinks, setCustomLinks] = useState<CustomLink[]>([]);
@@ -182,8 +207,12 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
         const value = profile[platform.field];
         return typeof value === "string" && value.trim().length > 0;
       }).sort((a, b) => {
-        const aPosition = socialSettings.find((setting) => setting.platform === a.key)?.position ?? SOCIAL_PLATFORMS.indexOf(a);
-        const bPosition = socialSettings.find((setting) => setting.platform === b.key)?.position ?? SOCIAL_PLATFORMS.indexOf(b);
+        const aPosition =
+          socialSettings.find((setting) => setting.platform === a.key)?.position ??
+          SOCIAL_PLATFORMS.indexOf(a);
+        const bPosition =
+          socialSettings.find((setting) => setting.platform === b.key)?.position ??
+          SOCIAL_PLATFORMS.indexOf(b);
         return aPosition - bPosition;
       }),
     [profile, socialSettings],
@@ -208,7 +237,9 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
     if (oldIndex < 0 || newIndex < 0) return;
     const reorderedPlatforms = arrayMove(platforms, oldIndex, newIndex);
     const visiblePositions = platforms
-      .map((platform) => socialSettings.find((setting) => setting.platform === platform.key)?.position)
+      .map(
+        (platform) => socialSettings.find((setting) => setting.platform === platform.key)?.position,
+      )
       .filter((position): position is number => typeof position === "number")
       .sort((a, b) => a - b);
     const positionByPlatform = new Map(
@@ -232,7 +263,10 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
     const next = arrayMove(customLinks, oldIndex, newIndex);
     setCustomLinks(next);
     try {
-      await reorderCustomLinks(profile.id, next.map((link) => link.id));
+      await reorderCustomLinks(
+        profile.id,
+        next.map((link) => link.id),
+      );
       await customQuery.refetch();
     } catch {
       setCustomLinks(customQuery.data ?? []);
@@ -282,12 +316,16 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
   function openCustom(link?: CustomLink) {
     setPickerOpen(false);
     setCustomEditing(link ?? null);
-    setCustomDraft(link ? {
-      name: link.name,
-      destination: displayCustomDestination(link.url),
-      icon: link.icon,
-      linkType: (link.link_type as CustomLinkType) || "link",
-    } : EMPTY_CUSTOM);
+    setCustomDraft(
+      link
+        ? {
+            name: link.name,
+            destination: displayCustomDestination(link.url),
+            icon: link.icon,
+            linkType: (link.link_type as CustomLinkType) || "link",
+          }
+        : EMPTY_CUSTOM,
+    );
     setError(null);
   }
 
@@ -296,7 +334,10 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
     const name = customDraft.name.trim();
     if (!name) return setError("Enter a link name");
     if (name.length > 80) return setError("Keep the link name under 80 characters");
-    const destinationError = validateCustomDestination(customDraft.destination, customDraft.linkType);
+    const destinationError = validateCustomDestination(
+      customDraft.destination,
+      customDraft.linkType,
+    );
     if (destinationError) return setError(destinationError);
     setSaving(true);
     const payload = {
@@ -323,7 +364,9 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
   }
 
   async function toggleCustom(link: CustomLink, enabled: boolean) {
-    setCustomLinks((items) => items.map((item) => item.id === link.id ? { ...item, enabled } : item));
+    setCustomLinks((items) =>
+      items.map((item) => (item.id === link.id ? { ...item, enabled } : item)),
+    );
     try {
       await updateCustomLink(link.id, { enabled });
     } catch {
@@ -371,18 +414,29 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
         <header className="min-w-0">
           <h1 className="font-display text-3xl font-semibold">My Links</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Manage, order, and control every link shown on your public profile</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Manage, order, and control every link shown on your public profile
+          </p>
         </header>
-        <Button type="button" onClick={() => setPickerOpen(true)}><Plus /> Add Link</Button>
+        <Button type="button" onClick={() => setPickerOpen(true)}>
+          <Plus /> Add Link
+        </Button>
       </div>
 
       <section aria-labelledby="social-links-heading">
         <div className="mb-4">
-          <h2 id="social-links-heading" className="font-display text-lg font-semibold">Social & platform links</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Drag to set the order of your profile icons</p>
+          <h2 id="social-links-heading" className="font-display text-lg font-semibold">
+            Social & platform links
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Drag to set the order of your profile icons
+          </p>
         </div>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={endSocialDrag}>
-          <SortableContext items={platforms.map((item) => item.key)} strategy={verticalListSortingStrategy}>
+          <SortableContext
+            items={platforms.map((item) => item.key)}
+            strategy={verticalListSortingStrategy}
+          >
             <div className="grid gap-2.5">
               {platforms.length === 0 ? (
                 <div className="rounded-lg border border-dashed border-border px-5 py-8 text-center text-sm text-muted-foreground">
@@ -394,18 +448,30 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
                 const value = profile[platform.field] ?? "";
                 const enabled = Boolean(value) && (setting?.enabled ?? true);
                 return (
-                  <SortableRow key={platform.key} id={platform.key}>{(handle) => (
-                    <LinkRow
-                      handle={handle}
-                      icon={<SocialIcon platform={platform.key} className="h-5 w-5" />}
-                      title={platform.label}
-                      detail={value}
-                      enabled={enabled}
-                      onToggle={(checked) => value ? void persistSocialSettings(socialSettings.map((item) => item.platform === platform.key ? { ...item, enabled: checked } : item)) : openSocial(platform)}
-                      onEdit={() => openSocial(platform)}
-                      {...(value ? { onDelete: () => void removeSocial(platform) } : {})}
-                    />
-                  )}</SortableRow>
+                  <SortableRow key={platform.key} id={platform.key}>
+                    {(handle) => (
+                      <LinkRow
+                        handle={handle}
+                        icon={<SocialIcon platform={platform.key} className="h-5 w-5" />}
+                        title={platform.label}
+                        detail={value}
+                        enabled={enabled}
+                        onToggle={(checked) =>
+                          value
+                            ? void persistSocialSettings(
+                                socialSettings.map((item) =>
+                                  item.platform === platform.key
+                                    ? { ...item, enabled: checked }
+                                    : item,
+                                ),
+                              )
+                            : openSocial(platform)
+                        }
+                        onEdit={() => openSocial(platform)}
+                        {...(value ? { onDelete: () => void removeSocial(platform) } : {})}
+                      />
+                    )}
+                  </SortableRow>
                 );
               })}
             </div>
@@ -415,49 +481,88 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
 
       <section aria-labelledby="custom-links-heading">
         <div className="mb-4">
-          <h2 id="custom-links-heading" className="font-display text-lg font-semibold">Custom Links</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Websites, phone contacts, email addresses, and more</p>
+          <h2 id="custom-links-heading" className="font-display text-lg font-semibold">
+            Custom Links
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Websites, phone contacts, email addresses, and more
+          </p>
         </div>
         {customQuery.isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : null}
         {!customQuery.isLoading && customLinks.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border px-5 py-8 text-center text-sm text-muted-foreground">No custom links yet</div>
+          <div className="rounded-lg border border-dashed border-border px-5 py-8 text-center text-sm text-muted-foreground">
+            No custom links yet
+          </div>
         ) : null}
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(event) => void endCustomDrag(event)}>
-          <SortableContext items={customLinks.map((item) => item.id)} strategy={verticalListSortingStrategy}>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={(event) => void endCustomDrag(event)}
+        >
+          <SortableContext
+            items={customLinks.map((item) => item.id)}
+            strategy={verticalListSortingStrategy}
+          >
             <div className="grid gap-2.5">
               {customLinks.map((link) => (
-                <SortableRow key={link.id} id={link.id}>{(handle) => (
-                  <LinkRow
-                    handle={handle}
-                    icon={<CustomLinkIcon icon={link.icon} className="h-5 w-5" />}
-                    title={link.name}
-                    detail={displayCustomDestination(link.url)}
-                    enabled={link.enabled}
-                    onToggle={(checked) => void toggleCustom(link, checked)}
-                    onEdit={() => openCustom(link)}
-                    onDelete={() => void removeCustom(link)}
-                  />
-                )}</SortableRow>
+                <SortableRow key={link.id} id={link.id}>
+                  {(handle) => (
+                    <LinkRow
+                      handle={handle}
+                      icon={<CustomLinkIcon icon={link.icon} className="h-5 w-5" />}
+                      title={link.name}
+                      detail={displayCustomDestination(link.url)}
+                      enabled={link.enabled}
+                      onToggle={(checked) => void toggleCustom(link, checked)}
+                      onEdit={() => openCustom(link)}
+                      onDelete={() => void removeCustom(link)}
+                    />
+                  )}
+                </SortableRow>
               ))}
             </div>
           </SortableContext>
         </DndContext>
       </section>
 
-      <div className="rounded-lg border border-border bg-secondary/40 px-4 py-3 text-xs text-muted-foreground">Changes go live on your public profile immediately</div>
+      <div className="rounded-lg border border-border bg-secondary/40 px-4 py-3 text-xs text-muted-foreground">
+        Changes go live on your public profile immediately
+      </div>
 
       <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
-          <DialogHeader><DialogTitle>Add a new link</DialogTitle><DialogDescription>Choose what you want to add to your profile</DialogDescription></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Add a new link</DialogTitle>
+            <DialogDescription>Choose what you want to add to your profile</DialogDescription>
+          </DialogHeader>
           <div className="grid grid-cols-2 gap-2 rounded-lg bg-secondary p-1">
-            <Button type="button" variant={pickerMode === "social" ? "default" : "ghost"} onClick={() => setPickerMode("social")}>Social / Platform</Button>
-            <Button type="button" variant={pickerMode === "custom" ? "default" : "ghost"} onClick={() => setPickerMode("custom")}>Custom Link</Button>
+            <Button
+              type="button"
+              variant={pickerMode === "social" ? "default" : "ghost"}
+              onClick={() => setPickerMode("social")}
+            >
+              Social / Platform
+            </Button>
+            <Button
+              type="button"
+              variant={pickerMode === "custom" ? "default" : "ghost"}
+              onClick={() => setPickerMode("custom")}
+            >
+              Custom Link
+            </Button>
           </div>
           {pickerMode === "social" ? (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {SOCIAL_PLATFORMS.map((platform) => (
-                <Button key={platform.key} type="button" variant="outline" className="h-12 justify-start" onClick={() => openSocial(platform)}>
-                  <SocialIcon platform={platform.key} className="h-5 w-5 text-primary" /> {platform.label}
+                <Button
+                  key={platform.key}
+                  type="button"
+                  variant="outline"
+                  className="h-12 justify-start"
+                  onClick={() => openSocial(platform)}
+                >
+                  <SocialIcon platform={platform.key} className="h-5 w-5 text-primary" />{" "}
+                  {platform.label}
                 </Button>
               ))}
             </div>
@@ -465,51 +570,221 @@ export function MyLinksManager({ profile, onProfileSaved }: { profile: Profile; 
             <div className="grid gap-3">
               <p className="text-sm font-medium">Custom link type</p>
               <div className="grid grid-cols-3 gap-2">
-                {CUSTOM_LINK_TYPES.map((type) => <Button key={type.key} type="button" variant="outline" onClick={() => { openCustom(); setCustomDraft({ ...EMPTY_CUSTOM, linkType: type.key, icon: type.key === "link" ? "globe" : type.key }); }}><type.icon /> {type.label}</Button>)}
+                {CUSTOM_LINK_TYPES.map((type) => (
+                  <Button
+                    key={type.key}
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      openCustom();
+                      setCustomDraft({
+                        ...EMPTY_CUSTOM,
+                        linkType: type.key,
+                        icon: type.key === "link" ? "globe" : type.key,
+                      });
+                    }}
+                  >
+                    <type.icon /> {type.label}
+                  </Button>
+                ))}
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      <Dialog open={Boolean(socialEditing)} onOpenChange={(open) => !open && setSocialEditing(null)}>
+      <Dialog
+        open={Boolean(socialEditing)}
+        onOpenChange={(open) => !open && setSocialEditing(null)}
+      >
         <DialogContent>
           <form onSubmit={saveSocial} className="grid gap-5" noValidate>
-            <DialogHeader><DialogTitle>{socialEditing ? `Edit ${socialEditing.label}` : "Edit social link"}</DialogTitle><DialogDescription>Paste the full profile URL visitors should open</DialogDescription></DialogHeader>
-            <div className="grid gap-2"><Label htmlFor="social-url">Profile URL</Label><Input id="social-url" value={socialValue} onChange={(event) => setSocialValue(event.target.value)} placeholder={socialEditing?.placeholder} autoFocus /></div>
+            <DialogHeader>
+              <DialogTitle>
+                {socialEditing ? `Edit ${socialEditing.label}` : "Edit social link"}
+              </DialogTitle>
+              <DialogDescription>Paste the full profile URL visitors should open</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-2">
+              <Label htmlFor="social-url">Profile URL</Label>
+              <Input
+                id="social-url"
+                value={socialValue}
+                onChange={(event) => setSocialValue(event.target.value)}
+                placeholder={socialEditing?.placeholder}
+                autoFocus
+              />
+            </div>
             {error ? <p className="text-sm text-destructive">{error}</p> : null}
-            <DialogFooter><Button type="button" variant="outline" onClick={() => setSocialEditing(null)}>Cancel</Button><Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save Changes"}</Button></DialogFooter>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setSocialEditing(null)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? "Saving…" : "Save Changes"}
+              </Button>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={Boolean(customEditing) || customDraft !== EMPTY_CUSTOM} onOpenChange={(open) => { if (!open) { setCustomEditing(null); setCustomDraft(EMPTY_CUSTOM); } }}>
+      <Dialog
+        open={Boolean(customEditing) || customDraft !== EMPTY_CUSTOM}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCustomEditing(null);
+            setCustomDraft(EMPTY_CUSTOM);
+          }
+        }}
+      >
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <form onSubmit={saveCustom} className="grid gap-5" noValidate>
-            <DialogHeader><DialogTitle>{customEditing ? "Edit custom link" : "Add custom link"}</DialogTitle><DialogDescription>Choose the destination, label, and icon visitors will see</DialogDescription></DialogHeader>
-            <div className="grid gap-2"><Label>Type</Label><div className="grid grid-cols-3 gap-2">{CUSTOM_LINK_TYPES.map((type) => <Button key={type.key} type="button" variant={customDraft.linkType === type.key ? "default" : "outline"} onClick={() => setCustomDraft((value) => ({ ...value, linkType: type.key, icon: value.icon === "globe" || value.icon === "phone" || value.icon === "email" ? (type.key === "link" ? "globe" : type.key) : value.icon }))}><type.icon /> {type.label}</Button>)}</div></div>
-            <div className="grid gap-2"><Label htmlFor="custom-name">Name</Label><Input id="custom-name" value={customDraft.name} maxLength={80} onChange={(event) => setCustomDraft((value) => ({ ...value, name: event.target.value }))} placeholder={customDraft.linkType === "phone" ? "Contact Me" : customDraft.linkType === "email" ? "Email Me" : "My Portfolio"} autoFocus /></div>
-            <div className="grid gap-2"><Label htmlFor="custom-destination">{customDraft.linkType === "phone" ? "Phone number" : customDraft.linkType === "email" ? "Email address" : "URL"}</Label><Input id="custom-destination" type={customDraft.linkType === "email" ? "email" : customDraft.linkType === "phone" ? "tel" : "url"} value={customDraft.destination} maxLength={2048} onChange={(event) => setCustomDraft((value) => ({ ...value, destination: event.target.value }))} placeholder={customDraft.linkType === "phone" ? "+213555123456" : customDraft.linkType === "email" ? "example@email.com" : "https://example.com"} /></div>
-            <div className="grid gap-2"><Label>Icon</Label><div className="grid grid-cols-6 gap-2 sm:grid-cols-9">{CUSTOM_LINK_ICONS.map((item) => <button key={item.key} type="button" onClick={() => setCustomDraft((value) => ({ ...value, icon: item.key }))} aria-label={item.label} title={item.label} className={`grid aspect-square place-items-center rounded-md border transition-colors ${customDraft.icon === item.key ? "border-primary bg-primary text-primary-foreground" : "border-border bg-secondary text-muted-foreground hover:text-foreground"}`}><item.icon className="h-4 w-4" /></button>)}</div></div>
+            <DialogHeader>
+              <DialogTitle>{customEditing ? "Edit custom link" : "Add custom link"}</DialogTitle>
+              <DialogDescription>
+                Choose the destination, label, and icon visitors will see
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-2">
+              <Label>Type</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {CUSTOM_LINK_TYPES.map((type) => (
+                  <Button
+                    key={type.key}
+                    type="button"
+                    variant={customDraft.linkType === type.key ? "default" : "outline"}
+                    onClick={() =>
+                      setCustomDraft((value) => ({
+                        ...value,
+                        linkType: type.key,
+                        icon:
+                          value.icon === "globe" || value.icon === "phone" || value.icon === "email"
+                            ? type.key === "link"
+                              ? "globe"
+                              : type.key
+                            : value.icon,
+                      }))
+                    }
+                  >
+                    <type.icon /> {type.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="custom-name">Name</Label>
+              <Input
+                id="custom-name"
+                value={customDraft.name}
+                maxLength={80}
+                onChange={(event) =>
+                  setCustomDraft((value) => ({ ...value, name: event.target.value }))
+                }
+                placeholder={
+                  customDraft.linkType === "phone"
+                    ? "Contact Me"
+                    : customDraft.linkType === "email"
+                      ? "Email Me"
+                      : "My Portfolio"
+                }
+                autoFocus
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="custom-destination">
+                {customDraft.linkType === "phone"
+                  ? "Phone number"
+                  : customDraft.linkType === "email"
+                    ? "Email address"
+                    : "URL"}
+              </Label>
+              <Input
+                id="custom-destination"
+                type={
+                  customDraft.linkType === "email"
+                    ? "email"
+                    : customDraft.linkType === "phone"
+                      ? "tel"
+                      : "url"
+                }
+                value={customDraft.destination}
+                maxLength={2048}
+                onChange={(event) =>
+                  setCustomDraft((value) => ({ ...value, destination: event.target.value }))
+                }
+                placeholder={
+                  customDraft.linkType === "phone"
+                    ? "+213555123456"
+                    : customDraft.linkType === "email"
+                      ? "example@email.com"
+                      : "https://example.com"
+                }
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Icon</Label>
+              <div className="grid grid-cols-6 gap-2 sm:grid-cols-9">
+                {CUSTOM_LINK_ICONS.map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setCustomDraft((value) => ({ ...value, icon: item.key }))}
+                    aria-label={item.label}
+                    title={item.label}
+                    className={`grid aspect-square place-items-center rounded-md border transition-colors ${customDraft.icon === item.key ? "border-primary bg-primary text-primary-foreground" : "border-border bg-secondary text-muted-foreground hover:text-foreground"}`}
+                  >
+                    <item.icon className="h-4 w-4" />
+                  </button>
+                ))}
+              </div>
+            </div>
             {error ? <p className="text-sm text-destructive">{error}</p> : null}
-            <DialogFooter><Button type="button" variant="outline" onClick={() => { setCustomEditing(null); setCustomDraft(EMPTY_CUSTOM); }}>Cancel</Button><Button type="submit" disabled={saving}>{saving ? "Saving…" : customEditing ? "Save Changes" : "Add Link"}</Button></DialogFooter>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setCustomEditing(null);
+                  setCustomDraft(EMPTY_CUSTOM);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? "Saving…" : customEditing ? "Save Changes" : "Add Link"}
+              </Button>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={Boolean(deleteTarget)} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+      <AlertDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {deleteTarget?.kind === "custom" ? `Delete “${deleteTarget.link.name}”?` : deleteTarget ? `Delete your ${deleteTarget.platform.label} link?` : "Delete link?"}
+              {deleteTarget?.kind === "custom"
+                ? `Delete “${deleteTarget.link.name}”?`
+                : deleteTarget
+                  ? `Delete your ${deleteTarget.platform.label} link?`
+                  : "Delete link?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove the link from your public profile. You can add it back later, but the old link settings won't be restored
+              This will remove the link from your public profile. You can add it back later, but the
+              old link settings won't be restored
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => void confirmDelete()} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={() => void confirmDelete()}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               {deleting ? "Deleting…" : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>

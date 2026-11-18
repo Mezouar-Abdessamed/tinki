@@ -45,9 +45,18 @@ describe("Client cookie-only auth (no localStorage/IndexedDB or Authorization he
   });
 
   it("removes all client-side token storage and Authorization header plumbing", () => {
-    const apiClientSrc = fs.readFileSync(path.resolve(process.cwd(), "src/lib/api-client.ts"), "utf8");
-    const analyticsSrc = fs.readFileSync(path.resolve(process.cwd(), "src/lib/analytics.ts"), "utf8");
-    const fbAuthSrc = fs.readFileSync(path.resolve(process.cwd(), "src/lib/firebase-auth.ts"), "utf8");
+    const apiClientSrc = fs.readFileSync(
+      path.resolve(process.cwd(), "src/lib/api-client.ts"),
+      "utf8",
+    );
+    const analyticsSrc = fs.readFileSync(
+      path.resolve(process.cwd(), "src/lib/analytics.ts"),
+      "utf8",
+    );
+    const fbAuthSrc = fs.readFileSync(
+      path.resolve(process.cwd(), "src/lib/firebase-auth.ts"),
+      "utf8",
+    );
 
     for (const forbidden of [
       "TOKEN_KEY",

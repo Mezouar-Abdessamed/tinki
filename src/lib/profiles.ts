@@ -224,8 +224,7 @@ export async function getCoverUrl(path: string | null | undefined): Promise<stri
 
 // Backgrounds we uploaded ourselves live in the "backgrounds" bucket as
 // "<user id>/<file>", supporting both Firebase Auth UIDs and UUIDs.
-const BACKGROUND_STORAGE_PATH =
-  /^[A-Za-z0-9_-]{8,128}\/[A-Za-z0-9][A-Za-z0-9._-]*$/;
+const BACKGROUND_STORAGE_PATH = /^[A-Za-z0-9_-]{8,128}\/[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 /** True only for a safe "<user id>/<file>" path inside the backgrounds bucket. */
 export function isBackgroundStoragePath(value: string): boolean {

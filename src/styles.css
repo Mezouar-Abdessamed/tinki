@@ -193,9 +193,15 @@
   animation: btn-press 280ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 @keyframes btn-press {
-  0% { transform: translateY(-2px) scale(1); }
-  45% { transform: translateY(1px) scale(0.9); }
-  100% { transform: translateY(0) scale(1); }
+  0% {
+    transform: translateY(-2px) scale(1);
+  }
+  45% {
+    transform: translateY(1px) scale(0.9);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* Group B — mobile menu icon: tilt-zoom on hover, nudge-twist on click */
@@ -212,9 +218,15 @@
   animation: btn-menu-nudge 340ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 @keyframes btn-menu-nudge {
-  0% { transform: scale(0.85) rotate(0deg); }
-  60% { transform: scale(1.08) rotate(8deg); }
-  100% { transform: scale(1) rotate(0deg); }
+  0% {
+    transform: scale(0.85) rotate(0deg);
+  }
+  60% {
+    transform: scale(1.08) rotate(8deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
 }
 
 /* Group C — mobile sheet actions: slide on hover, jelly squish on click */
@@ -235,10 +247,18 @@ html[dir="rtl"] .btn-sheet:hover {
   animation: btn-jelly 360ms ease-out;
 }
 @keyframes btn-jelly {
-  0% { transform: scale(1, 1); }
-  35% { transform: scale(0.94, 1.06); }
-  70% { transform: scale(1.05, 0.95); }
-  100% { transform: scale(1, 1); }
+  0% {
+    transform: scale(1, 1);
+  }
+  35% {
+    transform: scale(0.94, 1.06);
+  }
+  70% {
+    transform: scale(1.05, 0.95);
+  }
+  100% {
+    transform: scale(1, 1);
+  }
 }
 
 /* Group D — hero CTAs: float + glow on hover, pop on click */
@@ -257,9 +277,15 @@ html[dir="rtl"] .btn-sheet:hover {
   animation: btn-pop 340ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 @keyframes btn-pop {
-  0% { transform: scale(0.92); }
-  55% { transform: scale(1.06); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(0.92);
+  }
+  55% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Group E — final-section CTAs: light sweep on hover, rubber-band on click */
@@ -294,11 +320,21 @@ html[dir="rtl"] .btn-sheet:hover {
   animation: btn-rubber 420ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 @keyframes btn-rubber {
-  0% { transform: scale(1, 1); }
-  30% { transform: scale(1.08, 0.9); }
-  55% { transform: scale(0.95, 1.05); }
-  75% { transform: scale(1.02, 0.98); }
-  100% { transform: scale(1, 1); }
+  0% {
+    transform: scale(1, 1);
+  }
+  30% {
+    transform: scale(1.08, 0.9);
+  }
+  55% {
+    transform: scale(0.95, 1.05);
+  }
+  75% {
+    transform: scale(1.02, 0.98);
+  }
+  100% {
+    transform: scale(1, 1);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -364,7 +400,9 @@ html[dir="rtl"] .btn-sheet:hover {
   animation: eye-ping-once 0.6s ease-out forwards;
 }
 
-html[dir="rtl"] body { font-family: "Cairo", var(--font-sans, sans-serif); }
+html[dir="rtl"] body {
+  font-family: "Cairo", var(--font-sans, sans-serif);
+}
 
 /* Landing scroll reveal */
 .reveal {
@@ -396,8 +434,14 @@ html.lenis body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .reveal { opacity: 1; transform: none; transition: none; }
-  html { scroll-behavior: auto !important; }
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  html {
+    scroll-behavior: auto !important;
+  }
 }
 html {
   scroll-behavior: smooth;
@@ -516,12 +560,13 @@ html {
 }
 
 .landing-enter-down {
-  animation: landing-enter-down var(--enter-dur, 600ms) var(--enter-ease, ease-out) var(--enter-delay, 0ms) both;
+  animation: landing-enter-down var(--enter-dur, 600ms) var(--enter-ease, ease-out)
+    var(--enter-delay, 0ms) both;
 }
 
 .landing-enter-up {
-  animation: landing-enter-up var(--enter-dur, 700ms) var(--enter-ease, cubic-bezier(0.22, 1, 0.36, 1))
-    var(--enter-delay, 0ms) both;
+  animation: landing-enter-up var(--enter-dur, 700ms)
+    var(--enter-ease, cubic-bezier(0.22, 1, 0.36, 1)) var(--enter-delay, 0ms) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -564,4 +609,3 @@ html {
   mask-composite: exclude;
   pointer-events: none;
 }
-
