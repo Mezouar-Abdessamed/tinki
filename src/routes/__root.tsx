@@ -8,12 +8,16 @@ import {
   Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { AuthProvider } from "@/lib/auth";
 import { Toaster } from "@/components/ui/sonner";
 import { LanguageProvider } from "@/lib/i18n";
+import {
+  isDynamicImportError,
+  tryConsumeChunkReloadAllowance,
+} from "@/lib/route-error-recovery";
 
 function NotFoundComponent() {
   return (
@@ -38,8 +42,18 @@ function NotFoundComponent() {
 }
 
 function ErrorComponent({ error, reset }: ErrorComponentProps) {
-  console.error(error);
   const router = useRouter();
+  const isModuleFetchError = isDynamicImportError(error);
+
+  useEffect(() => {
+    if (isModuleFetchError && typeof window !== "undefined") {
+      if (tryConsumeChunkReloadAllowance(window.sessionStorage)) {
+        window.location.reload();
+        return;
+      }
+    }
+    console.error(error);
+  }, [error, isModuleFetchError]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -48,17 +62,23 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
           This page didn't load
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home
+          {isModuleFetchError
+            ? "A newer version of the page is available or your connection dropped briefly. Reload to continue"
+            : "Something went wrong on our end. You can try refreshing or head back home"}
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
+              if (isModuleFetchError && typeof window !== "undefined") {
+                window.location.reload();
+                return;
+              }
               router.invalidate();
               reset();
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Try again
+            {isModuleFetchError ? "Reload page" : "Try again"}
           </button>
           <a
             href="/"

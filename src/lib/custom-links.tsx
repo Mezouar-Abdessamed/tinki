@@ -101,13 +101,8 @@ export function validateCustomUrl(raw: string) {
 
 export async function fetchCustomLinks(profileId: string, enabledOnly = false) {
   if (typeof window !== "undefined" && profileId) {
-    try {
-      const { fetchCustomLinksFirestore } = await import("@/lib/firestore-repository");
-      const fsLinks = await fetchCustomLinksFirestore(profileId, enabledOnly);
-      if (fsLinks.length > 0) return fsLinks;
-    } catch {
-      /* fallback to server API */
-    }
+    const { fetchCustomLinksFirestore } = await import("@/lib/firestore-repository");
+    return await fetchCustomLinksFirestore(profileId, enabledOnly);
   }
   const { links } = await apiFetch<{ links: CustomLink[] }>(
     `/api/profiles/${encodeURIComponent(profileId)}/custom-links${enabledOnly ? "?enabledOnly=true" : ""}`,

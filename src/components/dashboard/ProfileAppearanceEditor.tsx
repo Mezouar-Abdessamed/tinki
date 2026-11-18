@@ -273,8 +273,13 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
   }, []);
 
   async function uploadBackgroundVideo(file: File) {
-    if (!file.type.startsWith("video/")) {
-      toast.error("Please choose a video file from your device");
+    const extByVideoMime: Record<string, string> = {
+      "video/mp4": "mp4",
+      "video/webm": "webm",
+    };
+    const extension = extByVideoMime[file.type];
+    if (!extension) {
+      toast.error("Please choose an MP4 or WebM video file from your device");
       return;
     }
     if (file.size > MAX_VIDEO_BYTES) {
@@ -283,12 +288,11 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
     }
     setUploadingVideo(true);
     try {
-      const extension = file.name.split(".").pop()?.toLowerCase() || "mp4";
       const path = `${profile.id}/${crypto.randomUUID()}.${extension}`;
-      await storageApi.upload("backgrounds", path, file, file.type);
-      stagedPathsRef.current.add(path);
-      setLocalPreview(path, file);
-      setVideoUrl(path);
+      const savedPath = await storageApi.upload("backgrounds", path, file, file.type);
+      stagedPathsRef.current.add(savedPath);
+      setLocalPreview(savedPath, file);
+      setVideoUrl(savedPath);
       setMediaType("video");
       setImageEnabled(true);
       toast.success("Video uploaded. Press Save to publish it");
@@ -301,8 +305,15 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
 
 
   async function uploadBackground(file: File) {
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please choose an image file");
+    const extByImageMime: Record<string, string> = {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/webp": "webp",
+      "image/gif": "gif",
+    };
+    const extension = extByImageMime[file.type];
+    if (!extension) {
+      toast.error("Please choose a JPEG, PNG, WebP, or GIF image file");
       return;
     }
     if (file.size > 4 * 1024 * 1024) {
@@ -311,12 +322,11 @@ export function ProfileAppearanceEditor({ profile, avatarUrl, onSaved }: { profi
     }
     setUploading(true);
     try {
-      const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
       const path = `${profile.id}/${crypto.randomUUID()}.${extension}`;
-      await storageApi.upload("backgrounds", path, file, file.type);
-      stagedPathsRef.current.add(path);
-      setLocalPreview(path, file);
-      setImageUrl(path);
+      const savedPath = await storageApi.upload("backgrounds", path, file, file.type);
+      stagedPathsRef.current.add(savedPath);
+      setLocalPreview(savedPath, file);
+      setImageUrl(savedPath);
       setImageEnabled(true);
       toast.success("Photo uploaded. Press Save to publish it");
     } catch (error) {

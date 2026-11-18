@@ -1,12 +1,16 @@
-import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, beforeEach, describe, it } from "node:test";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { verifyFirebaseIdToken } from "../src/server/firebase-token-verifier.server";
-import { TinkiStore, hashPassword, verifyPassword } from "../src/server/local-fallback-store.server";
+import {
+  StoreError,
+  TinkiStore,
+  hashPassword,
+  verifyPassword,
+} from "../src/server/local-fallback-store.server";
 
 function signTestJwt(
   payload: Record<string, unknown>,
@@ -36,14 +40,15 @@ describe("TinkiStore local auth & persistence", () => {
   });
 
   afterEach(() => {
+    store.dispose();
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it("hashes and verifies passwords with timing-safe scrypt comparison", () => {
-    const hash = hashPassword("MySecretPass123!");
-    assert.equal(verifyPassword("MySecretPass123!", hash), true);
-    assert.equal(verifyPassword("WrongPassword", hash), false);
-    assert.equal(verifyPassword("anything", "malformed"), false);
+  it("hashes and verifies passwords with timing-safe async scrypt comparison", async () => {
+    const hash = await hashPassword("MySecretPass123!");
+    expect(await verifyPassword("MySecretPass123!", hash)).toBe(true);
+    expect(await verifyPassword("WrongPassword", hash)).toBe(false);
+    expect(await verifyPassword("anything", "malformed")).toBe(false);
   });
 
   it("verifies RS256 Firebase ID tokens and rejects expired or mismatched tokens", async () => {
@@ -73,9 +78,9 @@ describe("TinkiStore local auth & persistence", () => {
       nowSeconds: now,
       getJwks,
     });
-    assert.equal(claims.uid, "google-uid-123");
-    assert.equal(claims.email, "jane.doe@gmail.com");
-    assert.equal(claims.name, "Jane Doe");
+    expect(claims.uid).toBe("google-uid-123");
+    expect(claims.email).toBe("jane.doe@gmail.com");
+    expect(claims.name).toBe("Jane Doe");
 
     const expiredToken = signTestJwt(
       {
@@ -90,10 +95,9 @@ describe("TinkiStore local auth & persistence", () => {
       },
       privateKey,
     );
-    await assert.rejects(
-      () => verifyFirebaseIdToken(expiredToken, { projectId: "test-project", nowSeconds: now, getJwks }),
-      /expired/i,
-    );
+    await expect(
+      verifyFirebaseIdToken(expiredToken, { projectId: "test-project", nowSeconds: now, getJwks }),
+    ).rejects.toThrow(/expired/i);
 
     const wrongAudToken = signTestJwt(
       {
@@ -108,185 +112,247 @@ describe("TinkiStore local auth & persistence", () => {
       },
       privateKey,
     );
-    await assert.rejects(
-      () => verifyFirebaseIdToken(wrongAudToken, { projectId: "test-project", nowSeconds: now, getJwks }),
-      /does not match/i,
-    );
+    await expect(
+      verifyFirebaseIdToken(wrongAudToken, { projectId: "test-project", nowSeconds: now, getJwks }),
+    ).rejects.toThrow(/does not match/i);
   });
 
-  it("signs in with Google, supports claiming username + setting password, and links existing email users", () => {
+  it("signs in with Google, sets emailVerified, links verified email users, and refuses unverified ones", async () => {
     const googleSession = store.loginWithGoogle({
       uid: "google-uid-abc",
       email: "NewGoogleUser@gmail.com",
       name: "New Google User",
     });
-    assert.equal(googleSession.user.email, "newgoogleuser@gmail.com");
-    assert.deepEqual(googleSession.user.identities, [{ provider: "google" }]);
-    assert.equal(store.getProfileById(googleSession.user.id), null);
+    expect(googleSession.user.email).toBe("newgoogleuser@gmail.com");
+    expect(googleSession.user.identities).toEqual([{ provider: "google" }]);
+    expect(store.getProfileById(googleSession.user.id)).toBeNull();
 
     // Google user claims username and sets optional/initial password
-    const afterPassword = store.updatePassword(googleSession.user.id, "MyNewPass123!");
-    assert.deepEqual(
-      afterPassword.user.identities.map((i) => i.provider),
-      ["google", "email"],
-    );
+    const afterPassword = await store.updatePassword(googleSession.user.id, "MyNewPass123!");
+    expect(afterPassword.user.identities.map((i) => i.provider)).toEqual(["google", "email"]);
     const createdProfile = store.createProfile(googleSession.user.id, "janedoe");
-    assert.equal(createdProfile.username, "janedoe");
-    assert.equal(createdProfile.display_name, "New Google User");
+    expect(createdProfile.username).toBe("janedoe");
+    expect(createdProfile.display_name).toBe("New Google User");
 
-    // Existing email user later signs in with Google on same verified email
-    const emailUser = store.signUp({
-      email: "existing@gmail.com",
+    // Email user created through verified flow (register-pending + confirm-email) CAN link with Google
+    await store.createPendingSignup({
+      email: "verified@gmail.com",
       password: "Password123!",
-      username: "existinguser",
+      username: "verifieduser",
+    });
+    const verifiedEmailUser = store.completeVerifiedEmailSignup({
+      email: "verified@gmail.com",
     });
     const linkedSession = store.loginWithGoogle({
-      uid: "google-uid-existing",
-      email: "existing@gmail.com",
+      uid: "google-uid-verified",
+      email: "verified@gmail.com",
     });
-    assert.equal(linkedSession.user.id, emailUser.user.id);
-    assert.deepEqual(
-      linkedSession.user.identities.map((i) => i.provider),
-      ["email", "google"],
-    );
+    expect(linkedSession.user.id).toBe(verifiedEmailUser.user.id);
+    expect(linkedSession.user.identities.map((i) => i.provider)).toEqual(["email", "google"]);
+
+    // Email user NOT created through verified flow MUST NOT be linked by email
+    const unverifiedUser = await store.signUp({
+      email: "unverified@gmail.com",
+      password: "Password123!",
+      username: "unverifieduser",
+    });
+    let unverifiedLinkErr: unknown;
+    try {
+      store.loginWithGoogle({
+        uid: "google-uid-attacker",
+        email: "unverified@gmail.com",
+      });
+    } catch (err) {
+      unverifiedLinkErr = err;
+    }
+    expect(unverifiedLinkErr).toBeInstanceOf(StoreError);
+    expect((unverifiedLinkErr as StoreError).code).toBe("email_not_verified");
+    expect((unverifiedLinkErr as StoreError).status).toBe(409);
+
+    // Also refuse linking a legacy StoredUser lacking emailVerified: true on disk
+    await store.flush();
+    const dbPath = path.join(tmpDir, "db.json");
+    const rawDb = JSON.parse(fs.readFileSync(dbPath, "utf8")) as {
+      users: Array<Record<string, unknown>>;
+    };
+    const googleRec = rawDb.users.find((u) => u["id"] === googleSession.user.id);
+    const verifiedRec = rawDb.users.find((u) => u["id"] === verifiedEmailUser.user.id);
+    const unverifiedRec = rawDb.users.find((u) => u["id"] === unverifiedUser.user.id);
+    expect(googleRec?.["emailVerified"]).toBe(true);
+    expect(verifiedRec?.["emailVerified"]).toBe(true);
+    expect(unverifiedRec?.["emailVerified"]).toBe(false);
+    expect(unverifiedRec?.["googleUid"]).toBeUndefined();
+    expect(unverifiedRec?.["providers"]).toEqual(["email"]);
+
+    rawDb.users.push({
+      id: "legacy-user-1",
+      email: "legacy@gmail.com",
+      passwordHash: await hashPassword("LegacyPass123!"),
+      providers: ["email"],
+      createdAt: new Date().toISOString(),
+    });
+    fs.writeFileSync(dbPath, JSON.stringify(rawDb, null, 2), "utf8");
+
+    const reloaded = new TinkiStore(tmpDir);
+    try {
+      let legacyErr: unknown;
+      try {
+        reloaded.loginWithGoogle({
+          uid: "google-uid-legacy-attempt",
+          email: "legacy@gmail.com",
+        });
+      } catch (err) {
+        legacyErr = err;
+      }
+      expect(legacyErr).toBeInstanceOf(StoreError);
+      expect((legacyErr as StoreError).code).toBe("email_not_verified");
+      expect((legacyErr as StoreError).status).toBe(409);
+    } finally {
+      reloaded.dispose();
+    }
   });
 
-  it("signs up, enforces unique email/username, logs in, and persists across restarts", () => {
-    const created = store.signUp({
+  it("signs up, enforces unique email/username, logs in, and persists across restarts", async () => {
+    const created = await store.signUp({
       email: "Alex@Example.com",
       password: "Password123!",
       username: "alex99",
     });
-    assert.equal(created.user.email, "alex@example.com");
-    assert.equal(store.isUsernameAvailable("alex99"), false);
-    assert.equal(store.isUsernameAvailable("newname"), true);
-    assert.equal(store.isUsernameAvailable("dashboard"), false);
+    expect(created.user.email).toBe("alex@example.com");
+    expect(store.isUsernameAvailable("alex99")).toBe(false);
+    expect(store.isUsernameAvailable("newname")).toBe(true);
+    expect(store.isUsernameAvailable("dashboard")).toBe(false);
 
-    assert.throws(
-      () =>
-        store.signUp({ email: "alex@example.com", password: "Password123!", username: "other" }),
-      /already registered/i,
-    );
-    assert.throws(
-      () =>
-        store.signUp({ email: "other@example.com", password: "Password123!", username: "alex99" }),
-      /already taken/i,
-    );
+    await expect(
+      store.signUp({ email: "alex@example.com", password: "Password123!", username: "other" }),
+    ).rejects.toThrow(/already registered/i);
+    await expect(
+      store.signUp({ email: "other@example.com", password: "Password123!", username: "alex99" }),
+    ).rejects.toThrow(/already taken/i);
 
-    const loggedIn = store.login({ email: "ALEX@EXAMPLE.COM", password: "Password123!" });
-    assert.equal(loggedIn.user.id, created.user.id);
-    assert.throws(
-      () => store.login({ email: "alex@example.com", password: "WrongPassword" }),
-      /invalid login/i,
-    );
+    const loggedIn = await store.login({ email: "ALEX@EXAMPLE.COM", password: "Password123!" });
+    expect(loggedIn.user.id).toBe(created.user.id);
+    await expect(
+      store.login({ email: "alex@example.com", password: "WrongPassword" }),
+    ).rejects.toThrow(/invalid login/i);
 
     // Reload from disk in a fresh store instance
+    await store.flush();
     const reloaded = new TinkiStore(tmpDir);
-    const verified = reloaded.verifySessionToken(loggedIn.access_token);
-    assert.ok(verified);
-    assert.equal(verified.id, created.user.id);
-    assert.equal(reloaded.getProfileByUsername("alex99")?.id, created.user.id);
+    try {
+      const verified = reloaded.verifySessionToken(loggedIn.access_token);
+      expect(verified).toBeTruthy();
+      expect(verified?.id).toBe(created.user.id);
+      expect(reloaded.getProfileByUsername("alex99")?.id).toBe(created.user.id);
+    } finally {
+      reloaded.dispose();
+    }
   });
 
-  it("validates pending signup candidates without reserving usernames prematurely", () => {
+  it("validates pending signup candidates without reserving usernames prematurely", async () => {
     store.validatePendingSignupCandidate({
       email: "Fresh@Example.com",
       username: "freshuser",
     });
-    assert.equal(store.isUsernameAvailable("freshuser"), true);
+    expect(store.isUsernameAvailable("freshuser")).toBe(true);
 
-    store.signUp({
+    await store.signUp({
       email: "taken@example.com",
       password: "Password123!",
       username: "takenuser",
     });
-    assert.throws(
-      () =>
-        store.validatePendingSignupCandidate({
-          email: "taken@example.com",
-          username: "newname",
-        }),
-      /already registered/i,
-    );
-    assert.throws(
-      () =>
-        store.validatePendingSignupCandidate({
-          email: "other@example.com",
-          username: "takenuser",
-        }),
-      /already taken/i,
-    );
+    expect(() =>
+      store.validatePendingSignupCandidate({
+        email: "taken@example.com",
+        username: "newname",
+      }),
+    ).toThrow(/already registered/i);
+    expect(() =>
+      store.validatePendingSignupCandidate({
+        email: "other@example.com",
+        username: "takenuser",
+      }),
+    ).toThrow(/already taken/i);
   });
 
-  it("reserves pending email signups until verified and activates the profile on confirmation", () => {
-    const pending = store.createPendingSignup({
+  it("reserves pending email signups until verified and activates the profile on confirmation", async () => {
+    const pending = await store.createPendingSignup({
       email: "VerifyMe@Example.com",
       password: "Password123!",
       username: "verifyme",
     });
-    assert.equal(pending.email, "verifyme@example.com");
-    assert.equal(pending.username, "verifyme");
+    expect(pending.email).toBe("verifyme@example.com");
+    expect(pending.username).toBe("verifyme");
 
     // Profile and active login are NOT created until email is confirmed
-    assert.equal(store.getProfileByUsername("verifyme"), null);
-    assert.throws(
-      () => store.login({ email: "verifyme@example.com", password: "Password123!" }),
-      /invalid login/i,
-    );
+    expect(store.getProfileByUsername("verifyme")).toBeNull();
+    await expect(
+      store.login({ email: "verifyme@example.com", password: "Password123!" }),
+    ).rejects.toThrow(/invalid login/i);
 
     // Another user cannot steal the reserved username while pending, but same email can retry
-    assert.equal(store.isUsernameAvailable("verifyme"), false);
-    assert.equal(store.isUsernameAvailable("verifyme", "verifyme@example.com"), true);
-    assert.ok(store.getPendingSignupCredentialsMatch("verifyme@example.com", "Password123!"));
-    assert.equal(store.getPendingSignupCredentialsMatch("verifyme@example.com", "WrongPass"), null);
+    expect(store.isUsernameAvailable("verifyme")).toBe(false);
+    expect(store.isUsernameAvailable("verifyme", "verifyme@example.com")).toBe(true);
+    expect(
+      await store.getPendingSignupCredentialsMatch("verifyme@example.com", "Password123!"),
+    ).toBeTruthy();
+    expect(
+      await store.getPendingSignupCredentialsMatch("verifyme@example.com", "WrongPass"),
+    ).toBeNull();
 
     // Confirming email promotes pending signup into real user + profile
     const session = store.completeVerifiedEmailSignup({ email: "verifyme@example.com" });
-    assert.equal(session.user.email, "verifyme@example.com");
-    assert.equal(session.user.user_metadata.username, "verifyme");
-    assert.equal(store.getProfileByUsername("verifyme")?.id, session.user.id);
-    assert.equal(store.getPendingSignupCredentialsMatch("verifyme@example.com", "Password123!"), null);
+    expect(session.user.email).toBe("verifyme@example.com");
+    expect(session.user.user_metadata.username).toBe("verifyme");
+    expect(store.getProfileByUsername("verifyme")?.id).toBe(session.user.id);
+    expect(
+      await store.getPendingSignupCredentialsMatch("verifyme@example.com", "Password123!"),
+    ).toBeNull();
 
     // Subsequent password login works and repeat confirmation call is idempotent
-    assert.equal(
-      store.login({ email: "verifyme@example.com", password: "Password123!" }).user.id,
-      session.user.id,
-    );
-    assert.equal(
-      store.completeVerifiedEmailSignup({ email: "verifyme@example.com" }).user.id,
+    expect(
+      (await store.login({ email: "verifyme@example.com", password: "Password123!" })).user.id,
+    ).toBe(session.user.id);
+    expect(store.completeVerifiedEmailSignup({ email: "verifyme@example.com" }).user.id).toBe(
       session.user.id,
     );
   });
 
-  it("supports password update and single-use password reset tokens", () => {
-    const session = store.signUp({
+  it("supports password update and single-use password reset tokens", async () => {
+    const session = await store.signUp({
       email: "reset@example.com",
       password: "OldPassword1!",
       username: "resetuser",
     });
 
-    assert.throws(
-      () => store.updatePassword(session.user.id, "NewPassword1!", "WrongOld"),
-      /current password is incorrect/i,
-    );
-    store.updatePassword(session.user.id, "NewPassword1!", "OldPassword1!");
-    assert.ok(store.login({ email: "reset@example.com", password: "NewPassword1!" }));
+    await expect(
+      store.updatePassword(session.user.id, "NewPassword1!", "WrongOld"),
+    ).rejects.toThrow(/current password is incorrect/i);
+    await store.updatePassword(session.user.id, "NewPassword1!", "OldPassword1!");
+    expect(await store.login({ email: "reset@example.com", password: "NewPassword1!" })).toBeTruthy();
 
+    const staleReset = store.createPasswordReset("reset@example.com");
     const reset = store.createPasswordReset("reset@example.com");
-    assert.ok(reset?.token);
-    const newSession = store.consumePasswordReset(reset.token, "ResetPass99!");
-    assert.equal(newSession.user.id, session.user.id);
+    if (!staleReset?.token || !reset?.token) {
+      throw new Error("Expected password reset tokens to be generated");
+    }
+    expect(staleReset.token).not.toBe(reset.token);
+    await expect(
+      store.consumePasswordReset(staleReset.token, "StaleAttempt1!"),
+    ).rejects.toThrow(/expired or is invalid/i);
+
+    const newSession = await store.consumePasswordReset(reset.token, "ResetPass99!");
+    expect(newSession.user.id).toBe(session.user.id);
 
     // Token is single-use
-    assert.throws(
-      () => store.consumePasswordReset(reset.token, "AnotherPass1!"),
-      /expired or is invalid/i,
-    );
-    assert.ok(store.login({ email: "reset@example.com", password: "ResetPass99!" }));
+    await expect(
+      store.consumePasswordReset(reset.token, "AnotherPass1!"),
+    ).rejects.toThrow(/expired or is invalid/i);
+    expect(await store.login({ email: "reset@example.com", password: "ResetPass99!" })).toBeTruthy();
   });
 
-  it("manages profile fields, custom links CRUD + reorder, analytics, media, and account deletion", () => {
-    const session = store.signUp({
+  it("manages profile fields, custom links CRUD + reorder, analytics, media, and account deletion", async () => {
+    const session = await store.signUp({
       email: "creator@example.com",
       password: "Password123!",
       username: "creator",
@@ -297,8 +363,8 @@ describe("TinkiStore local auth & persistence", () => {
       bio: "Design & Code",
       github_url: "https://github.com/creator",
     });
-    assert.equal(updated.display_name, "Creator One");
-    assert.equal(updated.github_url, "https://github.com/creator");
+    expect(updated.display_name).toBe("Creator One");
+    expect(updated.github_url).toBe("https://github.com/creator");
 
     const linkA = store.createCustomLink(session.user.id, {
       name: "Portfolio",
@@ -312,14 +378,11 @@ describe("TinkiStore local auth & persistence", () => {
       icon: "email",
       link_type: "email",
     });
-    assert.equal(store.listCustomLinks(session.user.id).length, 2);
+    expect(store.listCustomLinks(session.user.id)).toHaveLength(2);
 
     store.reorderCustomLinks(session.user.id, session.user.id, [linkB.id, linkA.id]);
     const reordered = store.listCustomLinks(session.user.id);
-    assert.deepEqual(
-      reordered.map((l) => l.id),
-      [linkB.id, linkA.id],
-    );
+    expect(reordered.map((l) => l.id)).toEqual([linkB.id, linkA.id]);
 
     // Owner's own view is ignored; visitor's view and clicks are counted
     store.recordEvent(session.user.id, {
@@ -347,32 +410,97 @@ describe("TinkiStore local auth & persistence", () => {
     });
 
     const stats = store.getAnalytics(session.user.id, session.user.id);
-    assert.equal(stats.views, 1);
-    assert.equal(stats.clicks, 1);
-    assert.equal(stats.customLinkClicks, 1);
-    assert.equal(stats.byCountry["US"], 1);
+    expect(stats.views).toBe(1);
+    expect(stats.clicks).toBe(1);
+    expect(stats.customLinkClicks).toBe(1);
+    expect(stats.byCountry["US"]).toBe(1);
 
     // Media upload & read
     const mediaPath = `${session.user.id}/avatar.png`;
-    store.saveMediaFile(
-      session.user.id,
-      "avatars",
-      mediaPath,
-      Buffer.from("png-bytes"),
-      "image/png",
-    );
+    const validPng = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d]);
+    store.saveMediaFile(session.user.id, "avatars", mediaPath, validPng, "image/png");
     const file = store.readMediaFile("avatars", mediaPath);
-    assert.ok(file);
-    assert.equal(file.contentType, "image/png");
+    expect(file).toBeTruthy();
+    expect(file?.contentType).toBe("image/png");
+
+    // Session token revocation on logout & account deletion across restarts
+    const beforeLogoutSession = await store.login({
+      email: "creator@example.com",
+      password: "Password123!",
+    });
+    expect(store.verifySessionToken(beforeLogoutSession.access_token)).toBeTruthy();
+    expect(store.revokeUserTokens(session.user.id)).toBe(true);
+    expect(store.verifySessionToken(beforeLogoutSession.access_token)).toBeNull();
+
+    const activeBeforeDelete = await store.login({
+      email: "creator@example.com",
+      password: "Password123!",
+    });
+    expect(store.verifySessionToken(activeBeforeDelete.access_token)).toBeTruthy();
 
     // Delete account verifies password & username and removes data + media
-    assert.throws(
-      () => store.deleteAccount(session.user.id, "creator", "WrongPassword"),
-      /current password is incorrect/i,
-    );
-    store.deleteAccount(session.user.id, "creator", "Password123!");
-    assert.equal(store.getProfileById(session.user.id), null);
-    assert.equal(store.readMediaFile("avatars", mediaPath), null);
-    assert.equal(store.isUsernameAvailable("creator"), true);
+    await expect(
+      store.deleteAccount(session.user.id, "creator", "WrongPassword"),
+    ).rejects.toThrow(/current password is incorrect/i);
+    await store.deleteAccount(session.user.id, "creator", "Password123!");
+    await store.flush();
+    expect(store.verifySessionToken(activeBeforeDelete.access_token)).toBeNull();
+    const reloadedAfterDelete = new TinkiStore(tmpDir);
+    try {
+      expect(reloadedAfterDelete.verifySessionToken(activeBeforeDelete.access_token)).toBeNull();
+    } finally {
+      reloadedAfterDelete.dispose();
+    }
+    expect(store.getProfileById(session.user.id)).toBeNull();
+    expect(store.readMediaFile("avatars", mediaPath)).toBeNull();
+    expect(store.isUsernameAvailable("creator")).toBe(true);
+  });
+
+  it("only seeds demo@tinki.app when NODE_ENV !== 'production' and SEED_DEMO=true and cleans up on startup otherwise", async () => {
+    const prevNodeEnv = process.env["NODE_ENV"];
+    const prevSeedDemo = process.env["SEED_DEMO"];
+    const prevSecret = process.env["AUTH_SECRET"];
+    const demoDir = fs.mkdtempSync(path.join(os.tmpdir(), "tinki-demo-node-"));
+    let seeded: TinkiStore | undefined;
+    let cleaned: TinkiStore | undefined;
+    let prodStore: TinkiStore | undefined;
+    try {
+      // Disabled by default
+      expect(store.getProfileByUsername("sara")).toBeNull();
+
+      // Enabled in non-production when SEED_DEMO=true
+      process.env["NODE_ENV"] = "development";
+      process.env["SEED_DEMO"] = "true";
+      seeded = new TinkiStore(demoDir);
+      expect(seeded.getProfileByUsername("sara")?.username).toBe("sara");
+      await seeded.flush();
+
+      // Cleaned up when SEED_DEMO is unset
+      delete process.env["SEED_DEMO"];
+      cleaned = new TinkiStore(demoDir);
+      expect(cleaned.getProfileByUsername("sara")).toBeNull();
+      await expect(
+        cleaned.login({ email: "demo@tinki.app", password: "DemoPass123!" }),
+      ).rejects.toThrow(/invalid login/i);
+      await cleaned.flush();
+
+      // Never seeded in production even with SEED_DEMO=true
+      process.env["NODE_ENV"] = "production";
+      process.env["SEED_DEMO"] = "true";
+      process.env["AUTH_SECRET"] = "test-production-secret-at-least-32-chars";
+      prodStore = new TinkiStore(demoDir);
+      expect(prodStore.getProfileByUsername("sara")).toBeNull();
+    } finally {
+      seeded?.dispose();
+      cleaned?.dispose();
+      prodStore?.dispose();
+      if (prevNodeEnv === undefined) delete process.env["NODE_ENV"];
+      else process.env["NODE_ENV"] = prevNodeEnv;
+      if (prevSeedDemo === undefined) delete process.env["SEED_DEMO"];
+      else process.env["SEED_DEMO"] = prevSeedDemo;
+      if (prevSecret === undefined) delete process.env["AUTH_SECRET"];
+      else process.env["AUTH_SECRET"] = prevSecret;
+      fs.rmSync(demoDir, { recursive: true, force: true });
+    }
   });
 });

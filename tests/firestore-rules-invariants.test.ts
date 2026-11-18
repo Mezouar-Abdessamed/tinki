@@ -66,7 +66,7 @@ describe("Firestore security specification & cross-restart session persistence",
     );
   });
 
-  it("verifies signed session tokens even across fresh container restarts with wiped local db", () => {
+  it("verifies signed session tokens across persisted restarts and rejects unknown users on wiped db", async () => {
     const tmpDirA = fs.mkdtempSync(path.join(os.tmpdir(), "tinki-persist-a-"));
     const tmpDirB = fs.mkdtempSync(path.join(os.tmpdir(), "tinki-persist-b-"));
     try {
@@ -80,12 +80,16 @@ describe("Firestore security specification & cross-restart session persistence",
           name: "Persistent User",
         });
         assert.equal(session.user.id, "TestGoogleUid12345");
+        await storeA.flush();
 
-        const storeB = new TinkiStore(tmpDirB);
-        const restoredUser = storeB.verifySessionToken(session.access_token);
+        const storeReloaded = new TinkiStore(tmpDirA);
+        const restoredUser = storeReloaded.verifySessionToken(session.access_token);
         assert.ok(restoredUser);
         assert.equal(restoredUser.id, "TestGoogleUid12345");
         assert.equal(restoredUser.email, "persistent@example.com");
+
+        const storeWiped = new TinkiStore(tmpDirB);
+        assert.equal(storeWiped.verifySessionToken(session.access_token), null);
       } finally {
         if (prevSecret === undefined) delete process.env["AUTH_SECRET"];
         else process.env["AUTH_SECRET"] = prevSecret;
@@ -96,8 +100,8 @@ describe("Firestore security specification & cross-restart session persistence",
     }
   });
 
-  it("issues Partitioned SameSite=None Secure 30-day cookies on HTTPS/forwarded iframe requests", async () => {
-    const req = new Request("http://localhost:3000/api/auth/logout", {
+  it("issues SameSite=Lax; Secure 7-day cookies on HTTPS/forwarded and production requests without trusting Origin or Referer", async () => {
+    const httpsReq = new Request("http://localhost:3000/api/auth/logout", {
       method: "POST",
       headers: {
         "x-forwarded-proto": "https",
@@ -105,10 +109,27 @@ describe("Firestore security specification & cross-restart session persistence",
       },
       body: "{}",
     });
-    const res = await handleApiOrMediaRequest(req);
-    assert.ok(res);
-    const cookie = res.headers.get("set-cookie") ?? "";
-    assert.match(cookie, /SameSite=None;\s*Secure;\s*Partitioned/i);
-    assert.match(cookie, /HttpOnly/i);
+    const httpsRes = await handleApiOrMediaRequest(httpsReq);
+    assert.ok(httpsRes);
+    const httpsCookie = httpsRes.headers.get("set-cookie") ?? "";
+    assert.match(httpsCookie, /SameSite=Lax;\s*Secure/i);
+    assert.match(httpsCookie, /HttpOnly/i);
+    assert.doesNotMatch(httpsCookie, /SameSite=None|Partitioned/i);
+
+    // Spoofed Origin/Referer on plain HTTP must NOT cause Secure to be set in development
+    const spoofedHttpReq = new Request("http://localhost:3000/api/auth/logout", {
+      method: "POST",
+      headers: {
+        origin: "http://localhost:3000",
+        referer: "https://localhost:3000/dashboard",
+        "content-type": "application/json",
+      },
+      body: "{}",
+    });
+    const spoofedHttpRes = await handleApiOrMediaRequest(spoofedHttpReq);
+    assert.ok(spoofedHttpRes);
+    const spoofedCookie = spoofedHttpRes.headers.get("set-cookie") ?? "";
+    assert.match(spoofedCookie, /SameSite=Lax/i);
+    assert.doesNotMatch(spoofedCookie, /;\s*Secure\b/i);
   });
 });

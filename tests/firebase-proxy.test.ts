@@ -1,5 +1,4 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, expect, it } from "vitest";
 
 import {
   buildEmailVerificationContinueUrl,
@@ -13,17 +12,15 @@ import {
 
 describe("Firebase Auth proxy & client error helpers", () => {
   it("maps only HTTPS Firebase Auth origins to same-origin proxy paths", () => {
-    assert.equal(
+    expect(
       toFirebaseProxyUrl("https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=k1"),
-      "/api/firebase-proxy/identitytoolkit/v1/accounts:signInWithIdp?key=k1",
-    );
-    assert.equal(
-      toFirebaseProxyUrl("https://securetoken.googleapis.com/v1/token?key=k1"),
+    ).toBe("/api/firebase-proxy/identitytoolkit/v1/accounts:signInWithIdp?key=k1");
+    expect(toFirebaseProxyUrl("https://securetoken.googleapis.com/v1/token?key=k1")).toBe(
       "/api/firebase-proxy/securetoken/v1/token?key=k1",
     );
-    assert.equal(toFirebaseProxyUrl("http://identitytoolkit.googleapis.com/v1/projects?key=k1"), null);
-    assert.equal(toFirebaseProxyUrl("https://evil.example/v1/projects?key=k1"), null);
-    assert.equal(toFirebaseProxyUrl("not a url"), null);
+    expect(toFirebaseProxyUrl("http://identitytoolkit.googleapis.com/v1/projects?key=k1")).toBeNull();
+    expect(toFirebaseProxyUrl("https://evil.example/v1/projects?key=k1")).toBeNull();
+    expect(toFirebaseProxyUrl("not a url")).toBeNull();
   });
 
   it("validates proxy targets strictly against service, path allowlist, and API key", () => {
@@ -32,43 +29,68 @@ describe("Firebase Auth proxy & client error helpers", () => {
       "?key=expected-key",
       "expected-key",
     );
-    assert.equal(ok.service, "identitytoolkit");
-    assert.equal(ok.upstreamUrl, "https://identitytoolkit.googleapis.com/v1/projects?key=expected-key");
+    expect(ok.service).toBe("identitytoolkit");
+    expect(ok.upstreamUrl).toBe("https://identitytoolkit.googleapis.com/v1/projects?key=expected-key");
 
     const okToken = resolveFirebaseProxyTarget(
       "/api/firebase-proxy/securetoken/v1/token",
       "?key=expected-key",
       "expected-key",
     );
-    assert.equal(okToken.upstreamUrl, "https://securetoken.googleapis.com/v1/token?key=expected-key");
+    expect(okToken.upstreamUrl).toBe("https://securetoken.googleapis.com/v1/token?key=expected-key");
 
-    assert.throws(
-      () =>
-        resolveFirebaseProxyTarget(
-          "/api/firebase-proxy/identitytoolkit/v1/projects",
-          "?key=wrong-key",
-          "expected-key",
-        ),
-      /Invalid Firebase API key/,
-    );
-    assert.throws(
-      () =>
-        resolveFirebaseProxyTarget(
-          "/api/firebase-proxy/identitytoolkit/v1/../v2/admin",
-          "?key=expected-key",
-          "expected-key",
-        ),
-      /Unsupported Firebase Auth endpoint/,
-    );
-    assert.throws(
-      () =>
-        resolveFirebaseProxyTarget(
-          "/api/firebase-proxy/storage/v1/projects",
-          "?key=expected-key",
-          "expected-key",
-        ),
-      /Not found/,
-    );
+    expect(() =>
+      resolveFirebaseProxyTarget(
+        "/api/firebase-proxy/identitytoolkit/v1/projects",
+        "?key=wrong-key",
+        "expected-key",
+      ),
+    ).toThrow(/Invalid Firebase API key/);
+
+    expect(() =>
+      resolveFirebaseProxyTarget(
+        "/api/firebase-proxy/identitytoolkit/v1/../v2/admin",
+        "?key=expected-key",
+        "expected-key",
+      ),
+    ).toThrow(/Unsupported Firebase Auth endpoint/);
+
+    expect(() =>
+      resolveFirebaseProxyTarget(
+        "/api/firebase-proxy/storage/v1/projects",
+        "?key=expected-key",
+        "expected-key",
+      ),
+    ).toThrow(/Not found/);
+
+    // Strictly allowlisted client endpoints succeed
+    for (const allowedPath of [
+      "/api/firebase-proxy/identitytoolkit/v1/accounts:signUp",
+      "/api/firebase-proxy/identitytoolkit/v1/accounts:signInWithPassword",
+      "/api/firebase-proxy/identitytoolkit/v1/accounts:signInWithIdp",
+      "/api/firebase-proxy/identitytoolkit/v1/accounts:createAuthUri",
+      "/api/firebase-proxy/identitytoolkit/v1/accounts:lookup",
+      "/api/firebase-proxy/identitytoolkit/v1/accounts:update",
+      "/api/firebase-proxy/identitytoolkit/v1/accounts:resetPassword",
+      "/api/firebase-proxy/identitytoolkit/v1/accounts:sendOobCode",
+    ]) {
+      const target = resolveFirebaseProxyTarget(allowedPath, "?key=expected-key", "expected-key");
+      expect(target.service).toBe("identitytoolkit");
+    }
+
+    // Disallowed/unused endpoints and URL-encoded tricks fail with 403
+    for (const disallowedPath of [
+      "/api/firebase-proxy/identitytoolkit/v1/accounts:delete",
+      "/api/firebase-proxy/identitytoolkit/v1/accounts:signInWithCustomToken",
+      "/api/firebase-proxy/identitytoolkit/v1/accounts:signInWithPhoneNumber",
+      "/api/firebase-proxy/identitytoolkit/v1/accounts:sendVerificationCode",
+      "/api/firebase-proxy/securetoken/v1/projects",
+      "/api/firebase-proxy/identitytoolkit/v1/accounts%3AsignInWithPassword",
+    ]) {
+      expect(() =>
+        resolveFirebaseProxyTarget(disallowedPath, "?key=expected-key", "expected-key"),
+      ).toThrow(/Unsupported Firebase Auth endpoint/);
+    }
   });
 
   it("forwards allowlisted headers/body and handles upstream errors cleanly", async () => {
@@ -103,16 +125,15 @@ describe("Firebase Auth proxy & client error helpers", () => {
       },
     });
 
-    assert.equal(res.status, 200);
-    assert.equal(
-      seenUrl,
+    expect(res.status).toBe(200);
+    expect(seenUrl).toBe(
       "https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=expected-key",
     );
-    assert.equal(seenHeaders?.get("x-firebase-locale"), "en");
-    assert.equal(seenHeaders?.get("cookie"), null);
-    assert.equal(seenHeaders?.get("authorization"), null);
-    assert.equal(seenBody, '{"requestUri":"https://example.com"}');
-    assert.deepEqual(await res.json(), { idToken: "mock-id-token" });
+    expect(seenHeaders?.get("x-firebase-locale")).toBe("en");
+    expect(seenHeaders?.get("cookie")).toBeNull();
+    expect(seenHeaders?.get("authorization")).toBeNull();
+    expect(seenBody).toBe('{"requestUri":"https://example.com"}');
+    expect(await res.json()).toEqual({ idToken: "mock-id-token" });
 
     const badMethod = await handleFirebaseProxyRequest(
       new Request(
@@ -121,7 +142,7 @@ describe("Firebase Auth proxy & client error helpers", () => {
       ),
       { expectedApiKey: "expected-key" },
     );
-    assert.equal(badMethod.status, 405);
+    expect(badMethod.status).toBe(405);
 
     const failedUpstream = await handleFirebaseProxyRequest(
       new Request(
@@ -134,7 +155,7 @@ describe("Firebase Auth proxy & client error helpers", () => {
         },
       },
     );
-    assert.equal(failedUpstream.status, 502);
+    expect(failedUpstream.status).toBe(502);
   });
 
   it("maps Firebase network, cancellation, and configuration errors cleanly", () => {
@@ -142,26 +163,25 @@ describe("Firebase Auth proxy & client error helpers", () => {
       code: "auth/network-request-failed",
       message: "Firebase: Error (auth/network-request-failed).",
     });
-    assert.equal(netErr.isNetworkError, true);
-    assert.equal(netErr.isCancelled, false);
-    assert.ok(!netErr.message.includes("Firebase:"));
+    expect(netErr.isNetworkError).toBe(true);
+    expect(netErr.isCancelled).toBe(false);
+    expect(netErr.message.includes("Firebase:")).toBe(false);
 
     const cancelled = mapFirebaseAuthError({ code: "auth/popup-closed-by-user" });
-    assert.equal(cancelled.isCancelled, true);
+    expect(cancelled.isCancelled).toBe(true);
 
     const genericFirebase = mapFirebaseAuthError(new Error("Firebase: Error (auth/unknown)."));
-    assert.equal(genericFirebase.message, "Authentication didn't work. Please try again");
+    expect(genericFirebase.message).toBe("Authentication didn't work. Please try again");
 
     const expiredCode = mapFirebaseAuthError({ code: "auth/expired-action-code" });
-    assert.ok(expiredCode.message.toLowerCase().includes("expired"));
+    expect(expiredCode.message.toLowerCase()).toContain("expired");
 
-    assert.equal(
+    expect(
       buildEmailVerificationContinueUrl(
         "https://ais-dev.example.run.app",
         "dzwolf240@gmail.com",
         "myhandle",
       ),
-      "https://ais-dev.example.run.app/verify-email?email=dzwolf240%40gmail.com&username=myhandle",
-    );
+    ).toBe("https://ais-dev.example.run.app/verify-email?email=dzwolf240%40gmail.com&username=myhandle");
   });
 });

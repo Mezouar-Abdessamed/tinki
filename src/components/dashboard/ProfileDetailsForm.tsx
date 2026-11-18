@@ -207,15 +207,13 @@ export function ProfileDetailsForm({
       if (pickedFile) {
         const { blob, contentType } = await reencodeAvatar(pickedFile);
         const path = `${profile.id}/${crypto.randomUUID()}.${extensionForType(contentType)}`;
-        await storageApi.upload("avatars", path, blob, contentType);
-        uploadedAvatar = path;
+        uploadedAvatar = await storageApi.upload("avatars", path, blob, contentType);
       }
       if (coverFile) {
         const { blob, contentType } = await reencodeAvatar(coverFile, 1600);
         if (blob.size > MAX_COVER_BYTES) throw new Error("Cover photo must be 5 MB or less");
         const path = `${profile.id}/${crypto.randomUUID()}.${extensionForType(contentType)}`;
-        await storageApi.upload("covers", path, blob, contentType);
-        uploadedCover = path;
+        uploadedCover = await storageApi.upload("covers", path, blob, contentType);
       }
       const avatarPath = uploadedAvatar ?? (removeAvatar ? null : profile.avatar_path);
       const coverPath = uploadedCover ?? (removeCover ? null : profile.cover_photo_path ?? null);

@@ -1,6 +1,11 @@
 import { apiFetch } from "@/lib/api-client";
 import type { AppTableRow } from "@/lib/database-types";
-import { SOCIAL_PLATFORMS, type SocialKey } from "@/lib/profile-validation";
+import {
+  SOCIAL_PLATFORMS,
+  firstError,
+  socialLinkSettingsArraySchema,
+  type SocialKey,
+} from "@/lib/profile-validation";
 
 export type SocialLinkSetting = {
   id: string | undefined;
@@ -37,12 +42,8 @@ export async function fetchSocialLinkSettings(profileId: string) {
 }
 
 export async function saveSocialLinkSettings(settings: SocialLinkSetting[]) {
-  if (typeof window !== "undefined") {
-    const { auth: fbAuth, saveSocialLinkSettingsFirestore } = await import("@/lib/firestore-repository");
-    if (fbAuth.currentUser) {
-      await saveSocialLinkSettingsFirestore(settings);
-      return;
-    }
+  if (!Array.isArray(settings)) {
+    throw new Error("settings must be an array");
   }
   const payload = settings.map((setting, position) => ({
     profile_id: setting.profile_id,
@@ -50,8 +51,20 @@ export async function saveSocialLinkSettings(settings: SocialLinkSetting[]) {
     enabled: setting.enabled,
     position,
   }));
+  const parsed = socialLinkSettingsArraySchema.safeParse(payload);
+  if (!parsed.success) {
+    throw new Error(firstError(parsed.error));
+  }
+
+  if (typeof window !== "undefined") {
+    const { auth: fbAuth, saveSocialLinkSettingsFirestore } = await import("@/lib/firestore-repository");
+    if (fbAuth.currentUser) {
+      await saveSocialLinkSettingsFirestore(settings);
+      return;
+    }
+  }
   await apiFetch("/api/social-settings", {
     method: "PUT",
-    body: JSON.stringify({ settings: payload }),
+    body: JSON.stringify({ settings: parsed.data }),
   });
 }

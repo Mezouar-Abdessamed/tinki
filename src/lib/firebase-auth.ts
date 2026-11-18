@@ -3,21 +3,26 @@ import { getApp, getApps } from "firebase/app";
 import {
   GoogleAuthProvider,
   applyActionCode,
+  confirmPasswordReset,
   createUserWithEmailAndPassword,
   getAuth,
   getRedirectResult,
+  reauthenticateWithPopup,
   sendEmailVerification,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signInWithRedirect,
   signOut,
+  verifyPasswordResetCode,
   type Auth,
   type User,
 } from "firebase/auth";
 
-import { apiFetch, authApi, notifyAuthListeners, setStoredToken, type AuthSession } from "@/lib/api-client";
+import { ApiError, apiFetch, authApi, notifyAuthListeners, type AuthSession } from "@/lib/api-client";
 import type { CustomLink, CustomLinkType } from "@/lib/custom-links";
 import {
+  checkUsernameAvailableFirestore,
   createCustomLinkFirestore,
   createProfileFirestore,
   fetchProfileByIdFirestore,
@@ -237,8 +242,6 @@ export async function syncSessionFromFirebaseUser(fbUser: User): Promise<AuthSes
       ),
     ];
     session = {
-      access_token: idToken,
-      token_type: "bearer",
       user: {
         id: fbUser.uid,
         email: (fbUser.email ?? "").trim().toLowerCase(),
@@ -248,7 +251,6 @@ export async function syncSessionFromFirebaseUser(fbUser: User): Promise<AuthSes
         ),
       },
     };
-    setStoredToken(idToken);
     notifyAuthListeners(session);
   }
 
@@ -413,9 +415,65 @@ export async function signInWithGooglePopup(): Promise<AuthSession> {
   }
 }
 
+export async function reauthenticateWithGooglePopup(user: User): Promise<void> {
+  ensureFetchProviderConfigured();
+  const provider = createGoogleProvider();
+
+  try {
+    await reauthenticateWithPopup(user, provider);
+  } catch (firstError: unknown) {
+    const firstMapped = mapFirebaseAuthError(firstError);
+    if (firstMapped.isNetworkError) {
+      warmUpPromise = null;
+      try {
+        await reauthenticateWithPopup(user, provider);
+        return;
+      } catch (retryError: unknown) {
+        throw new Error(mapFirebaseAuthError(retryError).message);
+      }
+    }
+    throw new Error(firstMapped.message);
+  }
+}
+
 export type SignupVerificationResult =
   | { status: "pending"; email: string; username: string }
   | { status: "verified"; session: AuthSession };
+
+export async function signInWithEmailPasswordFirebase(
+  email: string,
+  password: string,
+): Promise<AuthSession> {
+  const auth = getFirebaseAuth();
+  const cleanEmail = email.trim().toLowerCase();
+
+  try {
+    const credential = await signInWithEmailAndPassword(auth, cleanEmail, password);
+    const firebaseUser = credential.user;
+    await firebaseUser.reload();
+    if (!firebaseUser.emailVerified) {
+      await signOut(auth).catch(() => undefined);
+      throw new ApiError(
+        "Please confirm your email address first. Check your inbox for the confirmation link",
+        403,
+        "email_not_verified",
+      );
+    }
+    return await syncSessionFromFirebaseUser(firebaseUser);
+  } catch (err) {
+    if (err instanceof ApiError) {
+      throw err;
+    }
+    try {
+      return await authApi.signInWithPassword({ email: cleanEmail, password });
+    } catch (apiErr) {
+      if (apiErr instanceof ApiError && apiErr.code === "email_not_verified") {
+        throw apiErr;
+      }
+      throw new Error("Those details don't match an account");
+    }
+  }
+}
 
 export async function sendSignupVerificationEmail(input: {
   email: string;
@@ -426,10 +484,21 @@ export async function sendSignupVerificationEmail(input: {
   const cleanEmail = input.email.trim().toLowerCase();
   const cleanUsername = input.username.trim().toLowerCase();
 
-  await authApi.checkSignupAvailable({
-    email: cleanEmail,
-    username: cleanUsername,
-  });
+  const usernameFree = await checkUsernameAvailableFirestore(cleanUsername);
+  if (!usernameFree) {
+    throw new Error("That username is already taken");
+  }
+
+  try {
+    await authApi.checkSignupAvailable({
+      email: cleanEmail,
+      username: cleanUsername,
+    });
+  } catch (err) {
+    if (!(err instanceof ApiError && err.code === "local_store_disabled")) {
+      throw err;
+    }
+  }
 
   let firebaseUser: User;
   try {
@@ -447,7 +516,16 @@ export async function sendSignupVerificationEmail(input: {
         await firebaseUser.reload();
         if (firebaseUser.emailVerified) {
           const idToken = await firebaseUser.getIdToken(true);
-          const session = await authApi.confirmEmailSignup(idToken, cleanUsername);
+          let session: AuthSession;
+          try {
+            session = await authApi.confirmEmailSignup(idToken, cleanUsername);
+          } catch (confirmErr) {
+            if (confirmErr instanceof ApiError && confirmErr.code === "local_store_disabled") {
+              session = await syncSessionFromFirebaseUser(firebaseUser);
+            } else {
+              throw confirmErr;
+            }
+          }
           await syncFirebaseAccountDoc(firebaseUser, cleanUsername).catch(() => undefined);
           clearPendingVerificationState();
           return { status: "verified", session };
@@ -466,11 +544,17 @@ export async function sendSignupVerificationEmail(input: {
     throw new Error(mapFirebaseAuthError(error).message);
   }
 
-  await authApi.registerPendingSignup({
-    email: cleanEmail,
-    password: input.password,
-    username: cleanUsername,
-  });
+  try {
+    await authApi.registerPendingSignup({
+      email: cleanEmail,
+      password: input.password,
+      username: cleanUsername,
+    });
+  } catch (err) {
+    if (!(err instanceof ApiError && err.code === "local_store_disabled")) {
+      throw err;
+    }
+  }
 
   storePendingVerificationState(cleanEmail, cleanUsername);
   return { status: "pending", email: cleanEmail, username: cleanUsername };
@@ -535,10 +619,76 @@ export async function checkAndCompleteEmailVerification(options?: {
   const stored = readPendingVerificationState();
   const idToken = await user.getIdToken(true);
   const chosenUsername = options?.username ?? stored.username;
-  const session = await authApi.confirmEmailSignup(idToken, chosenUsername);
+  let session: AuthSession;
+  try {
+    session = await authApi.confirmEmailSignup(idToken, chosenUsername);
+  } catch (err) {
+    if (err instanceof ApiError && err.code === "local_store_disabled") {
+      session = await syncSessionFromFirebaseUser(user);
+    } else {
+      throw err;
+    }
+  }
   await syncFirebaseAccountDoc(user, chosenUsername).catch(() => undefined);
   clearPendingVerificationState();
   return { status: "confirmed", session };
+}
+
+export async function sendFirebasePasswordResetEmail(email: string): Promise<void> {
+  const cleanEmail = email.trim().toLowerCase();
+  if (!cleanEmail) return;
+  const auth = getFirebaseAuth();
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+
+  try {
+    if (origin) {
+      try {
+        await sendPasswordResetEmail(auth, cleanEmail, {
+          url: `${origin}/reset-password`,
+          handleCodeInApp: true,
+        });
+        return;
+      } catch (error: unknown) {
+        const code =
+          typeof error === "object" && error !== null && "code" in error
+            ? String((error as { code: unknown }).code)
+            : "";
+        if (
+          code !== "auth/unauthorized-continue-uri" &&
+          code !== "auth/invalid-continue-uri"
+        ) {
+          throw error;
+        }
+      }
+    }
+    await sendPasswordResetEmail(auth, cleanEmail);
+  } catch {
+    /* never reveal whether an account exists for the supplied email */
+  }
+}
+
+export async function verifyFirebasePasswordResetCode(oobCode: string): Promise<string> {
+  const auth = getFirebaseAuth();
+  try {
+    return await verifyPasswordResetCode(auth, oobCode);
+  } catch (error: unknown) {
+    throw new Error(mapFirebaseAuthError(error).message);
+  }
+}
+
+export async function confirmFirebasePasswordReset(
+  oobCode: string,
+  newPassword: string,
+): Promise<string | null> {
+  const auth = getFirebaseAuth();
+  let email: string | null = null;
+  try {
+    email = await verifyPasswordResetCode(auth, oobCode);
+    await confirmPasswordReset(auth, oobCode, newPassword);
+    return email;
+  } catch (error: unknown) {
+    throw new Error(mapFirebaseAuthError(error).message);
+  }
 }
 
 export async function signOutFirebaseGoogle(): Promise<void> {

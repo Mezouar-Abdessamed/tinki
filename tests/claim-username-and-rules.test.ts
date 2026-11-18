@@ -48,44 +48,58 @@ describe("ClaimUsername flow & non-circular Firestore rules", () => {
     );
   });
 
-  it("TinkiStore.updatePassword succeeds after container restart using verified token fallback user", () => {
+  it("TinkiStore.updatePassword persists across restarts on shared data dir and rejects unknown users on wiped dir", async () => {
     const tmpA = fs.mkdtempSync(path.join(os.tmpdir(), "tinki-pw-a-"));
     const tmpB = fs.mkdtempSync(path.join(os.tmpdir(), "tinki-pw-b-"));
     const prevSecret = process.env["AUTH_SECRET"];
     process.env["AUTH_SECRET"] = "test-secret-across-restarts-1234";
     try {
       const storeA = new TinkiStore(tmpA);
-      const initialSession = storeA.loginWithGoogle({
-        uid: "GoogleUidAfterRestart1",
-        email: "creator@example.com",
-        name: "Creator",
-      });
-      assert.equal(requiresInitialPasswordSetup(initialSession.user), true);
+      let storeWiped: TinkiStore | undefined;
+      let storeRestarted: TinkiStore | undefined;
+      try {
+        const initialSession = storeA.loginWithGoogle({
+          uid: "GoogleUidAfterRestart1",
+          email: "creator@example.com",
+          name: "Creator",
+        });
+        assert.equal(requiresInitialPasswordSetup(initialSession.user), true);
+        await storeA.flush();
 
-      const storeB = new TinkiStore(tmpB);
-      const verifiedUser = storeB.verifySessionToken(initialSession.access_token);
-      assert.ok(verifiedUser);
+        storeWiped = new TinkiStore(tmpB);
+        assert.equal(storeWiped.verifySessionToken(initialSession.access_token), null);
+        await assert.rejects(
+          () => storeWiped!.updatePassword(initialSession.user.id, "StrongPass123!"),
+          /User not found/i,
+        );
 
-      const updated = storeB.updatePassword(
-        verifiedUser.id,
-        "StrongPass123!",
-        undefined,
-        verifiedUser,
-      );
-      assert.equal(requiresInitialPasswordSetup(updated.user), false);
-      assert.ok(updated.user.identities.some((i) => i.provider === "email"));
-      assert.ok(updated.user.identities.some((i) => i.provider === "google"));
+        storeRestarted = new TinkiStore(tmpA);
+        const verifiedUser = storeRestarted.verifySessionToken(initialSession.access_token);
+        assert.ok(verifiedUser);
 
-      assert.throws(
-        () => storeB.updatePassword(verifiedUser.id, "AnotherPass123!"),
-        /current password is incorrect/i,
-      );
-      const changed = storeB.updatePassword(
-        verifiedUser.id,
-        "AnotherPass123!",
-        "StrongPass123!",
-      );
-      assert.ok(changed.access_token);
+        const updated = await storeRestarted.updatePassword(verifiedUser.id, "StrongPass123!");
+        assert.equal(requiresInitialPasswordSetup(updated.user), false);
+        assert.ok(updated.user.identities.some((i) => i.provider === "email"));
+        assert.ok(updated.user.identities.some((i) => i.provider === "google"));
+        assert.equal(storeRestarted.verifySessionToken(initialSession.access_token), null);
+
+        await assert.rejects(
+          () => storeRestarted!.updatePassword(verifiedUser.id, "AnotherPass123!"),
+          /current password is incorrect/i,
+        );
+        const changed = await storeRestarted.updatePassword(
+          verifiedUser.id,
+          "AnotherPass123!",
+          "StrongPass123!",
+        );
+        assert.ok(changed.access_token);
+        assert.equal(storeRestarted.verifySessionToken(updated.access_token), null);
+        assert.ok(storeRestarted.verifySessionToken(changed.access_token));
+      } finally {
+        storeA.dispose();
+        storeWiped?.dispose();
+        storeRestarted?.dispose();
+      }
     } finally {
       if (prevSecret === undefined) delete process.env["AUTH_SECRET"];
       else process.env["AUTH_SECRET"] = prevSecret;

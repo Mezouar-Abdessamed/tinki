@@ -1,45 +1,71 @@
-import { apiFetch, getStoredToken } from "@/lib/api-client";
+import { apiFetch } from "@/lib/api-client";
 import type { SocialKey } from "@/lib/profile-validation";
 
-const VISITOR_KEY = "onelink_visitor";
-const VIEW_PREFIX = "onelink_viewed:";
-const COUNTRY_KEY = "onelink_country";
+export const VISITOR_KEY = "tinki_visitor";
+export const VIEW_PREFIX = "tinki_viewed:";
+const LEGACY_VISITOR_KEY = "onelink_visitor";
+const LEGACY_VIEW_PREFIX = "onelink_viewed:";
+const STORAGE_MIGRATED_KEY = "tinki_storage_migrated_v1";
+const VIEW_TTL_MS = 60 * 60 * 1000;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-let countryPromise: Promise<string | null> | null = null;
+export function migrateLegacyAnalyticsStorage(storage?: Storage | null): void {
+  const target = storage ?? (typeof window !== "undefined" ? window.localStorage : null);
+  if (!target) return;
 
-export function getCountryCode(): Promise<string | null> {
-  if (typeof window === "undefined") return Promise.resolve(null);
   try {
-    const cached = window.localStorage.getItem(COUNTRY_KEY);
-    if (cached) return Promise.resolve(cached);
+    if (target.getItem(STORAGE_MIGRATED_KEY) === "1") {
+      return;
+    }
+
+    const legacyVisitor = target.getItem(LEGACY_VISITOR_KEY);
+    if (legacyVisitor !== null) {
+      const currentVisitor = target.getItem(VISITOR_KEY);
+      if ((!currentVisitor || !UUID_RE.test(currentVisitor)) && UUID_RE.test(legacyVisitor)) {
+        target.setItem(VISITOR_KEY, legacyVisitor);
+      }
+      target.removeItem(LEGACY_VISITOR_KEY);
+    }
+
+    const legacyViewKeys: string[] = [];
+    for (let i = 0; i < target.length; i++) {
+      const key = target.key(i);
+      if (key && key.startsWith(LEGACY_VIEW_PREFIX)) {
+        legacyViewKeys.push(key);
+      }
+    }
+
+    for (const oldKey of legacyViewKeys) {
+      const suffix = oldKey.slice(LEGACY_VIEW_PREFIX.length);
+      const newKey = `${VIEW_PREFIX}${suffix}`;
+      const oldVal = target.getItem(oldKey);
+      if (oldVal !== null) {
+        const existingVal = target.getItem(newKey);
+        const oldTs = Number(oldVal);
+        const existingTs = existingVal !== null ? Number(existingVal) : Number.NaN;
+        if (
+          existingVal === null ||
+          !Number.isFinite(existingTs) ||
+          (Number.isFinite(oldTs) && oldTs > existingTs)
+        ) {
+          target.setItem(newKey, oldVal);
+        }
+      }
+      target.removeItem(oldKey);
+    }
+
+    target.setItem(STORAGE_MIGRATED_KEY, "1");
   } catch {
     /* storage unavailable */
   }
-  if (!countryPromise) {
-    countryPromise = fetch("https://www.cloudflare.com/cdn-cgi/trace")
-      .then((res) => (res.ok ? res.text() : ""))
-      .then((text) => {
-        const match = text.match(/^loc=([A-Z]{2})$/m);
-        const code = match?.[1] ?? null;
-        if (code) {
-          try {
-            window.localStorage.setItem(COUNTRY_KEY, code);
-          } catch {
-            /* storage unavailable */
-          }
-        }
-        return code;
-      })
-      .catch(() => null);
-  }
-  return countryPromise;
 }
 
 export function getVisitorId(): string | null {
   if (typeof window === "undefined") return null;
   try {
+    migrateLegacyAnalyticsStorage(window.localStorage);
     let id = window.localStorage.getItem(VISITOR_KEY);
-    if (!id) {
+    if (!id || !UUID_RE.test(id)) {
       id = crypto.randomUUID();
       window.localStorage.setItem(VISITOR_KEY, id);
     }
@@ -52,7 +78,12 @@ export function getVisitorId(): string | null {
 function seenRecently(key: string): boolean {
   if (typeof window === "undefined") return true;
   try {
-    return window.localStorage.getItem(`${VIEW_PREFIX}${key}`) !== null;
+    migrateLegacyAnalyticsStorage(window.localStorage);
+    const raw = window.localStorage.getItem(`${VIEW_PREFIX}${key}`);
+    if (raw === null) return false;
+    const recordedAt = Number(raw);
+    if (!Number.isFinite(recordedAt)) return false;
+    return Date.now() - recordedAt < VIEW_TTL_MS;
   } catch {
     return false;
   }
@@ -60,6 +91,7 @@ function seenRecently(key: string): boolean {
 
 function markSeen(key: string) {
   try {
+    migrateLegacyAnalyticsStorage(window.localStorage);
     window.localStorage.setItem(`${VIEW_PREFIX}${key}`, String(Date.now()));
   } catch {
     /* storage unavailable */
@@ -75,24 +107,15 @@ type ClickEvent = {
 };
 
 function sendClick(event: ClickEvent) {
-  if (typeof window !== "undefined") {
-    void import("@/lib/firestore-repository")
-      .then(({ recordProfileEventFirestore }) => recordProfileEventFirestore(event))
-      .catch(() => undefined);
-    return;
-  }
   if (typeof fetch === "undefined") return;
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
-  const token = getStoredToken();
-  if (token) headers["Authorization"] = `Bearer ${token}`;
 
   void fetch("/api/events", {
     method: "POST",
     keepalive: true,
     credentials: "include",
-    headers,
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(event),
   }).catch(() => {
     /* a lost click is never worth interrupting the visitor */
@@ -103,27 +126,15 @@ export async function trackProfileView(profileId: string, isOwner: boolean) {
   if (isOwner) return;
   const visitorId = getVisitorId();
   if (!visitorId || seenRecently(profileId)) return;
-  const country = await getCountryCode();
   try {
-    if (typeof window !== "undefined") {
-      const { recordProfileEventFirestore } = await import("@/lib/firestore-repository");
-      await recordProfileEventFirestore({
+    await apiFetch("/api/events", {
+      method: "POST",
+      body: JSON.stringify({
         profile_id: profileId,
         event_type: "profile_view",
         visitor_id: visitorId,
-        country,
-      });
-    } else {
-      await apiFetch("/api/events", {
-        method: "POST",
-        body: JSON.stringify({
-          profile_id: profileId,
-          event_type: "profile_view",
-          visitor_id: visitorId,
-          country,
-        }),
-      });
-    }
+      }),
+    });
     markSeen(profileId);
   } catch {
     /* ignore transient tracking errors */

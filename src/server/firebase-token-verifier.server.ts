@@ -6,11 +6,15 @@ import { StoreError } from "./local-fallback-store.server";
 const GOOGLE_JWK_URL =
   "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com";
 
+export const REAUTH_MAX_AGE_SECONDS = 5 * 60;
+
 export type GoogleTokenClaims = {
   uid: string;
   email: string;
   name?: string;
   picture?: string;
+  authTime?: number;
+  signInProvider?: string;
 };
 
 type JwkEntry = crypto.JsonWebKey & {
@@ -197,12 +201,68 @@ export async function verifyFirebaseIdToken(
       ? payload["picture"].trim()
       : undefined;
 
+  const firebaseClaims =
+    typeof payload["firebase"] === "object" && payload["firebase"] !== null
+      ? (payload["firebase"] as Record<string, unknown>)
+      : undefined;
+  const signInProvider =
+    firebaseClaims && typeof firebaseClaims["sign_in_provider"] === "string"
+      ? firebaseClaims["sign_in_provider"].trim()
+      : undefined;
+  const parsedAuthTime =
+    typeof payload["auth_time"] === "number" && Number.isFinite(payload["auth_time"]) && payload["auth_time"] > 0
+      ? payload["auth_time"]
+      : undefined;
+
   return {
     uid: sub,
     email,
     ...(name ? { name } : {}),
     ...(picture ? { picture } : {}),
+    ...(parsedAuthTime !== undefined ? { authTime: parsedAuthTime } : {}),
+    ...(signInProvider ? { signInProvider } : {}),
   };
+}
+
+export function assertRecentGoogleAuth(
+  claims: { authTime?: number },
+  nowSeconds: number = Math.floor(Date.now() / 1000),
+  maxAgeSeconds: number = REAUTH_MAX_AGE_SECONDS,
+): void {
+  if (
+    typeof claims.authTime !== "number" ||
+    !Number.isFinite(claims.authTime) ||
+    nowSeconds - claims.authTime > maxAgeSeconds
+  ) {
+    throw new StoreError(
+      "Please sign in with Google again before deleting your account",
+      401,
+      "reauth_required",
+    );
+  }
+}
+
+export async function deleteFirebaseAuthUserServer(
+  idToken: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<boolean> {
+  const apiKey = readFirebaseApiKey();
+  if (!apiKey || !idToken) return false;
+
+  try {
+    const response = await fetchImpl(
+      `https://identitytoolkit.googleapis.com/v1/accounts:delete?key=${encodeURIComponent(apiKey)}`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ idToken }),
+        signal: AbortSignal.timeout(10_000),
+      },
+    );
+    return response.ok;
+  } catch {
+    return false;
+  }
 }
 
 export async function signInFirebaseEmailPasswordServer(
@@ -227,5 +287,47 @@ export async function signInFirebaseEmailPasswordServer(
     return typeof data.idToken === "string" && data.idToken ? { idToken: data.idToken } : null;
   } catch {
     return null;
+  }
+}
+
+export async function sendFirebasePasswordResetEmailServer(
+  email: string,
+  continueUrl?: string,
+): Promise<void> {
+  const apiKey = readFirebaseApiKey();
+  const cleanEmail = email.trim().toLowerCase();
+  if (!apiKey || !cleanEmail) return;
+
+  const endpoint = `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${encodeURIComponent(apiKey)}`;
+  const send = async (withContinueUrl: boolean) => {
+    const payload =
+      withContinueUrl && continueUrl
+        ? { requestType: "PASSWORD_RESET", email: cleanEmail, continueUrl, canHandleCodeInApp: true }
+        : { requestType: "PASSWORD_RESET", email: cleanEmail };
+    return fetch(endpoint, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(10_000),
+    });
+  };
+
+  try {
+    const first = await send(true);
+    if (!first.ok && continueUrl) {
+      const body = (await first.json().catch(() => null)) as {
+        error?: { message?: string };
+      } | null;
+      const errMsg = body?.error?.message ?? "";
+      if (
+        errMsg.includes("UNAUTHORIZED_DOMAIN") ||
+        errMsg.includes("INVALID_CONTINUE_URI") ||
+        errMsg.includes("MISSING_CONTINUE_URI")
+      ) {
+        await send(false);
+      }
+    }
+  } catch {
+    /* never reveal user existence or delivery errors to callers */
   }
 }

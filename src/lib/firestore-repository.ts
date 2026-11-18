@@ -15,6 +15,7 @@ import {
   getDocFromServer,
   getDocs,
   getFirestore,
+  initializeFirestore,
   orderBy,
   query,
   serverTimestamp,
@@ -92,8 +93,17 @@ export function getFirebaseClientAuth(): Auth {
 }
 
 export const db: Firestore = (() => {
+  if (cachedDb) return cachedDb;
   const app = getFirebaseClientApp();
-  cachedDb = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+  try {
+    cachedDb = initializeFirestore(
+      app,
+      { experimentalAutoDetectLongPolling: true },
+      firebaseConfig.firestoreDatabaseId,
+    );
+  } catch {
+    cachedDb = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+  }
   return cachedDb;
 })();
 
@@ -101,11 +111,16 @@ export const auth: Auth = getFirebaseClientAuth();
 
 async function testConnection() {
   if (typeof window === "undefined" || connectionTested) return;
+  if (typeof navigator !== "undefined" && navigator.onLine === false) return;
   connectionTested = true;
   try {
     await getDocFromServer(doc(db, "test", "connection"));
   } catch (error) {
-    if (error instanceof Error && error.message.includes("the client is offline")) {
+    if (
+      error instanceof Error &&
+      error.message.includes("the client is offline") &&
+      (typeof navigator === "undefined" || navigator.onLine !== false)
+    ) {
       console.error("Please check your Firebase configuration.");
     }
   }
@@ -1034,6 +1049,18 @@ export async function removeMediaFirestore(
   }
 }
 
+async function deleteDocRefsInBatches(
+  refs: Array<ReturnType<typeof doc>>,
+): Promise<void> {
+  for (let i = 0; i < refs.length; i += 400) {
+    const batch = writeBatch(db);
+    for (const ref of refs.slice(i, i + 400)) {
+      batch.delete(ref);
+    }
+    await batch.commit();
+  }
+}
+
 // --- Full Account Deletion from Firestore ---
 export async function deleteAccountFirestore(): Promise<void> {
   const user = auth.currentUser;
@@ -1041,13 +1068,16 @@ export async function deleteAccountFirestore(): Promise<void> {
   const uid = user.uid;
 
   try {
-    const profile = await fetchProfileByIdFirestore(uid);
+    const [profile, accountSnap] = await Promise.all([
+      fetchProfileByIdFirestore(uid),
+      getDoc(doc(db, "accounts", uid)),
+    ]);
 
     const mediaSnap = await getDocs(
       query(collection(db, "media_objects"), where("owner_id", "==", uid)),
     );
     for (const mediaDoc of mediaSnap.docs) {
-      const chunkCount = Number(mediaDoc.data()["chunk_count"] ?? 0);
+      const chunkCount = Math.min(20, Math.max(0, Number(mediaDoc.data()["chunk_count"] ?? 0)));
       const batch = writeBatch(db);
       for (let i = 0; i < chunkCount; i++) {
         batch.delete(doc(db, "media_objects", mediaDoc.id, "chunks", String(i)));
@@ -1056,31 +1086,29 @@ export async function deleteAccountFirestore(): Promise<void> {
       await batch.commit();
     }
 
-    const eventsSnap = await getDocs(
-      query(collection(db, "profile_events"), where("profile_id", "==", uid)),
-    );
-    for (let i = 0; i < eventsSnap.docs.length; i += 400) {
-      const batch = writeBatch(db);
-      eventsSnap.docs.slice(i, i + 400).forEach((d) => batch.delete(d.ref));
-      await batch.commit();
+    const [eventsSnap, linksSnap, settingsSnap] = await Promise.all([
+      getDocs(query(collection(db, "profile_events"), where("profile_id", "==", uid))),
+      getDocs(query(collection(db, "custom_links"), where("profile_id", "==", uid))),
+      getDocs(query(collection(db, "social_link_settings"), where("profile_id", "==", uid))),
+    ]);
+
+    const accountData = accountSnap.exists() ? accountSnap.data() : undefined;
+    const claimedUsernames = new Set<string>();
+    if (profile?.username) claimedUsernames.add(profile.username.toLowerCase());
+    if (typeof accountData?.["username"] === "string" && accountData["username"]) {
+      claimedUsernames.add(accountData["username"].toLowerCase());
     }
 
-    const linksSnap = await getDocs(
-      query(collection(db, "custom_links"), where("profile_id", "==", uid)),
-    );
-    const settingsSnap = await getDocs(
-      query(collection(db, "social_link_settings"), where("profile_id", "==", uid)),
-    );
+    const refsToDelete: Array<ReturnType<typeof doc>> = [
+      ...eventsSnap.docs.map((d) => d.ref),
+      ...linksSnap.docs.map((d) => d.ref),
+      ...settingsSnap.docs.map((d) => d.ref),
+      ...[...claimedUsernames].map((uname) => doc(db, "usernames", uname)),
+      doc(db, "profiles", uid),
+      doc(db, "accounts", uid),
+    ];
 
-    const batch = writeBatch(db);
-    linksSnap.docs.forEach((d) => batch.delete(d.ref));
-    settingsSnap.docs.forEach((d) => batch.delete(d.ref));
-    if (profile?.username) {
-      batch.delete(doc(db, "usernames", profile.username));
-    }
-    batch.delete(doc(db, "profiles", uid));
-    batch.delete(doc(db, "accounts", uid));
-    await batch.commit();
+    await deleteDocRefsInBatches(refsToDelete);
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, `accounts/${uid}`);
   }

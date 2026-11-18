@@ -8,7 +8,20 @@ const ALLOWED_UPSTREAM_HOSTS = {
 
 type ProxyService = keyof typeof ALLOWED_UPSTREAM_HOSTS;
 
-const ALLOWED_PATH_PATTERN = /^\/v1\/(?:projects|token|accounts:[A-Za-z]+)$/;
+const ALLOWED_PATHS_BY_SERVICE: Record<ProxyService, ReadonlySet<string>> = {
+  identitytoolkit: new Set([
+    "/v1/projects",
+    "/v1/accounts:signUp",
+    "/v1/accounts:signInWithPassword",
+    "/v1/accounts:signInWithIdp",
+    "/v1/accounts:createAuthUri",
+    "/v1/accounts:lookup",
+    "/v1/accounts:update",
+    "/v1/accounts:resetPassword",
+    "/v1/accounts:sendOobCode",
+  ]),
+  securetoken: new Set(["/v1/token"]),
+};
 const MAX_PROXY_BODY_BYTES = 64 * 1024;
 const PROXY_TIMEOUT_MS = 15_000;
 
@@ -41,12 +54,13 @@ export function resolveFirebaseProxyTarget(
     throw new StoreError("Invalid proxy path", 400);
   }
 
+  const allowedPaths = ALLOWED_PATHS_BY_SERVICE[service];
   if (
     decodedSubpath.includes("..") ||
     decodedSubpath.includes("//") ||
     decodedSubpath.includes("\\") ||
-    !ALLOWED_PATH_PATTERN.test(rawSubpath) ||
-    !ALLOWED_PATH_PATTERN.test(decodedSubpath)
+    rawSubpath !== decodedSubpath ||
+    !allowedPaths.has(decodedSubpath)
   ) {
     throw new StoreError("Unsupported Firebase Auth endpoint", 403);
   }

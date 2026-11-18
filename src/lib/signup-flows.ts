@@ -1,4 +1,4 @@
-import { authApi, type AuthSession } from "@/lib/api-client";
+import type { AuthSession } from "@/lib/api-client";
 import {
   sendSignupVerificationEmail,
   type SignupVerificationResult,
@@ -20,14 +20,14 @@ export type SignUpFn = (input: {
 /** Create an account and require a real authenticated session before continuing. */
 export async function signUpDirectly(
   values: SignupValues,
-  signUp: SignUpFn = (input) => authApi.signUp(input),
+  signUp: SignUpFn,
 ): Promise<AuthSession> {
   const session = await signUp({
     email: values.email,
     password: values.password,
     username: values.username,
   });
-  if (!session || !session.access_token) {
+  if (!session || !session.user?.id) {
     throw new Error("We couldn't finish signing you in — please try logging in");
   }
   return session;

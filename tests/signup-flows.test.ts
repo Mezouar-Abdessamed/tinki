@@ -10,8 +10,7 @@ const values = {
 };
 
 const session: AuthSession = {
-  access_token: "token-123",
-  token_type: "bearer",
+  expires_at: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7,
   user: {
     id: "new-user",
     email: values.email,
@@ -31,8 +30,8 @@ describe("direct signup", () => {
     });
   });
 
-  it("never treats a signup without an access token as authenticated", async () => {
-    const signUp = vi.fn().mockResolvedValue({ ...session, access_token: "" });
+  it("never treats a signup without an authenticated user id as authenticated", async () => {
+    const signUp = vi.fn().mockResolvedValue({ ...session, user: { ...session.user, id: "" } });
     await expect(signUpDirectly(values, signUp)).rejects.toThrow();
   });
 

@@ -273,6 +273,104 @@ export const emailSchema = z
     "Enter a valid email address, like you@example.com",
   );
 
+export const SOCIAL_PLATFORM_KEYS = SOCIAL_PLATFORMS.map((p) => p.key) as [
+  SocialKey,
+  ...SocialKey[],
+];
+
+export const PROFILE_EVENT_TYPES = [
+  "profile_view",
+  "social_click",
+  "custom_link_click",
+] as const;
+
+export const profileEventBodySchema = z
+  .object({
+    profile_id: z
+      .string()
+      .trim()
+      .min(1, "profile_id is required")
+      .max(128, "profile_id is too long")
+      .regex(/^[a-zA-Z0-9_-]+$/, "Invalid profile_id"),
+    event_type: z.enum(PROFILE_EVENT_TYPES),
+    platform: z.enum(SOCIAL_PLATFORM_KEYS).nullable().optional(),
+    custom_link_id: z
+      .string()
+      .trim()
+      .min(1, "custom_link_id must not be empty")
+      .max(128, "custom_link_id is too long")
+      .regex(/^[a-zA-Z0-9_-]+$/, "Invalid custom_link_id")
+      .nullable()
+      .optional(),
+    visitor_id: z.string().uuid("visitor_id must be a valid UUID").nullable().optional(),
+    country: z
+      .string()
+      .regex(/^[A-Z]{2}$/, "country must be an ISO-3166 alpha-2 code")
+      .nullable()
+      .optional(),
+  })
+  .strict()
+  .superRefine((val, ctx) => {
+    if (val.event_type === "social_click" && !val.platform) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["platform"],
+        message: "platform is required for social_click events",
+      });
+    }
+    if (val.event_type !== "social_click" && val.platform != null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["platform"],
+        message: "platform is only valid for social_click events",
+      });
+    }
+    if (val.event_type === "custom_link_click" && !val.custom_link_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["custom_link_id"],
+        message: "custom_link_id is required for custom_link_click events",
+      });
+    }
+    if (val.event_type !== "custom_link_click" && val.custom_link_id != null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["custom_link_id"],
+        message: "custom_link_id is only valid for custom_link_click events",
+      });
+    }
+  });
+
+export type ProfileEventBody = z.infer<typeof profileEventBodySchema>;
+
+export const socialLinkSettingItemSchema = z
+  .object({
+    profile_id: z.string().trim().min(1).max(128).optional(),
+    platform: z.enum(SOCIAL_PLATFORM_KEYS),
+    enabled: z.boolean(),
+    position: z
+      .number()
+      .int("position must be an integer")
+      .min(0, "position must be between 0 and 50")
+      .max(50, "position must be between 0 and 50"),
+  })
+  .strict();
+
+export const socialLinkSettingsArraySchema = z
+  .array(socialLinkSettingItemSchema)
+  .max(
+    SOCIAL_PLATFORMS.length,
+    `settings cannot exceed ${SOCIAL_PLATFORMS.length} platforms`,
+  );
+
+export const saveSocialLinkSettingsBodySchema = z
+  .object({
+    settings: socialLinkSettingsArraySchema,
+  })
+  .strict();
+
+export type SocialLinkSettingInput = z.infer<typeof socialLinkSettingItemSchema>;
+
 /** First human-readable message from a zod error. */
 export function firstError(error: { issues: { message: string }[] }): string {
   return error.issues[0]?.message ?? "That value isn't valid";

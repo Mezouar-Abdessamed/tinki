@@ -8,10 +8,11 @@ import { PasswordInput } from "@/components/PasswordInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ApiError, authApi } from "@/lib/api-client";
+import { ApiError } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth";
 import {
   completeGoogleRedirectIfPending,
+  signInWithEmailPasswordFirebase,
   signInWithGooglePopup,
   warmUpFirebaseAuth,
 } from "@/lib/firebase-auth";
@@ -79,10 +80,7 @@ function LoginPage() {
     setNeedsConfirmationEmail(null);
     const cleanEmail = email.trim().toLowerCase();
     try {
-      await authApi.signInWithPassword({
-        email: cleanEmail,
-        password,
-      });
+      await signInWithEmailPasswordFirebase(cleanEmail, password);
       navigate({ to: "/dashboard" });
     } catch (error) {
       if (error instanceof ApiError && error.code === "email_not_verified") {

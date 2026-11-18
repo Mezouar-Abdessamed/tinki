@@ -70,6 +70,9 @@ export function DeleteAccountSection({ username }: { username: string }) {
             <AlertDialogTitle>Delete your account?</AlertDialogTitle>
             <AlertDialogDescription>
               This can't be undone. Your page at /{username} will stop working immediately
+              {!hasPassword
+                ? ". You may be asked to re-confirm your Google sign-in before deletion."
+                : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-3">
