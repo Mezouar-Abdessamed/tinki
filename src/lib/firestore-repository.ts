@@ -33,6 +33,23 @@ import type { CustomLink, CustomLinkType } from "@/lib/custom-links";
 import type { Profile } from "@/lib/profiles";
 import type { SocialLinkSetting } from "@/lib/social-link-settings";
 import {
+  BG_TYPES,
+  FONT_FAMILIES,
+  FONT_STYLES,
+  PROFILE_DEFAULTS,
+  QR_ERROR_CORRECTIONS,
+  QR_EYE_SHAPES,
+  QR_MODULE_SHAPES,
+  buildCreateProfilePayload,
+  buildUsernameClaimPayload,
+  clamp,
+  enumOrFallback,
+  hexOrFallback,
+  hexOrNull,
+  optStr,
+  utf8ByteLength,
+} from "@/lib/firestore-payloads";
+import {
   RESERVED_USERNAMES,
   SOCIAL_PLATFORMS,
   usernameSchema,
@@ -167,87 +184,6 @@ function isoFromFirestoreTimestamp(value: unknown): string {
   return new Date().toISOString();
 }
 
-function clamp(num: unknown, min: number, max: number, fallback: number): number {
-  if (typeof num !== "number" || !Number.isFinite(num)) return fallback;
-  return Math.min(max, Math.max(min, num));
-}
-
-function optStr(value: unknown, maxLen: number): string | null {
-  if (typeof value !== "string") return null;
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  return trimmed.slice(0, maxLen);
-}
-
-const HEX_COLOR_RE = /^#[0-9a-f]{6}$/i;
-function hexOrNull(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-  const trimmed = value.trim();
-  return HEX_COLOR_RE.test(trimmed) ? trimmed : null;
-}
-
-function hexOrFallback(value: unknown, fallback: string): string {
-  return hexOrNull(value) ?? fallback;
-}
-
-const PROFILE_DEFAULTS: Omit<Profile, "id" | "username" | "created_at" | "updated_at"> & {
-  verified: boolean;
-} = {
-  display_name: null,
-  bio: null,
-  avatar_path: null,
-  cover_photo_path: null,
-  cover_photo_x: 50,
-  cover_photo_y: 50,
-  show_qr_button: true,
-  verified: false,
-  instagram_url: null,
-  facebook_url: null,
-  tiktok_url: null,
-  snapchat_url: null,
-  linkedin_url: null,
-  x_url: null,
-  youtube_url: null,
-  whatsapp_url: null,
-  telegram_url: null,
-  discord_url: null,
-  github_url: null,
-  steam_url: null,
-  epicgames_url: null,
-  threads_url: null,
-  reddit_url: null,
-  twitch_url: null,
-  card_background_type: "default",
-  card_background_color: "#222634",
-  card_gradient_color: "#173D38",
-  card_gradient_angle: 135,
-  social_icon_color: null,
-  social_icon_bg_color: null,
-  page_background_type: "solid",
-  page_background_color: "#10131A",
-  page_gradient_color: "#173D38",
-  page_gradient_angle: 135,
-  page_background_image_url: null,
-  page_background_image_mode: "cover",
-  page_background_use_image: false,
-  page_background_video_url: null,
-  page_background_media_type: "image",
-  name_font_family: "display",
-  name_font_weight: 600,
-  name_font_style: "normal",
-  bio_font_family: "sans",
-  bio_font_weight: 400,
-  bio_font_style: "normal",
-  name_color: null,
-  bio_color: null,
-  qr_foreground_color: "#0d1117",
-  qr_background_color: "#ffffff",
-  qr_margin: 4,
-  qr_error_correction: "M",
-  qr_module_shape: "square",
-  qr_eye_shape: "square",
-};
-
 function docToProfile(id: string, data: DocumentData): Profile & { verified: boolean } {
   return {
     ...PROFILE_DEFAULTS,
@@ -321,9 +257,9 @@ export async function syncFirebaseAccountDoc(
       await setDoc(ref, {
         id: fbUser.uid,
         email: fbUser.email.trim().toLowerCase().slice(0, 254),
-        name: fbUser.displayName ? fbUser.displayName.trim().slice(0, 80) : null,
+        name: optStr(fbUser.displayName, 80),
         username: username ? username.trim().toLowerCase() : null,
-        providers: providers.slice(0, 4),
+        providers: providers.map((p) => p.slice(0, 32)).slice(0, 4),
         media_count: 0,
         created_at: serverTimestamp(),
         updated_at: serverTimestamp(),
@@ -332,8 +268,8 @@ export async function syncFirebaseAccountDoc(
       const current = existing.data();
       const nextUsername = username ? username.trim().toLowerCase() : (current["username"] ?? null);
       const nextName = fbUser.displayName
-        ? fbUser.displayName.trim().slice(0, 80)
-        : (current["name"] ?? null);
+        ? optStr(fbUser.displayName, 80)
+        : optStr(current["name"], 80);
       await updateDoc(ref, {
         email: fbUser.email.trim().toLowerCase().slice(0, 254),
         name: nextName,
@@ -343,7 +279,9 @@ export async function syncFirebaseAccountDoc(
             ...(Array.isArray(current["providers"]) ? current["providers"] : []),
             ...providers,
           ]),
-        ].slice(0, 4),
+        ]
+          .map((p) => String(p).slice(0, 32))
+          .slice(0, 4),
         updated_at: serverTimestamp(),
       });
     }
@@ -411,12 +349,26 @@ export async function fetchProfileByUsernameFirestore(username: string): Promise
   }
 }
 
+async function ensureVerifiedAuthToken(user: FirebaseUser): Promise<void> {
+  if (!user.emailVerified) {
+    await user.reload().catch(() => undefined);
+  }
+  if (!user.emailVerified) {
+    throw new Error("Please verify your email address before claiming a username");
+  }
+  const tokenResult = await user.getIdTokenResult();
+  if (tokenResult.claims["email_verified"] !== true) {
+    await user.getIdToken(true);
+  }
+}
+
 export async function createProfileFirestore(
   rawUsername: string,
   seed?: Partial<Profile>,
 ): Promise<Profile> {
   const user = auth.currentUser;
   if (!user) throw new Error("Not signed in");
+  await ensureVerifiedAuthToken(user);
 
   const parsed = usernameSchema.safeParse(rawUsername);
   if (!parsed.success) {
@@ -435,75 +387,47 @@ export async function createProfileFirestore(
   }
 
   const uid = user.uid;
-  const batch = writeBatch(db);
   const unameRef = doc(db, "usernames", username);
   const profileRef = doc(db, "profiles", uid);
 
-  const profilePayload: Record<string, unknown> = {
-    ...PROFILE_DEFAULTS,
-    ...(seed ?? {}),
-    id: uid,
-    username,
-    display_name: optStr(seed?.display_name ?? user.displayName ?? null, 80),
-    bio: optStr(seed?.bio ?? null, 50),
-    avatar_path: optStr(seed?.avatar_path ?? null, 256),
-    cover_photo_path: optStr(seed?.cover_photo_path ?? null, 256),
-    cover_photo_x: clamp(seed?.cover_photo_x, 0, 100, 50),
-    cover_photo_y: clamp(seed?.cover_photo_y, 0, 100, 50),
-    show_qr_button: seed?.show_qr_button ?? true,
-    verified: username === "abdessamed",
-    card_background_color: hexOrFallback(
-      seed?.card_background_color,
-      PROFILE_DEFAULTS.card_background_color,
-    ),
-    card_gradient_color: hexOrFallback(
-      seed?.card_gradient_color,
-      PROFILE_DEFAULTS.card_gradient_color,
-    ),
-    card_gradient_angle: clamp(seed?.card_gradient_angle, 0, 360, 135),
-    social_icon_color: hexOrNull(seed?.social_icon_color),
-    social_icon_bg_color: hexOrNull(seed?.social_icon_bg_color),
-    page_background_color: hexOrFallback(
-      seed?.page_background_color,
-      PROFILE_DEFAULTS.page_background_color,
-    ),
-    page_gradient_color: hexOrFallback(
-      seed?.page_gradient_color,
-      PROFILE_DEFAULTS.page_gradient_color,
-    ),
-    page_gradient_angle: clamp(seed?.page_gradient_angle, 0, 360, 135),
-    page_background_image_url: optStr(seed?.page_background_image_url ?? null, 500),
-    page_background_video_url: optStr(seed?.page_background_video_url ?? null, 500),
-    name_color: hexOrNull(seed?.name_color),
-    bio_color: hexOrNull(seed?.bio_color),
-    qr_foreground_color: hexOrFallback(
-      seed?.qr_foreground_color,
-      PROFILE_DEFAULTS.qr_foreground_color,
-    ),
-    qr_background_color: hexOrFallback(
-      seed?.qr_background_color,
-      PROFILE_DEFAULTS.qr_background_color,
-    ),
-    qr_margin: Math.round(clamp(seed?.qr_margin, 0, 10, 4)),
-    created_at: serverTimestamp(),
-    updated_at: serverTimestamp(),
-  };
-
-  for (const p of SOCIAL_PLATFORMS) {
-    profilePayload[p.field] = optStr(seed?.[p.field] ?? null, 300);
+  const existingProfileSnap = await getDocFromServer(profileRef).catch(() => getDoc(profileRef));
+  if (existingProfileSnap.exists()) {
+    return docToProfile(existingProfileSnap.id, existingProfileSnap.data());
   }
 
-  batch.set(unameRef, {
+  const usernamePayload = buildUsernameClaimPayload({
     username,
-    owner_id: uid,
-    created_at: serverTimestamp(),
+    ownerId: uid,
+    createdAt: serverTimestamp(),
   });
+  const profilePayload = buildCreateProfilePayload({
+    uid,
+    username,
+    displayName: user.displayName ?? null,
+    seed,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+
+  const batch = writeBatch(db);
+  batch.set(unameRef, usernamePayload);
   batch.set(profileRef, profilePayload);
 
   try {
     await batch.commit();
   } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, `profiles/${uid}`);
+    const currentUnameSnap = await getDocFromServer(unameRef).catch(() => null);
+    if (currentUnameSnap?.exists() && currentUnameSnap.data()["owner_id"] !== uid) {
+      const takenErr = new Error(
+        'duplicate key value violates unique constraint "profiles_username_key"',
+      ) as Error & {
+        code?: string;
+      };
+      takenErr.code = "23505";
+      throw takenErr;
+    }
+    const targetPath = currentUnameSnap?.exists() ? `usernames/${username}` : `profiles/${uid}`;
+    handleFirestoreError(error, OperationType.WRITE, targetPath);
   }
 
   await syncFirebaseAccountDoc(user, username);
@@ -524,7 +448,7 @@ export async function updateMyProfileFirestore(patch: Partial<Profile>): Promise
   const sanitized: Record<string, unknown> = {};
 
   if (patch.bio !== undefined) {
-    if (patch.bio !== null && patch.bio.length > 50) {
+    if (patch.bio !== null && utf8ByteLength(patch.bio) > 50) {
       throw new Error("Bio must be 50 characters or fewer");
     }
     sanitized["bio"] = optStr(patch.bio, 50);
@@ -559,8 +483,19 @@ export async function updateMyProfileFirestore(patch: Partial<Profile>): Promise
     }
   }
 
+  const bgTypeSet = new Set<string>(BG_TYPES);
+  const fontFamilySet = new Set<string>(FONT_FAMILIES);
+  const fontStyleSet = new Set<string>(FONT_STYLES);
+  const qrEcSet = new Set<string>(QR_ERROR_CORRECTIONS);
+  const qrModuleSet = new Set<string>(QR_MODULE_SHAPES);
+  const qrEyeSet = new Set<string>(QR_EYE_SHAPES);
+
   if (patch.card_background_type !== undefined)
-    sanitized["card_background_type"] = patch.card_background_type;
+    sanitized["card_background_type"] = enumOrFallback(
+      patch.card_background_type,
+      bgTypeSet,
+      current.card_background_type,
+    );
   if (patch.card_background_color !== undefined) {
     sanitized["card_background_color"] = hexOrFallback(
       patch.card_background_color,
@@ -583,7 +518,11 @@ export async function updateMyProfileFirestore(patch: Partial<Profile>): Promise
     sanitized["social_icon_bg_color"] = hexOrNull(patch.social_icon_bg_color);
   }
   if (patch.page_background_type !== undefined)
-    sanitized["page_background_type"] = patch.page_background_type;
+    sanitized["page_background_type"] = enumOrFallback(
+      patch.page_background_type,
+      bgTypeSet,
+      current.page_background_type,
+    );
   if (patch.page_background_color !== undefined) {
     sanitized["page_background_color"] = hexOrFallback(
       patch.page_background_color,
@@ -616,14 +555,34 @@ export async function updateMyProfileFirestore(patch: Partial<Profile>): Promise
     sanitized["page_background_media_type"] =
       patch.page_background_media_type === "video" ? "video" : "image";
   }
-  if (patch.name_font_family !== undefined) sanitized["name_font_family"] = patch.name_font_family;
+  if (patch.name_font_family !== undefined)
+    sanitized["name_font_family"] = enumOrFallback(
+      patch.name_font_family,
+      fontFamilySet,
+      current.name_font_family,
+    );
   if (patch.name_font_weight !== undefined)
     sanitized["name_font_weight"] = clamp(patch.name_font_weight, 100, 900, 600);
-  if (patch.name_font_style !== undefined) sanitized["name_font_style"] = patch.name_font_style;
-  if (patch.bio_font_family !== undefined) sanitized["bio_font_family"] = patch.bio_font_family;
+  if (patch.name_font_style !== undefined)
+    sanitized["name_font_style"] = enumOrFallback(
+      patch.name_font_style,
+      fontStyleSet,
+      current.name_font_style,
+    );
+  if (patch.bio_font_family !== undefined)
+    sanitized["bio_font_family"] = enumOrFallback(
+      patch.bio_font_family,
+      fontFamilySet,
+      current.bio_font_family,
+    );
   if (patch.bio_font_weight !== undefined)
     sanitized["bio_font_weight"] = clamp(patch.bio_font_weight, 100, 900, 400);
-  if (patch.bio_font_style !== undefined) sanitized["bio_font_style"] = patch.bio_font_style;
+  if (patch.bio_font_style !== undefined)
+    sanitized["bio_font_style"] = enumOrFallback(
+      patch.bio_font_style,
+      fontStyleSet,
+      current.bio_font_style,
+    );
   if (patch.name_color !== undefined) sanitized["name_color"] = hexOrNull(patch.name_color);
   if (patch.bio_color !== undefined) sanitized["bio_color"] = hexOrNull(patch.bio_color);
   if (patch.qr_foreground_color !== undefined) {
@@ -642,9 +601,19 @@ export async function updateMyProfileFirestore(patch: Partial<Profile>): Promise
     sanitized["qr_margin"] = Math.round(clamp(patch.qr_margin, 0, 10, 4));
   }
   if (patch.qr_error_correction !== undefined)
-    sanitized["qr_error_correction"] = patch.qr_error_correction;
-  if (patch.qr_module_shape !== undefined) sanitized["qr_module_shape"] = patch.qr_module_shape;
-  if (patch.qr_eye_shape !== undefined) sanitized["qr_eye_shape"] = patch.qr_eye_shape;
+    sanitized["qr_error_correction"] = enumOrFallback(
+      patch.qr_error_correction,
+      qrEcSet,
+      current.qr_error_correction,
+    );
+  if (patch.qr_module_shape !== undefined)
+    sanitized["qr_module_shape"] = enumOrFallback(
+      patch.qr_module_shape,
+      qrModuleSet,
+      current.qr_module_shape,
+    );
+  if (patch.qr_eye_shape !== undefined)
+    sanitized["qr_eye_shape"] = enumOrFallback(patch.qr_eye_shape, qrEyeSet, current.qr_eye_shape);
 
   const requestedUsername =
     patch.username !== undefined ? patch.username.trim().toLowerCase() : current.username;
