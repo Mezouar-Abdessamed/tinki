@@ -28,18 +28,18 @@ service cloud.firestore {
     }
 
     function isValidId(id) {
-      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_-]+$');
     }
 
     function isValidMediaId(id) {
-      return id is string && id.size() >= 3 && id.size() <= 220 && id.matches('^[a-zA-Z0-9_\\-]+$');
+      return id is string && id.size() >= 3 && id.size() <= 220 && id.matches('^[a-zA-Z0-9_-]+$');
     }
 
     function isValidUsernameStr(username) {
       return username is string
         && username.size() >= 1
         && username.size() <= 20
-        && username.matches('^[a-z0-9_\\-]+$')
+        && username.matches('^[a-z0-9_-]+$')
         && !(username in [
           'admin', 'login', 'register', 'dashboard', 'api', 'settings',
           'about', 'contact', 'terms', 'privacy', 'favicon.ico', 'robots.txt',
@@ -406,8 +406,15 @@ service cloud.firestore {
         && isValidProfile(incoming(), profileId)
         && incoming().created_at == request.time
         && incoming().updated_at == request.time
-        && existsAfter(/databases/$(database)/documents/usernames/$(incoming().username))
-        && getAfter(/databases/$(database)/documents/usernames/$(incoming().username)).data.owner_id == request.auth.uid;
+        && (
+          (
+            exists(/databases/$(database)/documents/usernames/$(incoming().username))
+            && get(/databases/$(database)/documents/usernames/$(incoming().username)).data.owner_id == request.auth.uid
+          ) || (
+            existsAfter(/databases/$(database)/documents/usernames/$(incoming().username))
+            && getAfter(/databases/$(database)/documents/usernames/$(incoming().username)).data.owner_id == request.auth.uid
+          )
+        );
       allow update: if isVerifiedUser()
         && isValidId(profileId)
         && isOwner(profileId)
@@ -426,6 +433,9 @@ service cloud.firestore {
             && (
               incoming().username == existing().username
               || (
+                exists(/databases/$(database)/documents/usernames/$(incoming().username))
+                && get(/databases/$(database)/documents/usernames/$(incoming().username)).data.owner_id == request.auth.uid
+              ) || (
                 existsAfter(/databases/$(database)/documents/usernames/$(incoming().username))
                 && getAfter(/databases/$(database)/documents/usernames/$(incoming().username)).data.owner_id == request.auth.uid
               )

@@ -63,6 +63,16 @@ describe("ClaimUsername flow & non-circular Firestore rules", () => {
     assert.equal(usernamesBlock.includes("documents/profiles/"), false);
     assert.ok(
       profilesBlock.includes(
+        "exists(/databases/$(database)/documents/usernames/$(incoming().username))",
+      ),
+    );
+    assert.ok(
+      profilesBlock.includes(
+        "get(/databases/$(database)/documents/usernames/$(incoming().username)).data.owner_id == request.auth.uid",
+      ),
+    );
+    assert.ok(
+      profilesBlock.includes(
         "existsAfter(/databases/$(database)/documents/usernames/$(incoming().username))",
       ),
     );
@@ -70,6 +80,10 @@ describe("ClaimUsername flow & non-circular Firestore rules", () => {
       profilesBlock.includes(
         "getAfter(/databases/$(database)/documents/usernames/$(incoming().username)).data.owner_id == request.auth.uid",
       ),
+    );
+    assert.ok(
+      !rules.includes("\\-"),
+      "regex character classes should not unnecessarily escape '-'",
     );
   });
 

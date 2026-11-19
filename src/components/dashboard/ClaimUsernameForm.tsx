@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authApi } from "@/lib/api-client";
+import { refreshCurrentFirebaseSession } from "@/lib/firebase-auth";
 import { createMyProfile, isUsernameAvailable, isUsernameTakenError } from "@/lib/profiles";
 import { firstError, passwordSchema, usernameSchema } from "@/lib/profile-validation";
 
@@ -62,7 +63,7 @@ export function ClaimUsernameForm({
         } catch (passwordSaveError) {
           const message =
             passwordSaveError instanceof Error ? passwordSaveError.message.toLowerCase() : "";
-          await authApi.getSession().catch(() => null);
+          await refreshCurrentFirebaseSession().catch(() => null);
           toast.warning(
             message.includes("current password")
               ? "Your page is ready! Your account already has an email password."

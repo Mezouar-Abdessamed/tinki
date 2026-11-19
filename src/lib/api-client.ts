@@ -78,15 +78,27 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   return parsed as T;
 }
 
+let localStoreAvailable: boolean | null = null;
+
 export const authApi = {
   async getSession(): Promise<AuthSession | null> {
     if (typeof window === "undefined") return null;
     try {
-      const data = await apiFetch<{ session: AuthSession | null }>("/api/auth/session");
+      const response = await fetch("/api/auth/session", { credentials: "include" });
+      localStoreAvailable = response.headers?.get("x-local-store") === "1";
+      if (!response.ok) return null;
+      const data = (await response.json()) as { session: AuthSession | null };
       return data.session;
     } catch {
       return null;
     }
+  },
+
+  async isLocalStoreAvailable(): Promise<boolean> {
+    if (typeof window === "undefined") return false;
+    if (localStoreAvailable !== null) return localStoreAvailable;
+    await authApi.getSession();
+    return localStoreAvailable ?? false;
   },
 
   async checkSignupAvailable(input: { email: string; username: string }): Promise<void> {
@@ -146,33 +158,59 @@ export const authApi = {
   },
 
   async updatePassword(input: { password: string; currentPassword?: string }): Promise<void> {
-    try {
-      const data = await apiFetch<{ session?: AuthSession }>("/api/auth/update-password", {
-        method: "POST",
-        body: JSON.stringify(input),
-      });
-      if (data.session) {
-        notifyAuthListeners(data.session);
-      }
-      return;
-    } catch (err) {
-      if (!(err instanceof ApiError && err.code === "local_store_disabled")) {
-        throw err;
-      }
-    }
-
-    const { EmailAuthProvider, reauthenticateWithCredential, updatePassword } =
-      await import("firebase/auth");
     const { auth: fbAuth } = await import("@/lib/firestore-repository");
     const fbUser = fbAuth.currentUser;
-    if (!fbUser) {
-      throw new Error("Please log in again before updating your password");
+
+    if (fbUser) {
+      const { EmailAuthProvider, reauthenticateWithCredential, updatePassword } =
+        await import("firebase/auth");
+      const { mapFirebaseAuthError } = await import("@/lib/firebase-auth-helpers");
+      const { syncSessionFromFirebaseUser } = await import("@/lib/firebase-auth");
+
+      if (input.currentPassword && fbUser.email) {
+        try {
+          const cred = EmailAuthProvider.credential(fbUser.email, input.currentPassword);
+          await reauthenticateWithCredential(fbUser, cred);
+        } catch (reauthErr) {
+          const code =
+            typeof reauthErr === "object" && reauthErr !== null && "code" in reauthErr
+              ? String((reauthErr as { code: unknown }).code)
+              : "";
+          if (
+            code === "auth/wrong-password" ||
+            code === "auth/invalid-credential" ||
+            code === "auth/invalid-login-credentials"
+          ) {
+            throw new Error("Your current password is incorrect");
+          }
+          throw new Error(mapFirebaseAuthError(reauthErr).message);
+        }
+      }
+
+      try {
+        await updatePassword(fbUser, input.password);
+      } catch (pwErr) {
+        throw new Error(mapFirebaseAuthError(pwErr).message);
+      }
+
+      await fbUser.reload().catch(() => undefined);
+      await syncSessionFromFirebaseUser(fbUser).catch(() => undefined);
+      if (localStoreAvailable === true) {
+        await apiFetch<{ session?: AuthSession }>("/api/auth/update-password", {
+          method: "POST",
+          body: JSON.stringify(input),
+        }).catch(() => undefined);
+      }
+      return;
     }
-    if (input.currentPassword && fbUser.email) {
-      const cred = EmailAuthProvider.credential(fbUser.email, input.currentPassword);
-      await reauthenticateWithCredential(fbUser, cred);
+
+    const data = await apiFetch<{ session?: AuthSession }>("/api/auth/update-password", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+    if (data.session) {
+      notifyAuthListeners(data.session);
     }
-    await updatePassword(fbUser, input.password);
   },
 
   async requestPasswordReset(

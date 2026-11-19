@@ -87,7 +87,11 @@ function LoginPage() {
         setNeedsConfirmationEmail(cleanEmail);
         toast.error(error.message);
       } else {
-        toast.error("Those details don't match an account");
+        toast.error(
+          error instanceof Error && error.message
+            ? error.message
+            : "Those details don't match an account",
+        );
       }
     } finally {
       setSubmitting(false);

@@ -614,10 +614,64 @@ export async function handleApiOrMediaRequest(
       return json({ ok: true, deduplicated: false }, 201);
     }
 
+    if (pathname === "/api/auth/forgot-password" && method === "POST") {
+      const limitCheck = limiter.consume(`auth:${pathname}:${clientIp}`, 5, HOUR_MS, now);
+      if (!limitCheck.allowed) {
+        return rateLimitedResponse(limitCheck.retryAfterSeconds);
+      }
+      const startedAt = Date.now();
+      const body = await readJson<{ email?: string }>(request);
+      const cleanEmail = (body.email ?? "").trim().toLowerCase();
+      if (localStoreEnabled) {
+        getStore().createPasswordReset(cleanEmail);
+      }
+
+      const clientDispatched = request.headers.get("x-reset-email-dispatched") === "client";
+      const sendResetEmail =
+        options.sendPasswordResetEmail ??
+        (!clientDispatched && process.env["NODE_ENV"] !== "test"
+          ? sendFirebasePasswordResetEmailServer
+          : undefined);
+
+      if (sendResetEmail && cleanEmail) {
+        const origin = url.origin && url.origin !== "null" ? url.origin : undefined;
+        const continueUrl = origin ? `${origin}/reset-password` : undefined;
+        try {
+          await sendResetEmail(cleanEmail, continueUrl);
+        } catch {
+          /* ignore email delivery failures so existence/timing stay uniform */
+        }
+      }
+
+      const elapsedMs = Date.now() - startedAt;
+      const minResponseMs = 120;
+      if (elapsedMs < minResponseMs) {
+        await new Promise((resolve) => setTimeout(resolve, minResponseMs - elapsedMs));
+      }
+
+      return json({ ok: true });
+    }
+
     // --- Single-source-of-truth Firestore mode (default & production) ---
     if (!localStoreEnabled) {
       if (pathname === "/api/auth/session" && method === "GET") {
         return json({ session: null });
+      }
+
+      if (pathname === "/api/auth/google" && method === "POST") {
+        const body = await readJson<{ idToken?: string }>(request);
+        const claims = await verifyToken(body.idToken ?? "");
+        const provider = claims.signInProvider === "password" ? "email" : "google";
+        const session = {
+          expires_at: Math.floor(now / 1000) + SESSION_COOKIE_MAX_AGE,
+          user: {
+            id: claims.uid,
+            email: (claims.email ?? "").trim().toLowerCase(),
+            user_metadata: {},
+            identities: [{ provider }],
+          },
+        };
+        return json({ session, user: session.user }, 200);
       }
 
       if (pathname === "/api/auth/logout" && method === "POST") {
@@ -726,10 +780,11 @@ export async function handleApiOrMediaRequest(
     // --- Auth routes ---
     if (pathname === "/api/auth/session" && method === "GET") {
       const user = getAuthenticatedUser(request);
-      if (!user) return json({ session: null });
+      if (!user) return json({ session: null }, 200, { "x-local-store": "1" });
       const renewed = store.refreshSessionForUser(user.id);
-      if (!renewed) return json({ session: null });
+      if (!renewed) return json({ session: null }, 200, { "x-local-store": "1" });
       return json({ session: toClientSession(renewed) }, 200, {
+        "x-local-store": "1",
         "set-cookie": sessionCookieHeader(request, renewed.access_token, SESSION_COOKIE_MAX_AGE),
       });
     }
@@ -868,42 +923,6 @@ export async function handleApiOrMediaRequest(
       return json({ ok: true, session: toClientSession(session), user: session.user }, 200, {
         "set-cookie": sessionCookieHeader(request, session.access_token, SESSION_COOKIE_MAX_AGE),
       });
-    }
-
-    if (pathname === "/api/auth/forgot-password" && method === "POST") {
-      const limitCheck = limiter.consume(`auth:${pathname}:${clientIp}`, 5, HOUR_MS, now);
-      if (!limitCheck.allowed) {
-        return rateLimitedResponse(limitCheck.retryAfterSeconds);
-      }
-      const startedAt = Date.now();
-      const body = await readJson<{ email?: string }>(request);
-      const cleanEmail = (body.email ?? "").trim().toLowerCase();
-      store.createPasswordReset(cleanEmail);
-
-      const clientDispatched = request.headers.get("x-reset-email-dispatched") === "client";
-      const sendResetEmail =
-        options.sendPasswordResetEmail ??
-        (!clientDispatched && process.env["NODE_ENV"] !== "test"
-          ? sendFirebasePasswordResetEmailServer
-          : undefined);
-
-      if (sendResetEmail && cleanEmail) {
-        const origin = url.origin && url.origin !== "null" ? url.origin : undefined;
-        const continueUrl = origin ? `${origin}/reset-password` : undefined;
-        try {
-          await sendResetEmail(cleanEmail, continueUrl);
-        } catch {
-          /* ignore email delivery failures so existence/timing stay uniform */
-        }
-      }
-
-      const elapsedMs = Date.now() - startedAt;
-      const minResponseMs = 120;
-      if (elapsedMs < minResponseMs) {
-        await new Promise((resolve) => setTimeout(resolve, minResponseMs - elapsedMs));
-      }
-
-      return json({ ok: true });
     }
 
     if (pathname === "/api/auth/reset-password" && method === "POST") {

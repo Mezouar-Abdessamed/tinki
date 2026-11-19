@@ -144,6 +144,32 @@ export function mapFirebaseAuthError(error: unknown): MappedFirebaseAuthError {
       isNetworkError: false,
     };
   }
+  if (
+    code === "auth/wrong-password" ||
+    code === "auth/invalid-credential" ||
+    code === "auth/invalid-login-credentials" ||
+    code === "auth/user-not-found"
+  ) {
+    return {
+      message: "Those details don't match an account",
+      isCancelled: false,
+      isNetworkError: false,
+    };
+  }
+  if (code === "auth/requires-recent-login") {
+    return {
+      message: "Please log in again before making this security change",
+      isCancelled: false,
+      isNetworkError: false,
+    };
+  }
+  if (code === "auth/user-mismatch") {
+    return {
+      message: "Signed-in account does not match. Please log in again",
+      isCancelled: false,
+      isNetworkError: false,
+    };
+  }
   if (code === "auth/account-exists-with-different-credential") {
     return {
       message: "An account already exists with this email using another sign-in method",

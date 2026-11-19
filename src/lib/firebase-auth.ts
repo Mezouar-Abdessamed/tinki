@@ -225,36 +225,63 @@ async function migrateLegacyServerProfileIfMissing(
   }
 }
 
+function extractFirebaseProviderNames(fbUser: User): string[] {
+  return [
+    ...new Set(
+      (fbUser.providerData ?? [])
+        .map((p) =>
+          p.providerId === "password"
+            ? "email"
+            : p.providerId === "google.com"
+              ? "google"
+              : p.providerId,
+        )
+        .filter(Boolean),
+    ),
+  ];
+}
+
 export async function syncSessionFromFirebaseUser(fbUser: User): Promise<AuthSession> {
   const idToken = await fbUser.getIdToken();
+  const firebaseProviders = extractFirebaseProviderNames(fbUser);
   let session: AuthSession;
+  let notified = false;
 
   try {
     session = await authApi.signInWithGoogle(idToken);
+    notified = true;
   } catch {
-    const fallbackProviders = [
-      ...new Set(
-        fbUser.providerData
-          .map((p) =>
-            p.providerId === "password"
-              ? "email"
-              : p.providerId === "google.com"
-                ? "google"
-                : p.providerId,
-          )
-          .filter(Boolean),
-      ),
-    ];
     session = {
       user: {
         id: fbUser.uid,
         email: (fbUser.email ?? "").trim().toLowerCase(),
         user_metadata: {},
-        identities: (fallbackProviders.length > 0 ? fallbackProviders : ["google"]).map(
+        identities: (firebaseProviders.length > 0 ? firebaseProviders : ["google"]).map(
           (provider) => ({ provider }),
         ),
       },
     };
+  }
+
+  const existingProviders = session.user.identities.map((item) => item.provider);
+  const mergedProviders = [...new Set([...existingProviders, ...firebaseProviders])];
+  const needsProviderSync =
+    mergedProviders.length !== existingProviders.length ||
+    mergedProviders.some((p, i) => existingProviders[i] !== p);
+
+  if (session.user.id !== fbUser.uid || needsProviderSync) {
+    session = {
+      ...session,
+      user: {
+        ...session.user,
+        id: fbUser.uid,
+        identities: mergedProviders.map((provider) => ({ provider })),
+      },
+    };
+    notified = false;
+  }
+
+  if (!notified) {
     notifyAuthListeners(session);
   }
 
@@ -266,19 +293,17 @@ export async function syncSessionFromFirebaseUser(fbUser: User): Promise<AuthSes
   migrationInFlight.set(fbUser.uid, inflight);
   await inflight;
 
-  // Ensure auth user id stays aligned with Firebase UID for Firestore rules consistency
-  if (session.user.id !== fbUser.uid) {
-    session = {
-      ...session,
-      user: {
-        ...session.user,
-        id: fbUser.uid,
-      },
-    };
-    notifyAuthListeners(session);
-  }
-
   return session;
+}
+
+export async function refreshCurrentFirebaseSession(): Promise<AuthSession | null> {
+  const auth = getFirebaseAuth();
+  const fbUser = auth.currentUser;
+  if (!fbUser) {
+    return authApi.getSession();
+  }
+  await fbUser.reload().catch(() => undefined);
+  return syncSessionFromFirebaseUser(fbUser);
 }
 
 export function storePendingVerificationState(email: string, username: string) {
@@ -465,14 +490,28 @@ export async function signInWithEmailPasswordFirebase(
     if (err instanceof ApiError) {
       throw err;
     }
-    try {
-      return await authApi.signInWithPassword({ email: cleanEmail, password });
-    } catch (apiErr) {
-      if (apiErr instanceof ApiError && apiErr.code === "email_not_verified") {
-        throw apiErr;
-      }
-      throw new Error("Those details don't match an account");
+    const code =
+      typeof err === "object" && err !== null && "code" in err
+        ? String((err as { code: unknown }).code)
+        : "";
+    if (
+      code === "auth/too-many-requests" ||
+      code === "auth/user-disabled" ||
+      code === "auth/network-request-failed"
+    ) {
+      throw new Error(mapFirebaseAuthError(err).message);
     }
+
+    if (await authApi.isLocalStoreAvailable()) {
+      try {
+        return await authApi.signInWithPassword({ email: cleanEmail, password });
+      } catch (apiErr) {
+        if (apiErr instanceof ApiError && apiErr.code === "email_not_verified") {
+          throw apiErr;
+        }
+      }
+    }
+    throw new Error("Those details don't match an account");
   }
 }
 

@@ -266,7 +266,8 @@ export async function syncFirebaseAccountDoc(
       });
     } else {
       const current = existing.data();
-      const nextUsername = username ? username.trim().toLowerCase() : (current["username"] ?? null);
+      const rawNextUsername = username ? username.trim().toLowerCase() : current["username"];
+      const nextUsername = optStr(rawNextUsername, 20);
       const nextName = fbUser.displayName
         ? optStr(fbUser.displayName, 80)
         : optStr(current["name"], 80);
@@ -290,6 +291,26 @@ export async function syncFirebaseAccountDoc(
   }
 }
 
+function isFirestorePermissionDenied(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const e = error as { code?: unknown; message?: unknown };
+  const code = typeof e.code === "string" ? e.code.toLowerCase() : "";
+  const msg = typeof e.message === "string" ? e.message.toLowerCase() : "";
+  return (
+    code === "permission-denied" ||
+    code === "firestore/permission-denied" ||
+    msg.includes("missing or insufficient permissions")
+  );
+}
+
+function throwUsernameTakenError(): never {
+  const err = new Error(
+    'duplicate key value violates unique constraint "profiles_username_key"',
+  ) as Error & { code?: string };
+  err.code = "23505";
+  throw err;
+}
+
 export async function checkUsernameAvailableFirestore(username: string): Promise<boolean> {
   const parsed = usernameSchema.safeParse(username);
   if (!parsed.success) return false;
@@ -297,17 +318,30 @@ export async function checkUsernameAvailableFirestore(username: string): Promise
   if (RESERVED_USERNAMES.has(clean)) return false;
 
   const path = `usernames/${clean}`;
+  let snap;
   try {
-    const snap = await getDocFromServer(doc(db, "usernames", clean));
-    return !snap.exists();
+    snap = await getDocFromServer(doc(db, "usernames", clean));
   } catch {
     try {
-      const snap = await getDoc(doc(db, "usernames", clean));
-      return !snap.exists();
+      snap = await getDoc(doc(db, "usernames", clean));
     } catch (error) {
       handleFirestoreError(error, OperationType.GET, path);
     }
   }
+
+  if (!snap.exists()) return true;
+
+  // If the current signed-in user already reserved this handle before their profile doc
+  // was created (e.g. interrupted two-step claim), allow them to complete profile creation.
+  const currentUid = auth.currentUser?.uid;
+  if (currentUid && snap.data()["owner_id"] === currentUid) {
+    const profileSnap = await getDocFromServer(doc(db, "profiles", currentUid)).catch(() => null);
+    if (profileSnap && !profileSnap.exists()) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 export async function fetchProfileByIdFirestore(uid: string): Promise<Profile | null> {
@@ -418,16 +452,40 @@ export async function createProfileFirestore(
   } catch (error) {
     const currentUnameSnap = await getDocFromServer(unameRef).catch(() => null);
     if (currentUnameSnap?.exists() && currentUnameSnap.data()["owner_id"] !== uid) {
-      const takenErr = new Error(
-        'duplicate key value violates unique constraint "profiles_username_key"',
-      ) as Error & {
-        code?: string;
-      };
-      takenErr.code = "23505";
-      throw takenErr;
+      throwUsernameTakenError();
     }
-    const targetPath = currentUnameSnap?.exists() ? `usernames/${username}` : `profiles/${uid}`;
-    handleFirestoreError(error, OperationType.WRITE, targetPath);
+
+    if (isFirestorePermissionDenied(error)) {
+      const ownedExistingClaim = Boolean(
+        currentUnameSnap?.exists() && currentUnameSnap.data()["owner_id"] === uid,
+      );
+      let createdClaimInFallback = false;
+
+      if (!ownedExistingClaim) {
+        try {
+          await setDoc(unameRef, usernamePayload);
+          createdClaimInFallback = true;
+        } catch (unameErr) {
+          const raceSnap = await getDocFromServer(unameRef).catch(() => null);
+          if (raceSnap?.exists() && raceSnap.data()["owner_id"] !== uid) {
+            throwUsernameTakenError();
+          }
+          handleFirestoreError(unameErr, OperationType.WRITE, `usernames/${username}`);
+        }
+      }
+
+      try {
+        await setDoc(profileRef, profilePayload);
+      } catch (profileErr) {
+        if (createdClaimInFallback) {
+          await deleteDoc(unameRef).catch(() => undefined);
+        }
+        handleFirestoreError(profileErr, OperationType.WRITE, `profiles/${uid}`);
+      }
+    } else {
+      const targetPath = currentUnameSnap?.exists() ? `usernames/${username}` : `profiles/${uid}`;
+      handleFirestoreError(error, OperationType.WRITE, targetPath);
+    }
   }
 
   await syncFirebaseAccountDoc(user, username);
@@ -634,25 +692,63 @@ export async function updateMyProfileFirestore(patch: Partial<Profile>): Promise
       throw err;
     }
 
-    const batch = writeBatch(db);
-    batch.set(doc(db, "usernames", nextUsername), {
+    const nextUnameRef = doc(db, "usernames", nextUsername);
+    const nextClaimPayload = buildUsernameClaimPayload({
       username: nextUsername,
-      owner_id: uid,
-      created_at: serverTimestamp(),
+      ownerId: uid,
+      createdAt: serverTimestamp(),
     });
-    batch.update(profileRef, {
+    const profileUpdatePayload = {
       ...sanitized,
       username: nextUsername,
       verified: nextUsername === "abdessamed",
       updated_at: serverTimestamp(),
-    });
+    };
+
+    const batch = writeBatch(db);
+    batch.set(nextUnameRef, nextClaimPayload);
+    batch.update(profileRef, profileUpdatePayload);
     if (current.username) {
       batch.delete(doc(db, "usernames", current.username));
     }
     try {
       await batch.commit();
     } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, `profiles/${uid}`);
+      const nextUnameSnap = await getDocFromServer(nextUnameRef).catch(() => null);
+      if (nextUnameSnap?.exists() && nextUnameSnap.data()["owner_id"] !== uid) {
+        throwUsernameTakenError();
+      }
+      if (isFirestorePermissionDenied(error)) {
+        const alreadyOwned = Boolean(
+          nextUnameSnap?.exists() && nextUnameSnap.data()["owner_id"] === uid,
+        );
+        let createdClaimInFallback = false;
+        if (!alreadyOwned) {
+          try {
+            await setDoc(nextUnameRef, nextClaimPayload);
+            createdClaimInFallback = true;
+          } catch (unameErr) {
+            const raceSnap = await getDocFromServer(nextUnameRef).catch(() => null);
+            if (raceSnap?.exists() && raceSnap.data()["owner_id"] !== uid) {
+              throwUsernameTakenError();
+            }
+            handleFirestoreError(unameErr, OperationType.WRITE, `usernames/${nextUsername}`);
+          }
+        }
+        try {
+          await updateDoc(profileRef, profileUpdatePayload);
+        } catch (profileErr) {
+          if (createdClaimInFallback) {
+            await deleteDoc(nextUnameRef).catch(() => undefined);
+          }
+          handleFirestoreError(profileErr, OperationType.UPDATE, `profiles/${uid}`);
+        }
+        if (current.username) {
+          await deleteDoc(doc(db, "usernames", current.username)).catch(() => undefined);
+        }
+      } else {
+        handleFirestoreError(error, OperationType.UPDATE, `profiles/${uid}`);
+      }
     }
     await syncFirebaseAccountDoc(user, nextUsername);
   } else {
